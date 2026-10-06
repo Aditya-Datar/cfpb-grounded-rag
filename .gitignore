@@ -1,0 +1,16 @@
+# Raw and processed data are too large for git; each member keeps a local copy.
+*.csv
+*.csv.zip
+*.parquet
+data/
+outputs/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Model checkpoints and indexes
+models/
+*.faiss
