@@ -2,8 +2,8 @@
 *.csv
 *.csv.zip
 *.parquet
-data/
-outputs/
+/data/
+/outputs/
 
 # Python
 .venv/
@@ -14,3 +14,7 @@ __pycache__/
 # Model checkpoints and indexes
 models/
 *.faiss
+
+# IDE
+.idea/
+.vscode/
