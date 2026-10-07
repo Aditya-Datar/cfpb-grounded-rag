@@ -26,7 +26,7 @@ src/cfpb/data/load.py     chunked .csv/.zip exports -> one Parquet, filtered by 
 src/cfpb/data/clean.py    redaction cleaning, redaction density, dedupe hash, filters
 src/cfpb/data/profile.py  JSON profile (label counts, narrative coverage, lengths)
 src/cfpb/data/split.py    classifier train/val/test; stratified annotation sample
-scripts/fetch_narrative_archive.py   downloads the 9 FOIA archive zips (~281 MB)
+scripts/fetch_narrative_archive.py   downloads the 10 FOIA archive zips (~365 MB)
 scripts/run_data_pipeline.py   end-to-end stage 0 CLI
 tests/test_clean.py       unit tests for cleaning and dedupe
 ```
@@ -62,8 +62,8 @@ On macOS/Linux use `.venv/bin/python`.
 
 - **The live CFPB data has no narratives.** On 2026-08-14 the CFPB stopped publishing complaint narratives. We checked on 2026-10-06: the search API returns no narrative field for any date range, even 2023, with or without `has_narrative=true`. The bulk `complaints.csv.zip` (last modified 2026-10-06) has only 15 columns, with no `Consumer complaint narrative`. **Do not try to re-download from the API or bulk file**; it cannot fix this.
 - **Narratives live in the FOIA Reading Room archive:** https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/ . It holds 21 zipped CSV exports covering complaints received 2011-12-01 to 2026-08-14. Each has 16 columns, including `Consumer complaint narrative`. Many rows still have an empty narrative, because only consumers who opted in had theirs published.
-- We use exports 13 to 21 (Sept 2025 to Aug 2026), about 281 MB zipped; the list is in `config.ARCHIVE_FILES`. `scripts/fetch_narrative_archive.py` downloads them to `data/raw/foia_archive/`.
-- **Usable narrative window: 2025-10-01 to 2026-08-14.** Complaints received after 2026-08-14 have no public narrative anywhere. The pipeline still filters to the project window 2025-10-01 to 2026-10-01 (`config.DATE_MIN`, `DATE_MAX`), but later rows will simply have no text.
+- We use exports 12 to 21 (July 2025 to Aug 2026), about 365 MB zipped; the list is in `config.ARCHIVE_FILES`. `scripts/fetch_narrative_archive.py` downloads them to `data/raw/foia_archive/`.
+- **Project window: 2025-08-14 to 2026-08-14 inclusive** (`config.DATE_MIN`, `DATE_MAX`; team decision 2026-10-06). It is one full year ending on the last day narratives exist. Complaints received after 2026-08-14 have no public narrative anywhere.
 - Archive exports may overlap, so the pipeline drops duplicate `complaint_id`s.
 - The archive files do not include `Consumer consent provided?`.
 
@@ -135,3 +135,7 @@ The narrative subset will be much smaller and may have a different product mix; 
 - Replaced `load.csv_to_parquet` and the `--narratives` side-join with `load.exports_to_parquet`, which takes several .csv/.zip files and filters by date. The pipeline now reads the archive by default (`--inputs` overrides it) and dedupes on `complaint_id`.
 - Added `scripts/fetch_narrative_archive.py` and the archive file list in config.
 - Tested on a synthetic zip: both date bounds are inclusive, out-of-window rows are dropped, and quoted narratives containing commas parse correctly. All 6 unit tests pass. The real archive is not downloaded yet.
+
+### 2026-10-06: Window moved to 2025-08-14 to 2026-08-14
+- Team decision: use one full year ending on the last narrative date, instead of Oct 2025 to Oct 2026, whose last 1.5 months have no text.
+- Added export 12 (July to Aug 2025, 84.2 MB) to `ARCHIVE_FILES`; the total download is now 10 files, about 365 MB.

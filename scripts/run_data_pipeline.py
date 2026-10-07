@@ -1,7 +1,7 @@
 """Stage 0 data pipeline: CFPB exports -> cleaned splits + annotation sample.
 
 Usage (from repo root, venv active):
-    python scripts/fetch_narrative_archive.py   # once, ~281 MB
+    python scripts/fetch_narrative_archive.py   # once, ~365 MB
     python scripts/run_data_pipeline.py         # reads data/raw/foia_archive/*.zip
     python scripts/run_data_pipeline.py --inputs a.csv b.zip --date-min 2026-01-01
 

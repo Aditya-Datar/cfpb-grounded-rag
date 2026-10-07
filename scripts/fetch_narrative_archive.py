@@ -1,4 +1,4 @@
-"""Download the CFPB FOIA narrative archive exports for our window (~281 MB).
+"""Download the CFPB FOIA narrative archive exports for our window (~365 MB).
 
 Usage (from repo root, venv active):
     python scripts/fetch_narrative_archive.py

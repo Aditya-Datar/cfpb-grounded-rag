@@ -11,7 +11,7 @@ Regulation-grounded triage and response drafting for CFPB consumer complaints (C
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt   # macOS/Linux: .venv/bin/python
 .venv/Scripts/python -m pytest -q tests
-.venv/Scripts/python scripts/fetch_narrative_archive.py   # CFPB FOIA narrative archive, ~281 MB
+.venv/Scripts/python scripts/fetch_narrative_archive.py   # CFPB FOIA narrative archive, ~365 MB
 .venv/Scripts/python scripts/run_data_pipeline.py
 ```
 
