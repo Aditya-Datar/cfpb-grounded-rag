@@ -8,7 +8,7 @@ Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope
 
 | Stage | Branch | Status | Owner |
 |---|---|---|---|
-| 0. Data processing | `data-processing` | Code written and tested; narrative source found (FOIA archive, Sec. 3); archive not yet downloaded | Aditya |
+| 0. Data processing | `data-processing` | **Done for v1.** Archive downloaded, pipeline run; splits and annotation sample ready (Sec. 3) | Aditya |
 | 1. Classifier (DistilBERT) | n/a | Not started | Pair A (TBD) |
 | 2. Regulation corpus + retrieval | n/a | Not started | Pair B (TBD) |
 | 3. Generation + 4. NLI verification | n/a | Not started | Pair C (TBD) |
@@ -67,6 +67,43 @@ On macOS/Linux use `.venv/bin/python`.
 - Archive exports may overlap, so the pipeline drops duplicate `complaint_id`s.
 - The archive files do not include `Consumer consent provided?`.
 
+### Narrative dataset, v1 (pipeline run 2026-10-06, 4.5 min)
+
+Source: FOIA archive exports 12 to 21, downloaded 2026-10-07 01:10 UTC (`data/raw/foia_archive/download_log.json`). All 10 zips pass the zip integrity test and share one 16-column header.
+
+| Step | Count |
+|---|---:|
+| Complaints received 2025-08-14 to 2026-08-14 (deduped on `complaint_id`) | 6,809,200 |
+| With a non-empty narrative | 469,659 (6.9%) |
+| Usable after cleaning (at least 20 words, redaction density 0.5 or less, exact-text dedupe) | 276,626 |
+| Classifier splits (`product`, at most 20k per class, 80/10/10) | train 111,563 / val 13,945 / test 13,946 |
+| Annotation sample | 120 (30 each for E, F, V, Z) |
+
+Usable narratives by product. Narratives are **far less skewed** than the full data, where credit reporting is 90%; here it is 33%:
+
+| Product | Usable narratives | Candidate regulation |
+|---|---:|---|
+| Credit reporting or other personal consumer reports | 90,158 | V |
+| Debt collection | 55,544 | F |
+| Checking or savings account | 36,610 | E |
+| Credit card | 34,860 | Z |
+| Money transfer, virtual currency, or money service | 17,601 | E |
+| Mortgage | 13,000 | Z |
+| Vehicle loan or lease | 10,274 | Z |
+| Payday loan, title loan, personal loan, or advance loan | 7,364 | Z |
+| Student loan | 6,617 | Z |
+| Prepaid card | 2,785 | E |
+| Debt or credit management | 1,813 | none |
+
+By candidate regulation: V 90,158; Z 72,115; E 56,996; F 55,544. Every regulation has thousands of candidates, so 30 gold pairs each is easy.
+
+Narrative length (words, after cleaning): median 175, IQR 93 to 285, mean 229, max 6,089. **Note for Pair A:** DistilBERT's 512-token limit truncates roughly the longest quarter, so consider head plus tail truncation.
+Redaction density: median 0.027, 75th percentile 0.05, so most narratives are lightly masked. 89 distinct issues.
+
+Annotation sample mix: E has 10 each of checking/savings, money transfer, and prepaid; F has 30 debt collection; V has 30 credit reporting; Z has 6 each of credit card, payday/personal loan, student loan, mortgage, and vehicle.
+
+**Data-quality observation:** many narratives read like credit-repair templates, formal letters citing the FDCPA, FCRA, and state law. The first sampled debt-collection complaint is one. This matches the CFPB's note about credit-repair and automated submissions (CLAUDE.md Sec. 8). Template letters cite statutes by name, which may make retrieval look easier than it is on organic complaints. A possible error-analysis slice: template vs organic.
+
 ### Structured profile of the live data (earlier snapshot, now deleted)
 
 `filtered_data.csv` was the bulk file filtered to 2025-10-01 to 2026-09-30: 7,004,226 complaints, 15 columns, no narratives. Its derived `data/processed/complaints.parquet` may still be on Aditya's machine; the next pipeline run overwrites it. Product counts:
@@ -105,7 +142,7 @@ The narrative subset will be much smaller and may have a different product mix; 
 
 ## 6. Next steps
 
-1. Run `scripts/fetch_narrative_archive.py` and then `scripts/run_data_pipeline.py`. Paste the narrative profile (count, product mix, word-length quantiles, redaction density) into Sec. 3, and check that each regulation has enough narratives for 30 gold pairs.
+1. Share `data/processed/annotation_sample.csv` once the rubric exists (step 3). Teammates can regenerate every file with the two scripts in Sec. 2; the seed is fixed, so outputs should match.
 2. Pair B: download eCFR XML for Parts 1005, 1026, 1022, 1006; chunk by section; verify the Reg V section numbers above.
 3. Draft the annotation rubric, including the "no in-scope section" label.
 4. Pair A: DistilBERT on `train.parquet`, label `product` first, `issue` second.
@@ -139,3 +176,8 @@ The narrative subset will be much smaller and may have a different product mix; 
 ### 2026-10-06: Window moved to 2025-08-14 to 2026-08-14
 - Team decision: use one full year ending on the last narrative date, instead of Oct 2025 to Oct 2026, whose last 1.5 months have no text.
 - Added export 12 (July to Aug 2025, 84.2 MB) to `ARCHIVE_FILES`; the total download is now 10 files, about 365 MB.
+
+### 2026-10-06: Archive downloaded, full pipeline run (Aditya + Claude)
+- Downloaded 10 archive zips (365 MB zipped, about 3.1 GB of CSV). The first pipeline attempt died when the session ended, so it was rerun cleanly; the log is in `outputs/pipeline_run.log`.
+- Results are in Sec. 3: 6,809,200 complaints, 469,659 with narratives, 276,626 usable, splits of 111,563 / 13,945 / 13,946, and an annotation sample of 120.
+- Output sizes: `complaints.parquet` 297 MB, `narratives_clean.parquet` 390 MB, `train.parquet` 173 MB. All are git-ignored.
