@@ -102,7 +102,7 @@ Redaction density: median 0.027, 75th percentile 0.05, so most narratives are li
 
 Annotation sample mix: E has 10 each of checking/savings, money transfer, and prepaid; F has 30 debt collection; V has 30 credit reporting; Z has 6 each of credit card, payday/personal loan, student loan, mortgage, and vehicle.
 
-**Data-quality observation:** many narratives read like credit-repair templates, formal letters citing the FDCPA, FCRA, and state law. The first sampled debt-collection complaint is one. This matches the CFPB's note about credit-repair and automated submissions (CLAUDE.md Sec. 8). Template letters cite statutes by name, which may make retrieval look easier than it is on organic complaints. A possible error-analysis slice: template vs organic.
+**Data-quality observation (prevalence NOT yet measured):** the first sampled debt-collection narrative reads like a credit-repair template, a formal letter citing the FDCPA, FCRA, and Indiana law. Given the CFPB's note about credit-repair and automated submissions (CLAUDE.md Sec. 8), such templates may be common. Measure this, for example by counting near-duplicate texts or statute mentions, before claiming it. Template letters cite statutes by name, which may make retrieval look easier than it is on organic complaints. A possible error-analysis slice: template vs organic.
 
 ### Structured profile of the live data (earlier snapshot, now deleted)
 
