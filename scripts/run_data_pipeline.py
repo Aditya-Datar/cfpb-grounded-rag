@@ -1,9 +1,9 @@
-"""Stage 0 data pipeline: raw CFPB CSV -> cleaned splits + annotation sample.
+"""Stage 0 data pipeline: CFPB exports -> cleaned splits + annotation sample.
 
 Usage (from repo root, venv active):
-    python scripts/run_data_pipeline.py --csv data/raw/filtered_data.csv
-    python scripts/run_data_pipeline.py --csv data/raw/filtered_data.csv \
-        --narratives data/raw/complaints_with_narratives.csv
+    python scripts/fetch_narrative_archive.py   # once, ~281 MB
+    python scripts/run_data_pipeline.py         # reads data/raw/foia_archive/*.zip
+    python scripts/run_data_pipeline.py --inputs a.csv b.zip --date-min 2026-01-01
 
 Outputs (all git-ignored):
     data/processed/complaints.parquet        all rows, selected columns
@@ -21,19 +21,21 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from cfpb.config import OUTPUT_DIR, PROCESSED_DIR  # noqa: E402
+from cfpb.config import (ARCHIVE_DIR, ARCHIVE_FILES, DATE_MAX, DATE_MIN,  # noqa: E402
+                         OUTPUT_DIR, PROCESSED_DIR)
 from cfpb.data.clean import add_clean_columns, filter_narratives  # noqa: E402
-from cfpb.data.load import csv_to_parquet  # noqa: E402
+from cfpb.data.load import exports_to_parquet  # noqa: E402
 from cfpb.data.profile import profile, write_report  # noqa: E402
 from cfpb.data.split import annotation_sample, make_splits  # noqa: E402
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", type=Path, required=True)
-    ap.add_argument("--narratives", type=Path, default=None,
-                    help="CSV with 'Complaint ID' and 'Consumer complaint narrative' "
-                         "to join in if --csv lacks narratives")
+    ap.add_argument("--inputs", type=Path, nargs="+",
+                    default=[ARCHIVE_DIR / f for f in ARCHIVE_FILES],
+                    help="CFPB export files (.csv or .zip); default: FOIA archive files")
+    ap.add_argument("--date-min", default=DATE_MIN, help="inclusive, Date received")
+    ap.add_argument("--date-max", default=DATE_MAX, help="inclusive, Date received")
     ap.add_argument("--skip-ingest", action="store_true",
                     help="reuse data/processed/complaints.parquet")
     ap.add_argument("--min-words", type=int, default=20)
@@ -44,11 +46,15 @@ def main() -> None:
 
     all_path = PROCESSED_DIR / "complaints.parquet"
     if not args.skip_ingest:
-        print(f"[1/5] Ingesting {args.csv}")
-        csv_to_parquet(args.csv, all_path, narratives_path=args.narratives)
+        missing = [p for p in args.inputs if not p.exists()]
+        if missing:
+            sys.exit(f"Missing inputs: {[p.name for p in missing]}. "
+                     "Run scripts/fetch_narrative_archive.py first.")
+        print(f"[1/5] Ingesting {len(args.inputs)} file(s), {args.date_min}..{args.date_max}")
+        exports_to_parquet(args.inputs, all_path, args.date_min, args.date_max)
 
     print("[2/5] Profiling all complaints")
-    df = pd.read_parquet(all_path)
+    df = pd.read_parquet(all_path).drop_duplicates("complaint_id", keep="last")
     report = profile(df)
     write_report(report, OUTPUT_DIR / "profile_all.json")
     print(f"  rows={report['n_rows']:,}  with narrative={report['n_with_narrative']:,}  "
@@ -56,9 +62,8 @@ def main() -> None:
 
     if report["n_with_narrative"] == 0:
         sys.exit("\nNo narratives found. Classification and retrieval need the "
-                 "'Consumer complaint narrative' column.\nRe-export with that "
-                 "column or pass --narratives. Structured profile written to "
-                 "outputs/profile_all.json.")
+                 "'Consumer complaint narrative' column, which only the FOIA\n"
+                 "archive files have (scripts/fetch_narrative_archive.py).")
 
     print("[3/5] Cleaning narratives")
     narr = df[df["narrative"].notna()].copy()

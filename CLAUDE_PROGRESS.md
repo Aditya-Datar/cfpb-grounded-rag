@@ -8,7 +8,7 @@ Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope
 
 | Stage | Branch | Status | Owner |
 |---|---|---|---|
-| 0. Data processing | `data-processing` | Code written and tested; **blocked on narratives** (see Sec. 3) | Aditya |
+| 0. Data processing | `data-processing` | Code written and tested; narrative source found (FOIA archive, Sec. 3); archive not yet downloaded | Aditya |
 | 1. Classifier (DistilBERT) | n/a | Not started | Pair A (TBD) |
 | 2. Regulation corpus + retrieval | n/a | Not started | Pair B (TBD) |
 | 3. Generation + 4. NLI verification | n/a | Not started | Pair C (TBD) |
@@ -20,11 +20,13 @@ CLAUDE.md                 project decisions (do not edit on feature branches)
 CLAUDE_PROGRESS.md        this file: build log and handoff
 requirements.txt          deps; later-stage deps are commented out
 .gitignore                ignores *.csv, *.parquet, data/, outputs/, .venv/, models/
-src/cfpb/config.py        paths, column map, PRODUCT_TO_REGULATION heuristic, seed (544)
-src/cfpb/data/load.py     chunked CSV -> Parquet; optional narrative join on Complaint ID
+src/cfpb/config.py        paths, column map, PRODUCT_TO_REGULATION heuristic, seed (544),
+                          date window, FOIA archive file list
+src/cfpb/data/load.py     chunked .csv/.zip exports -> one Parquet, filtered by Date received
 src/cfpb/data/clean.py    redaction cleaning, redaction density, dedupe hash, filters
 src/cfpb/data/profile.py  JSON profile (label counts, narrative coverage, lengths)
 src/cfpb/data/split.py    classifier train/val/test; stratified annotation sample
+scripts/fetch_narrative_archive.py   downloads the 9 FOIA archive zips (~281 MB)
 scripts/run_data_pipeline.py   end-to-end stage 0 CLI
 tests/test_clean.py       unit tests for cleaning and dedupe
 ```
@@ -37,7 +39,8 @@ The machine's global Python 3.12 has a broken numpy (the folder has no `__init__
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt
 .venv/Scripts/python -m pytest -q tests
-.venv/Scripts/python scripts/run_data_pipeline.py --csv filtered_data.csv
+.venv/Scripts/python scripts/fetch_narrative_archive.py
+.venv/Scripts/python scripts/run_data_pipeline.py
 ```
 
 On macOS/Linux use `.venv/bin/python`.
@@ -53,11 +56,20 @@ On macOS/Linux use `.venv/bin/python`.
 | `data/processed/{train,val,test}.parquet` | classifier splits, stratified by `product` |
 | `data/processed/annotation_sample.csv` | about 30 per regulation, blank gold columns for annotators |
 
-## 3. Data facts (verified by running code on our snapshot)
+## 3. Data facts (verified)
 
-**Snapshot:** `filtered_data.csv` (2.0 GB, not in git; ask Aditya for a copy). 7,004,226 complaints, `Date received` from 2025-10-01 to 2026-09-30.
+### Where narratives come from (read this first)
 
-Product counts:
+- **The live CFPB data has no narratives.** On 2026-08-14 the CFPB stopped publishing complaint narratives. We checked on 2026-10-06: the search API returns no narrative field for any date range, even 2023, with or without `has_narrative=true`. The bulk `complaints.csv.zip` (last modified 2026-10-06) has only 15 columns, with no `Consumer complaint narrative`. **Do not try to re-download from the API or bulk file**; it cannot fix this.
+- **Narratives live in the FOIA Reading Room archive:** https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/ . It holds 21 zipped CSV exports covering complaints received 2011-12-01 to 2026-08-14. Each has 16 columns, including `Consumer complaint narrative`. Many rows still have an empty narrative, because only consumers who opted in had theirs published.
+- We use exports 13 to 21 (Sept 2025 to Aug 2026), about 281 MB zipped; the list is in `config.ARCHIVE_FILES`. `scripts/fetch_narrative_archive.py` downloads them to `data/raw/foia_archive/`.
+- **Usable narrative window: 2025-10-01 to 2026-08-14.** Complaints received after 2026-08-14 have no public narrative anywhere. The pipeline still filters to the project window 2025-10-01 to 2026-10-01 (`config.DATE_MIN`, `DATE_MAX`), but later rows will simply have no text.
+- Archive exports may overlap, so the pipeline drops duplicate `complaint_id`s.
+- The archive files do not include `Consumer consent provided?`.
+
+### Structured profile of the live data (earlier snapshot, now deleted)
+
+`filtered_data.csv` was the bulk file filtered to 2025-10-01 to 2026-09-30: 7,004,226 complaints, 15 columns, no narratives. Its derived `data/processed/complaints.parquet` may still be on Aditya's machine; the next pipeline run overwrites it. Product counts:
 
 | Product | Count | Candidate regulation |
 |---|---:|---|
@@ -73,12 +85,7 @@ Product counts:
 | Prepaid card | 6,173 | E |
 | Debt or credit management | 4,269 | none |
 
-**BLOCKER: the snapshot has no narrative column.** Its 15 columns are: Date received, Product, Sub-product, Issue, Sub-issue, Company public response, Company, State, ZIP code, Tags, Submitted via, Date sent to company, Company response to consumer, Timely response?, Complaint ID. Both `Consumer complaint narrative` and `Consumer consent provided?` are missing. Without narrative text there is nothing to classify, nothing to use as a retrieval query, and nothing to annotate. The pipeline profiles the structured fields and then stops with a clear message.
-
-Fix options, in order of preference:
-1. Re-export from the CFPB bulk CSV (`complaints.csv.zip`, see CLAUDE.md Sec. 4) keeping the narrative column. Filter by date afterwards, not before.
-2. If the current bulk file no longer carries narratives (CFPB stopped publishing new ones in August 2026), get previously published ones from the FOIA Reading Room. Save them as a CSV with `Complaint ID` and `Consumer complaint narrative` columns, then run with `--narratives <file>`; `load.py` joins on Complaint ID.
-3. Not yet verified: whether narratives for complaints received after August 2026 exist at all. If they do not, the usable window shrinks to roughly Oct 2025 to Aug 2026.
+The narrative subset will be much smaller and may have a different product mix; profile it once the archive is downloaded.
 
 ## 4. Design decisions made in code (and why)
 
@@ -98,7 +105,7 @@ Fix options, in order of preference:
 
 ## 6. Next steps
 
-1. **Unblock narratives** (Sec. 3), then rerun `scripts/run_data_pipeline.py` and paste the narrative profile (count, word-length quantiles, redaction density) into Sec. 3.
+1. Run `scripts/fetch_narrative_archive.py` and then `scripts/run_data_pipeline.py`. Paste the narrative profile (count, product mix, word-length quantiles, redaction density) into Sec. 3, and check that each regulation has enough narratives for 30 gold pairs.
 2. Pair B: download eCFR XML for Parts 1005, 1026, 1022, 1006; chunk by section; verify the Reg V section numbers above.
 3. Draft the annotation rubric, including the "no in-scope section" label.
 4. Pair A: DistilBERT on `train.parquet`, label `product` first, `issue` second.
@@ -120,3 +127,11 @@ Fix options, in order of preference:
   - Submitted via: Web 6,969,322 (99.5%); Phone 15,411; Referral 13,344; Postal mail 6,149.
   - Top issues: "Incorrect information on your report" 3,811,531; "Improper use of your report" 1,306,860; "Problem with a company's investigation into an existing problem" 1,214,505; "Attempts to collect debt not owed" 138,289.
   - The 99.5% web share fits the CFPB's own note (CLAUDE.md Sec. 8) that automated and credit-repair submissions drove the surge.
+
+### 2026-10-06: Narrative source found (Aditya + Claude)
+- Confirmed that the live API and bulk file have no narratives for any period (checked 2023, 2025, and 2026 ranges), so a fresh download cannot fix the gap. Deleted `filtered_data.csv`. Wrote an API downloader, then deleted it uncommitted, since it could only reproduce the same data.
+- API facts recorded for future reference: the CDN returns 403 without an `Accept` header, the maximum `size` is 100,000 (100,001 returns 400), and parallel requests get 429.
+- Found the FOIA Reading Room narratives archive (Sec. 3). Previewed the header of export 21: 16 columns, including `Consumer complaint narrative`.
+- Replaced `load.csv_to_parquet` and the `--narratives` side-join with `load.exports_to_parquet`, which takes several .csv/.zip files and filters by date. The pipeline now reads the archive by default (`--inputs` overrides it) and dedupes on `complaint_id`.
+- Added `scripts/fetch_narrative_archive.py` and the archive file list in config.
+- Tested on a synthetic zip: both date bounds are inclusive, out-of-window rows are dropped, and quoted narratives containing commas parse correctly. All 6 unit tests pass. The real archive is not downloaded yet.

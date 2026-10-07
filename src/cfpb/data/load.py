@@ -1,8 +1,10 @@
-"""Stream the raw CFPB CSV (multi-GB) into a compact Parquet file.
+"""Stream CFPB complaint exports into one compact Parquet file.
 
-The full export is ~2 GB / 7M rows, so we read it in chunks, keep only the
-columns we need, and write Parquet incrementally. Everything is stored as
-string; dates are parsed later where needed.
+Inputs are the FOIA Reading Room narrative archive exports (zipped CSVs, see
+config.ARCHIVE_FILES), which are the only public source of narratives since
+the CFPB stopped publishing them on 2026-08-14. Plain CSVs work too. We read
+in chunks, keep only the columns we need, filter by Date received, and write
+Parquet incrementally. Everything is stored as string.
 """
 from pathlib import Path
 
@@ -15,56 +17,39 @@ from cfpb.config import COLUMN_MAP, KEEP_COLUMNS
 SCHEMA = pa.schema([(c, pa.string()) for c in KEEP_COLUMNS])
 
 
-def _read_header(csv_path: Path) -> list[str]:
-    return list(pd.read_csv(csv_path, nrows=0).columns)
+def _read_header(path: Path) -> list[str]:
+    return list(pd.read_csv(path, nrows=0).columns)  # .zip is read transparently
 
 
-def load_narratives(path: Path) -> pd.DataFrame:
-    """Load a side file of (Complaint ID, narrative), e.g. a fresh CFPB export
-    that still has the narrative column. Returns complaint_id -> narrative."""
-    df = pd.read_csv(path, dtype=str,
-                     usecols=["Complaint ID", "Consumer complaint narrative"])
-    df = df.rename(columns=COLUMN_MAP).dropna(subset=["narrative"])
-    return df.drop_duplicates("complaint_id").set_index("complaint_id")
+def exports_to_parquet(paths: list[Path], out_path: Path, date_min: str | None = None,
+                       date_max: str | None = None, chunksize: int = 500_000) -> int:
+    """Convert CFPB export files (.csv or single-CSV .zip) to Parquet.
 
-
-def csv_to_parquet(csv_path: Path, out_path: Path, chunksize: int = 500_000,
-                   narratives_path: Path | None = None,
-                   require_narrative: bool = False) -> int:
-    """Convert csv_path to Parquet at out_path. Returns rows written.
-
-    If the CSV lacks a narrative column, narratives_path can supply one,
-    joined on Complaint ID. With require_narrative=True, rows without a
-    narrative are dropped (what the classifier and retriever need).
+    date_min/date_max are inclusive YYYY-MM-DD bounds on Date received.
+    Returns rows written. The same complaint can appear in more than one
+    export, so downstream code drops duplicate complaint_ids.
     """
-    header = _read_header(csv_path)
-    usecols = [c for c in header if COLUMN_MAP.get(c) in KEEP_COLUMNS]
-    has_narrative = "Consumer complaint narrative" in header
-    side = load_narratives(narratives_path) if narratives_path else None
-    if not has_narrative and side is None:
-        print("WARNING: no 'Consumer complaint narrative' column and no "
-              "--narratives file. Output will have empty narratives.")
-
     out_path.parent.mkdir(parents=True, exist_ok=True)
     written = 0
     with pq.ParquetWriter(out_path, SCHEMA) as writer:
-        for chunk in pd.read_csv(csv_path, dtype=str, usecols=usecols,
-                                 chunksize=chunksize):
-            chunk = chunk.rename(columns=COLUMN_MAP)
-            if side is not None:
-                joined = chunk["complaint_id"].map(side["narrative"])
-                chunk["narrative"] = (chunk["narrative"].fillna(joined)
-                                      if "narrative" in chunk else joined)
-            for col in KEEP_COLUMNS:
-                if col not in chunk:
-                    chunk[col] = None
-            chunk = chunk[KEEP_COLUMNS]
-            if require_narrative:
-                chunk = chunk[chunk["narrative"].notna()
-                              & (chunk["narrative"].str.strip() != "")]
-            writer.write_table(pa.Table.from_pandas(chunk, schema=SCHEMA,
-                                                    preserve_index=False))
-            written += len(chunk)
-            print(f"  ... {written:,} rows written", end="\r")
-    print()
+        for path in paths:
+            header = _read_header(path)
+            if "Consumer complaint narrative" not in header:
+                print(f"WARNING: {path.name} has no narrative column")
+            usecols = [c for c in header if COLUMN_MAP.get(c) in KEEP_COLUMNS]
+            for chunk in pd.read_csv(path, dtype=str, usecols=usecols, chunksize=chunksize):
+                chunk = chunk.rename(columns=COLUMN_MAP)
+                day = chunk["date_received"].str.slice(0, 10)
+                if date_min:
+                    chunk = chunk[day >= date_min]
+                if date_max:
+                    chunk = chunk[day.loc[chunk.index] <= date_max]
+                for col in KEEP_COLUMNS:
+                    if col not in chunk:
+                        chunk[col] = None
+                writer.write_table(pa.Table.from_pandas(chunk[KEEP_COLUMNS], schema=SCHEMA,
+                                                        preserve_index=False))
+                written += len(chunk)
+                print(f"  {path.name}: {written:,} rows written so far", end="\r")
+            print()
     return written

@@ -60,3 +60,27 @@ REGULATION_PARTS = {"E": "12 CFR 1005", "Z": "12 CFR 1026",
                     "V": "12 CFR 1022", "F": "12 CFR 1006"}
 
 RANDOM_SEED = 544
+
+# Project window (CLAUDE.md). Narratives only exist up to 2026-08-14: the CFPB
+# stopped publishing them that day and moved all previously published ones to
+# the FOIA Reading Room narratives archive (verified 2026-10-06):
+# https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/
+DATE_MIN = "2025-10-01"
+DATE_MAX = "2026-10-01"
+NARRATIVES_END = "2026-08-14"
+
+ARCHIVE_DIR = RAW_DIR / "foia_archive"
+ARCHIVE_BASE_URL = "https://files.consumerfinance.gov/f/documents/"
+# Exports covering our window (13 starts Sept 2025; 21 is the last one).
+# Exports 1-12 cover Dec 2011 - Aug 2025 if more history is ever needed.
+ARCHIVE_FILES = [
+    "CCDB_Export_13_September_2025_through_October_2025.zip",
+    "CCDB_Export_14_November_2025_through_December_2025.zip",
+    "CCDB_Export_15_January_2026_through_February_2026.zip",
+    "CCDB_Export_16_March_2026.zip",
+    "CCDB_Export_17_April_2026.zip",
+    "CCDB_Export_18_May_2026.zip",
+    "CCDB_Export_19_June_2026.zip",
+    "CCDB_Export_20_July_2026.zip",
+    "CCDB_Export_21_August_2026.zip",
+]
