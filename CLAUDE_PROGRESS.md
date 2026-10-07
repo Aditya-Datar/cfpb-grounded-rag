@@ -39,7 +39,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | 1. Classifier: DistilBERT, macro-F1 | A | not created | **Not started.** Next task for Pair A (Sec. 6) |
 | 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Annotation rubric and 120 gold pairs | all | n/a | Sample ready (`annotation_sample.csv`); **rubric not drafted** |
+| Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
 
 **Pair A overall: about half done.** The data side is complete; the classifier, its evaluation, and the frozen output interface remain.
 
@@ -152,6 +152,16 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   - It says the ~120 gold pairs "reflect the real distribution across the four regulations". We follow CLAUDE.md Sec. 4 instead: stratified, 30 per regulation, because natural frequency would leave E, Z, and F with too few cases.
   - It says "two independent annotators". CLAUDE.md has all six annotate with overlap. Either way, agreement gets reported.
   - It assumes a snapshot of the live CFPB database. We had to use the FOIA narratives archive, because narratives were withdrawn on 2026-08-14 (Sec. 3).
+- **Jev (TypeSafe AI) research, 2026-10-07; CLAUDE.md Sec. 9 still governs: optional extra verifier only, never a dependency.**
+  - *What it is:* a "decision model" with no text generation. It returns typed answers (choice, rubric score, or yes/no) with calibrated probabilities. Released in early access 2026-09-15.
+  - *Access:* an OpenRouter blog post says it can be called via `https://openrouter.ai/api/alpha/decisions` with model `typesafe/jev-1.13`. Price is $0.042 per million input tokens, output is free, and the context is about 32k tokens. **Unverified:** the OpenRouter model pages returned 404 on 2026-10-07, so test a real call before relying on it.
+  - *Limits it states:* no explanations, no arithmetic or date math, text only, closed weights.
+  - *Evidence:* Rafe and Das 2026 (arXiv 2609.24052) applied it to police crash narratives: F1 0.908 against human labels, and one frontier LLM was 0.059 F1 better. They note that "calibration varies by model … so each model must be audited."
+  - *Fits:*
+    1. **Week 3 checker benchmark:** a yes/no "is this sentence supported by the passage?" question, scored against the 50 human pairs alongside DeBERTa NLI and an LLM judge. This is already allowed by CLAUDE.md, and is the best fit.
+    2. **Annotation flagging:** a choice question over E/Z/V/F/NONE. Low probability, or disagreement with the humans, flags an item for re-check (`annotation/ANNOTATION_GUIDE.md` Sec. 7).
+    3. *Possible, needs a team decision because CLAUDE.md does not allow it yet:* a zero-shot product-classification baseline next to DistilBERT. Cost is negligible: about 14k test narratives at roughly 300 tokens each is about $0.2.
+  - Sources: TypeSafe (typesafe.ai), the OpenRouter blog "What is Jev?", and arXiv 2609.24052.
 - Branch `data-processing` is not merged to `main` yet. Open a PR once a teammate has reproduced the pipeline.
 
 ## 6. Next steps
@@ -208,3 +218,7 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 
 ### 2026-10-07: Proposal cross-check
 - Read the submitted proposal PDF. It matches the build except for annotation sampling, annotator count, and data source; these are recorded in Sec. 5 so the final report can explain them.
+
+### 2026-10-07: Annotation guide and Jev research
+- Added `annotation/ANNOTATION_GUIDE.md`. It covers what to label (Set A: 120 complaint-to-section pairs; Set B: 50 sentence-support pairs), the rubric decisions left to the drafters, the procedure (10-item pilot, two blind annotators per item, kappa, adjudication), and three LLM prompts: a blind third annotator, an adjudication helper given the full section text, and a support check. LLMs only flag items; human labels stay ground truth.
+- Researched Jev (Sec. 5). Best fit: an extra verifier in the week 3 checker benchmark. API access is unverified.
