@@ -1,151 +1,165 @@
 # CLAUDE_PROGRESS.md: Build Log and Handoff Context
 
-Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables) and stays unchanged on `main`. **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what is blocked. Every Claude session (and every teammate) should read both files before writing code, and **append to the log at the bottom after each iteration**.
+Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-06 (commit after `bbe73e5`).
 
 ---
 
-## 1. Current state (update this section; keep it short)
+## 0. Start here (new teammate or new Claude session)
 
-| Stage | Branch | Status | Owner |
+**If you are Claude:** read `CLAUDE.md` fully, then this whole file, before writing code. Claude Code auto-loads only `CLAUDE.md`, so a teammate must say "read CLAUDE_PROGRESS.md" at the start of each session (or add `@CLAUDE_PROGRESS.md` to `CLAUDE.md` once the team agrees to edit it).
+
+**Get the code and data (about 15 minutes, no GPU):**
+
+```bash
+git clone https://github.com/Aditya-Datar/cfpb-grounded-rag.git
+cd cfpb-grounded-rag
+git checkout data-processing          # not merged to main yet; this file only exists here
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt   # macOS/Linux: .venv/bin/python
+.venv/Scripts/python -m pytest -q tests                   # expect: 6 passed
+.venv/Scripts/python scripts/fetch_narrative_archive.py   # ~365 MB from files.consumerfinance.gov
+.venv/Scripts/python scripts/run_data_pipeline.py         # ~5 min; writes data/processed/ and outputs/
+```
+
+Data files are git-ignored, so every member regenerates them locally. Check your run against Sec. 3: you should get 276,626 usable narratives. The seed is fixed, but identical output on other machines and library versions has **not** been verified; report any difference in the log.
+
+**Working rules for this repo:**
+1. **One branch per stage**, cut from `data-processing` until it is merged to `main`, then from `main`. Suggested names: `classifier`, `retrieval`, `generation-verification`.
+2. **Do not edit `CLAUDE.md`** on feature branches; it records team decisions. Put engineering facts here.
+3. **After every work session, update this file:** refresh Sec. 1 (status) and append a dated entry to Sec. 7 (what changed, what was run, the exact numbers, what broke).
+4. **Numbers in this file must come from a run or a primary source.** Mark anything unverified as *unverified*. Never paste in numbers estimated by an LLM.
+5. Never commit data, model weights, or API keys (`.gitignore` already covers data and models).
+6. Paper Review Reports are individual graded work (CLAUDE.md Sec. 7): coach and check, do not ghostwrite.
+
+## 1. Current state
+
+| Stage | Pair | Branch | Status |
 |---|---|---|---|
-| 0. Data processing | `data-processing` | **Done for v1.** Archive downloaded, pipeline run; splits and annotation sample ready (Sec. 3) | Aditya |
-| 1. Classifier (DistilBERT) | n/a | Not started | Pair A (TBD) |
-| 2. Regulation corpus + retrieval | n/a | Not started | Pair B (TBD) |
-| 3. Generation + 4. NLI verification | n/a | Not started | Pair C (TBD) |
+| 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
+| 1. Classifier: DistilBERT, macro-F1 | A | not created | **Not started.** Next task for Pair A (Sec. 6) |
+| 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
+| 3. Generation and 4. NLI verification | C | not created | Not started |
+| Annotation rubric and 120 gold pairs | all | n/a | Sample ready (`annotation_sample.csv`); **rubric not drafted** |
+
+**Pair A overall: about half done.** The data side is complete; the classifier, its evaluation, and the frozen output interface remain.
+
+**Open team decisions** (from CLAUDE.md Sec. 6, still undecided): who is in each pair, the single target LLM, the owner of the repo and shared evaluation script, and who drafts the rubric.
 
 ## 2. Repo layout
 
 ```
-CLAUDE.md                 project decisions (do not edit on feature branches)
-CLAUDE_PROGRESS.md        this file: build log and handoff
-requirements.txt          deps; later-stage deps are commented out
-.gitignore                ignores *.csv, *.parquet, data/, outputs/, .venv/, models/
-src/cfpb/config.py        paths, column map, PRODUCT_TO_REGULATION heuristic, seed (544),
-                          date window, FOIA archive file list
-src/cfpb/data/load.py     chunked .csv/.zip exports -> one Parquet, filtered by Date received
-src/cfpb/data/clean.py    redaction cleaning, redaction density, dedupe hash, filters
-src/cfpb/data/profile.py  JSON profile (label counts, narrative coverage, lengths)
-src/cfpb/data/split.py    classifier train/val/test; stratified annotation sample
-scripts/fetch_narrative_archive.py   downloads the 10 FOIA archive zips (~365 MB)
-scripts/run_data_pipeline.py   end-to-end stage 0 CLI
-tests/test_clean.py       unit tests for cleaning and dedupe
+CLAUDE.md                            project decisions (do not edit on feature branches)
+CLAUDE_PROGRESS.md                   this file
+README.md                            short quick start
+requirements.txt                     deps; later-stage deps are listed but commented out
+.gitignore                           ignores *.csv, *.parquet, /data/, /outputs/, .venv/, models/, .idea/
+src/cfpb/config.py                   paths, column map, PRODUCT_TO_REGULATION, seed 544,
+                                     date window, FOIA archive file list
+src/cfpb/data/load.py                .csv/.zip exports -> one Parquet, filtered by Date received
+src/cfpb/data/clean.py               redaction cleaning, redaction density, text hash, filters
+src/cfpb/data/profile.py             JSON profile (label counts, narrative coverage, lengths)
+src/cfpb/data/split.py               classifier train/val/test; stratified annotation sample
+scripts/fetch_narrative_archive.py   downloads the 10 FOIA archive zips
+scripts/run_data_pipeline.py         end-to-end stage 0 CLI (flags: --inputs, --date-min,
+                                     --date-max, --min-words, --max-redaction,
+                                     --max-per-class, --per-regulation, --skip-ingest)
+tests/test_clean.py                  unit tests for cleaning and dedupe
 ```
 
-### Setup (Windows, Git Bash or PowerShell)
+New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, a runnable script in `scripts/`, and tests in `tests/`. Scripts add `src/` to `sys.path`, so no package install is needed.
 
-The machine's global Python 3.12 has a broken numpy (the folder has no `__init__.py`), so always use the project venv:
+**Environment used for v1:** Windows 11, Python 3.12.2, pandas 3.0.6, pyarrow 25.0.1, scikit-learn 1.9.1, numpy 2.5.3. pandas 3 removes grouping columns from `groupby.apply`, so avoid that pattern. On Aditya's machine the global Python's numpy is broken, which is why we always use `.venv`.
 
-```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt
-.venv/Scripts/python -m pytest -q tests
-.venv/Scripts/python scripts/fetch_narrative_archive.py
-.venv/Scripts/python scripts/run_data_pipeline.py
-```
+### Output files (git-ignored, regenerable)
 
-On macOS/Linux use `.venv/bin/python`.
+| File | Rows | Contents |
+|---|---:|---|
+| `data/raw/foia_archive/*.zip` + `download_log.json` | | raw archive exports and download date |
+| `data/processed/complaints.parquet` | 6,809,200 | every complaint in the window, 12 columns, all strings |
+| `data/processed/narratives_clean.parquet` | 276,626 | usable narratives (schema below) |
+| `data/processed/train.parquet` / `val.parquet` / `test.parquet` | 111,563 / 13,945 / 13,946 | classifier splits (schema below) |
+| `data/processed/annotation_sample.csv` | 120 | gold-annotation sheet |
+| `outputs/profile_all.json`, `outputs/profile_narratives.json` | | profiles |
+| `outputs/pipeline_run.log` | | last pipeline run log |
 
-### Pipeline outputs (all git-ignored and regenerable)
+**Schema of `narratives_clean` and the splits** (all strings except where noted): `complaint_id`, `date_received`, `product`, `sub_product`, `issue`, `sub_issue`, `company`, `state`, `submitted_via`, `company_response`, `timely_response`, `narrative` (raw), `narrative_clean` (**use this as model input**), `n_words` (int), `redaction_density` (float), `text_hash`.
 
-| File | Contents |
-|---|---|
-| `data/processed/complaints.parquet` | all rows, 12 kept columns, as strings |
-| `outputs/profile_all.json` | profile of every complaint |
-| `data/processed/narratives_clean.parquet` | cleaned, filtered, deduped narratives |
-| `outputs/profile_narratives.json` | profile of usable narratives |
-| `data/processed/{train,val,test}.parquet` | classifier splits, stratified by `product` |
-| `data/processed/annotation_sample.csv` | about 30 per regulation, blank gold columns for annotators |
+**Schema of `annotation_sample.csv`:** `complaint_id`, `regulation_candidate` (E/F/V/Z heuristic, not gold), `product`, `sub_product`, `issue`, `sub_issue`, `company`, `narrative_clean`, plus blank columns for annotators: `gold_regulation`, `gold_section`, `gold_paragraph`, `annotator`, `confidence`, `notes`.
 
 ## 3. Data facts (verified)
 
 ### Where narratives come from (read this first)
 
-- **The live CFPB data has no narratives.** On 2026-08-14 the CFPB stopped publishing complaint narratives. We checked on 2026-10-06: the search API returns no narrative field for any date range, even 2023, with or without `has_narrative=true`. The bulk `complaints.csv.zip` (last modified 2026-10-06) has only 15 columns, with no `Consumer complaint narrative`. **Do not try to re-download from the API or bulk file**; it cannot fix this.
-- **Narratives live in the FOIA Reading Room archive:** https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/ . It holds 21 zipped CSV exports covering complaints received 2011-12-01 to 2026-08-14. Each has 16 columns, including `Consumer complaint narrative`. Many rows still have an empty narrative, because only consumers who opted in had theirs published.
-- We use exports 12 to 21 (July 2025 to Aug 2026), about 365 MB zipped; the list is in `config.ARCHIVE_FILES`. `scripts/fetch_narrative_archive.py` downloads them to `data/raw/foia_archive/`.
-- **Project window: 2025-08-14 to 2026-08-14 inclusive** (`config.DATE_MIN`, `DATE_MAX`; team decision 2026-10-06). It is one full year ending on the last day narratives exist. Complaints received after 2026-08-14 have no public narrative anywhere.
-- Archive exports may overlap, so the pipeline drops duplicate `complaint_id`s.
-- The archive files do not include `Consumer consent provided?`.
+- **The live CFPB data has no narratives.** On 2026-08-14 the CFPB stopped publishing complaint narratives. We checked on 2026-10-06: the search API returns no narrative field for any date range, even 2023, with or without `has_narrative=true`. The bulk `complaints.csv.zip` has only 15 columns, with no `Consumer complaint narrative`. **Do not re-download from the API or bulk file; it cannot fix this.**
+- **Narratives live in the FOIA Reading Room archive:** https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/ . It holds 21 zipped CSV exports covering complaints received 2011-12-01 to 2026-08-14, each with 16 columns including `Consumer complaint narrative`. Most rows have an empty narrative, because publication required the consumer's opt-in.
+- We use exports 12 to 21 (`config.ARCHIVE_FILES`). Exports 1 to 11 give earlier history if it is ever needed.
+- **Project window: 2025-08-14 to 2026-08-14 inclusive** (`config.DATE_MIN`, `DATE_MAX`; team decision 2026-10-06): one full year ending on the last day narratives exist.
+- Archive exports may overlap, so the pipeline drops duplicate `complaint_id`s. The archive has no `Consumer consent provided?` column.
+- When citing the data in the report: "CFPB Consumer Complaint Database narratives archive (FOIA Reading Room), exports 12 to 21, downloaded 2026-10-07 UTC."
 
 ### Narrative dataset, v1 (pipeline run 2026-10-06, 4.5 min)
 
-Source: FOIA archive exports 12 to 21, downloaded 2026-10-07 01:10 UTC (`data/raw/foia_archive/download_log.json`). All 10 zips pass the zip integrity test and share one 16-column header.
+All 10 zips pass the zip integrity test and share one 16-column header.
 
 | Step | Count |
 |---|---:|
 | Complaints received 2025-08-14 to 2026-08-14 (deduped on `complaint_id`) | 6,809,200 |
 | With a non-empty narrative | 469,659 (6.9%) |
 | Usable after cleaning (at least 20 words, redaction density 0.5 or less, exact-text dedupe) | 276,626 |
-| Classifier splits (`product`, at most 20k per class, 80/10/10) | train 111,563 / val 13,945 / test 13,946 |
+| Classifier splits (`product`, at most 20k per class before splitting, 80/10/10) | train 111,563 / val 13,945 / test 13,946 |
 | Annotation sample | 120 (30 each for E, F, V, Z) |
 
-Usable narratives by product. Narratives are **far less skewed** than the full data, where credit reporting is 90%; here it is 33%:
+Usable narratives by product. They are **far less skewed** than all complaints: credit reporting is 90% of complaints but only 33% of usable narratives.
 
-| Product | Usable narratives | Candidate regulation |
-|---|---:|---|
-| Credit reporting or other personal consumer reports | 90,158 | V |
-| Debt collection | 55,544 | F |
-| Checking or savings account | 36,610 | E |
-| Credit card | 34,860 | Z |
-| Money transfer, virtual currency, or money service | 17,601 | E |
-| Mortgage | 13,000 | Z |
-| Vehicle loan or lease | 10,274 | Z |
-| Payday loan, title loan, personal loan, or advance loan | 7,364 | Z |
-| Student loan | 6,617 | Z |
-| Prepaid card | 2,785 | E |
-| Debt or credit management | 1,813 | none |
+| Product | All complaints | Usable narratives | In `train` | Candidate regulation |
+|---|---:|---:|---:|---|
+| Credit reporting or other personal consumer reports | 6,152,294 | 90,158 | 16,000 | V |
+| Debt collection | 332,548 | 55,544 | 16,000 | F |
+| Checking or savings account | 86,182 | 36,610 | 16,000 | E |
+| Credit card | 95,747 | 34,860 | 16,000 | Z |
+| Money transfer, virtual currency, or money service | 38,283 | 17,601 | 14,081 | E |
+| Mortgage | 31,772 | 13,000 | 10,400 | Z |
+| Vehicle loan or lease | 24,594 | 10,274 | 8,219 | Z |
+| Payday loan, title loan, personal loan, or advance loan | 17,440 | 7,364 | 5,891 | Z |
+| Student loan | 19,671 | 6,617 | 5,294 | Z |
+| Prepaid card | 6,311 | 2,785 | 2,228 | E |
+| Debt or credit management | 4,358 | 1,813 | 1,450 | none |
 
-By candidate regulation: V 90,158; Z 72,115; E 56,996; F 55,544. Every regulation has thousands of candidates, so 30 gold pairs each is easy.
+In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; Z 189,224; E 130,776; none 4,358. Usable narratives by candidate regulation: V 90,158; Z 72,115; E 56,996; F 55,544.
 
-Narrative length (words, after cleaning): median 175, IQR 93 to 285, mean 229, max 6,089. **Note for Pair A:** DistilBERT's 512-token limit truncates roughly the longest quarter, so consider head plus tail truncation.
-Redaction density: median 0.027, 75th percentile 0.05, so most narratives are lightly masked. 89 distinct issues.
-
-Annotation sample mix: E has 10 each of checking/savings, money transfer, and prepaid; F has 30 debt collection; V has 30 credit reporting; Z has 6 each of credit card, payday/personal loan, student loan, mortgage, and vehicle.
-
-**Data-quality observation (prevalence NOT yet measured):** the first sampled debt-collection narrative reads like a credit-repair template, a formal letter citing the FDCPA, FCRA, and Indiana law. Given the CFPB's note about credit-repair and automated submissions (CLAUDE.md Sec. 8), such templates may be common. Measure this, for example by counting near-duplicate texts or statute mentions, before claiming it. Template letters cite statutes by name, which may make retrieval look easier than it is on organic complaints. A possible error-analysis slice: template vs organic.
-
-### Structured profile of the live data (earlier snapshot, now deleted)
-
-`filtered_data.csv` was the bulk file filtered to 2025-10-01 to 2026-09-30: 7,004,226 complaints, 15 columns, no narratives. Its derived `data/processed/complaints.parquet` may still be on Aditya's machine; the next pipeline run overwrites it. Product counts:
-
-| Product | Count | Candidate regulation |
-|---|---:|---|
-| Credit reporting or other personal consumer reports | 6,360,781 (90.8%) | V |
-| Debt collection | 319,850 | F |
-| Credit card | 93,490 | Z |
-| Checking or savings account | 86,556 | E |
-| Money transfer, virtual currency, or money service | 38,548 | E |
-| Mortgage | 32,270 | Z |
-| Vehicle loan or lease | 24,705 | Z |
-| Student loan | 19,590 | Z |
-| Payday loan, title loan, personal loan, or advance loan | 17,994 | Z |
-| Prepaid card | 6,173 | E |
-| Debt or credit management | 4,269 | none |
-
-The narrative subset will be much smaller and may have a different product mix; profile it once the archive is downloaded.
+- **Classifier labels:** 11 products; 89 distinct issues in `train`. Class sizes in `train` range from 16,000 down to 1,450, so report macro-F1.
+- **Narrative length** (words, after cleaning): median 175, IQR 93 to 285, mean 229, max 6,089. DistilBERT's 512-token limit will truncate roughly the longest quarter (*estimate: tokens per word not measured*); consider head plus tail truncation.
+- **Redaction density:** median 0.027, 75th percentile 0.05. Most narratives are lightly masked.
+- **Annotation sample mix:** E has 10 each of checking/savings, money transfer, and prepaid; F has 30 debt collection; V has 30 credit reporting; Z has 6 each of credit card, payday/personal loan, student loan, mortgage, and vehicle. It excludes the classifier test set.
+- **Data-quality observation (prevalence NOT yet measured):** the first sampled debt-collection narrative reads like a credit-repair template, a formal letter citing the FDCPA, FCRA, and Indiana law. Given the CFPB's note about credit-repair and automated submissions (CLAUDE.md Sec. 8), such templates may be common. Measure this before claiming it, for example by counting near-duplicate texts or statute mentions. Template letters cite statutes by name, which may make retrieval look easier than it is on organic complaints, so template vs organic is a candidate error-analysis slice.
 
 ## 4. Design decisions made in code (and why)
 
-- **Redaction cleaning** (`clean.py`): CFPB masks PII as `XXXX` runs and dates as `XX/XX/XXXX`, and wraps amounts in braces like `{$250.00}`. We map these to `[REDACTED]`, `[DATE]`, and `$250.00`, so models see one consistent token instead of X runs of varying length.
-- **Filters:** narratives must have at least 20 words and a redaction density of 0.5 or less. Both are CLI flags (`--min-words`, `--max-redaction`) and should be tuned once real narratives are profiled.
-- **Dedupe before splitting:** one consumer often files the same narrative against all three credit bureaus (visible in the snapshot as identical rows with different companies). We dedupe on a SHA-1 of the normalized text so copies cannot sit in both train and test.
-- **Class cap:** `--max-per-class 20000` (default) keeps credit reporting from swamping fine-tuning. Report macro-F1 as CLAUDE.md requires. Splits are 80/10/10, stratified by `product`. Classes with fewer than 10 rows go to train only.
-- **Annotation sample** (`split.annotation_sample`): `PRODUCT_TO_REGULATION` assigns each complaint a *candidate* regulation used only for stratification. It is round-robin across products within a regulation, so Reg Z is not all mortgages, and it excludes the classifier test set. Annotators fill `gold_regulation`, `gold_section`, `gold_paragraph`, `annotator`, `confidence`, and `notes`.
+- **Redaction cleaning** (`clean.py`): CFPB masks PII as runs of `XXXX`, masks dates as `XX/XX/XXXX`, and wraps amounts in braces like `{$250.00}`. We map these to `[REDACTED]`, `[DATE]`, and `$250.00`, so models see one consistent token.
+- **Filters:** narratives need at least 20 words and a redaction density of 0.5 or less (`--min-words`, `--max-redaction`). Defaults were not tuned. Given the profile above, the redaction filter removes very little.
+- **Dedupe before splitting:** consumers often file the same narrative against several companies (for example, all three credit bureaus). We dedupe on a SHA-1 of normalized text so copies cannot sit in both train and test. Near-duplicates (for example, templates with different names) are **not** caught.
+- **Class cap:** `--max-per-class 20000` before the 80/10/10 split, stratified by `product`. Classes with fewer than 10 rows go to train only (none at present).
+- **Annotation sample:** `PRODUCT_TO_REGULATION` assigns a *candidate* regulation used only for stratification. Sampling is round-robin across products within each regulation, and the sample is disjoint from the classifier test set.
 - **Seed:** 544 everywhere (`config.RANDOM_SEED`).
 
-## 5. Open issues and risks for the team
+## 5. Open issues and risks
 
-- **Reg V coverage gap (important for annotation).** Most credit-reporting complaints are about bureau dispute investigations, and those duties sit in the FCRA statute (15 U.S.C. 1681i), not in Reg V (12 CFR 1022). Reg V covers narrower ground, such as furnisher accuracy and direct disputes (1022.40 to 1022.43). Many of the 91% credit-reporting complaints may therefore have **no governing section in our four-part corpus**. The rubric needs a "no in-scope section" label, and the team should decide whether to accept this or add FCRA text. *Section numbers here come from general knowledge and are not yet verified against eCFR; check them during corpus parsing.*
-- The same applies, to a smaller degree, to mortgages (RESPA / Reg X) and deposit accounts (Reg DD), both outside our scope.
-- `PRODUCT_TO_REGULATION` is a product-level heuristic. An issue-level mapping would be more precise (for example, a credit card "unauthorized transaction" complaint is a Reg Z billing-error case, while a debit card one is Reg E). Revisit after the rubric is drafted.
-- Interfaces between stages are not frozen yet (CLAUDE.md week 2). Proposed classifier input: `narratives_clean.parquet` columns `complaint_id`, `narrative_clean`, `product`, `issue`.
+- **Reg V coverage gap (important for annotation).** Most credit-reporting complaints concern bureau dispute investigations. Those duties sit in the FCRA statute (15 U.S.C. 1681i), not in Reg V (12 CFR 1022), which covers narrower ground such as furnisher accuracy and direct disputes. Credit reporting is 33% of usable narratives, so many may have **no governing section in our four-part corpus**. The rubric needs a "no in-scope section" label; the team decides whether to accept that or add FCRA text. *Section numbers here are unverified; check them against eCFR during corpus parsing.*
+- The same applies, to a smaller degree, to mortgages (RESPA / Reg X) and deposit accounts (Reg DD), both out of scope.
+- `PRODUCT_TO_REGULATION` works at product level. An issue-level mapping would be more precise: an unauthorized credit card charge falls under Reg Z billing errors, while the same problem on a debit card falls under Reg E. Revisit with the rubric.
+- **Stage interfaces are not frozen** (CLAUDE.md week 2 milestone). Proposals are in Sec. 6. Agree them before Pairs B and C build against stubs.
+- Branch `data-processing` is not merged to `main` yet. Open a PR once a teammate has reproduced the pipeline.
 
 ## 6. Next steps
 
-1. Share `data/processed/annotation_sample.csv` once the rubric exists (step 3). Teammates can regenerate every file with the two scripts in Sec. 2; the seed is fixed, so outputs should match.
-2. Pair B: download eCFR XML for Parts 1005, 1026, 1022, 1006; chunk by section; verify the Reg V section numbers above.
-3. Draft the annotation rubric, including the "no in-scope section" label.
-4. Pair A: DistilBERT on `train.parquet`, label `product` first, `issue` second.
+**Pair A: classifier (next).**
+1. Create the `classifier` branch. Fine-tune `distilbert-base-uncased` on `train.parquet` with input `narrative_clean`; first label `product` (11 classes), then `issue` (89). Use `val` for early stopping and evaluate once on `test`. Run on a GPU (Colab T4 or USC CARC); CPU is impractical at 111k examples.
+2. Report per-class precision, recall, and F1, macro-F1, and a confusion matrix. Save results to `outputs/classifier/` and the numbers to Sec. 7.
+3. Proposed interface (freeze with the team), one row per complaint: `complaint_id`, `pred_product`, `pred_product_prob`, `pred_issue`, `pred_issue_prob`.
+
+**Pair B: regulation corpus.** Download eCFR Title 12 Parts 1005, 1026, 1022, 1006 (XML), chunk by section structure, and verify the Reg V section numbers in Sec. 5. Proposed chunk interface: `chunk_id`, `part`, `section` (e.g. `1026.13`), `paragraph`, `heading`, `text`, `source_url`.
+
+**Everyone.** Draft the annotation rubric (two people), including the "no in-scope section" label, then annotate `annotation_sample.csv` with overlap for inter-annotator agreement.
 
 ---
 
@@ -181,3 +195,9 @@ The narrative subset will be much smaller and may have a different product mix; 
 - Downloaded 10 archive zips (365 MB zipped, about 3.1 GB of CSV). The first pipeline attempt died when the session ended, so it was rerun cleanly; the log is in `outputs/pipeline_run.log`.
 - Results are in Sec. 3: 6,809,200 complaints, 469,659 with narratives, 276,626 usable, splits of 111,563 / 13,945 / 13,946, and an annotation sample of 120.
 - Output sizes: `complaints.parquet` 297 MB, `narratives_clean.parquet` 390 MB, `train.parquet` 173 MB. All are git-ignored.
+
+### 2026-10-06: Handoff rewrite of this file, branch pushed (Aditya + Claude)
+- Pushed `data-processing` to origin. Not merged; `main` still has only `CLAUDE.md`.
+- Rewrote Secs. 0 to 6 for a cold start: start-here steps, working rules, per-pair status, output schemas, library versions, per-product counts (all / usable / train), proposed stage interfaces, and concrete next steps. The iteration log below is unchanged.
+- Corrected stale text: "91% credit reporting" is now "33% of usable narratives", and the deleted-snapshot section was replaced by in-window counts from `outputs/profile_all.json`.
+
