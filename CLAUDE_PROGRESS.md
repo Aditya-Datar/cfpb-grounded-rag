@@ -36,12 +36,12 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | Stage | Pair | Branch | Status |
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
-| 1. Classifier: DistilBERT, macro-F1 | A | not created | **Not started.** Next task for Pair A (Sec. 6) |
+| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **Code ready and CPU-tested; not yet run on a GPU.** Run `notebooks/train_classifier_colab.ipynb` (Sec. 6) |
 | 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
 
-**Pair A overall: about half done.** The data side is complete; the classifier, its evaluation, and the frozen output interface remain.
+**Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
 
 **Open team decisions** (from CLAUDE.md Sec. 6, still undecided): who is in each pair, the single target LLM, the owner of the repo and shared evaluation script, and who drafts the rubric.
 
@@ -63,7 +63,15 @@ scripts/fetch_narrative_archive.py   downloads the 10 FOIA archive zips
 scripts/run_data_pipeline.py         end-to-end stage 0 CLI (flags: --inputs, --date-min,
                                      --date-max, --min-words, --max-redaction,
                                      --max-per-class, --per-regulation, --skip-ingest)
+src/cfpb/classify/data.py           tokenization (head+tail truncation), length-bucketed batches
+src/cfpb/classify/train.py          plain-PyTorch fine-tuning loop, evaluation, reports, resume
+scripts/train_classifier.py         stage 1 CLI (--label product|issue, --resume, --max-train ...)
+scripts/check_splits.py             verifies local splits match data_fingerprint.json
+data_fingerprint.json               SHA-1 of sorted complaint_ids per split (team reference)
+notebooks/train_classifier_colab.ipynb   step-by-step Colab runner (fresh-session safe)
+requirements-classifier.txt         torch, transformers, matplotlib on top of requirements.txt
 tests/test_clean.py                  unit tests for cleaning and dedupe
+tests/test_classify_data.py         unit tests for truncation, batching, padding
 ```
 
 New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, a runnable script in `scripts/`, and tests in `tests/`. Scripts add `src/` to `sys.path`, so no package install is needed.
@@ -166,10 +174,11 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 
 ## 6. Next steps
 
-**Pair A: classifier (next).**
-1. Create the `classifier` branch. Fine-tune `distilbert-base-uncased` on `train.parquet` with input `narrative_clean`; first label `product` (11 classes), then `issue` (89). Use `val` for early stopping and evaluate once on `test`. Run on a GPU (Colab T4 or USC CARC); CPU is impractical at 111k examples.
-2. Report per-class precision, recall, and F1, macro-F1, and a confusion matrix. Save results to `outputs/classifier/` and the numbers to Sec. 7.
-3. Proposed interface (freeze with the team), one row per complaint: `complaint_id`, `pred_product`, `pred_product_prob`, `pred_issue`, `pred_issue_prob`.
+**Pair A: classifier (code ready; GPU runs next).**
+1. **Run it:** open `notebooks/train_classifier_colab.ipynb` in Colab (*File → Open notebook → GitHub*, or upload it). It covers the GPU check, Drive mount, private-repo clone via a `GITHUB_TOKEN` Colab secret (classic token, `repo` scope), the data, a smoke test, the product run, and an optional issue run. Fastest data route: Aditya shares a Drive folder `cfpb-grounded-rag/data/processed/` with `train/val/test.parquet` and `annotation_sample.csv` (about 220 MB). Otherwise the notebook rebuilds the data (about 15 minutes, about 8 GB RAM).
+2. **Defaults:** `distilbert-base-uncased`, 3 epochs, batch 32, lr 5e-5, 6% warmup, weight decay 0.01, max 512 tokens with head 128 + tail 382 truncation, AMP (fp16 on T4, bf16 on A100). The best epoch is chosen by validation macro-F1, and the test set is evaluated once. Outputs go to Drive `outputs/classifier/<label>/`, listed in the script docstring.
+3. **Log the results** in Sec. 7: GPU, minutes per epoch, val and test macro-F1, and the weakest classes. Compare settings (for example `--class-weights` or `--head-tokens 510`) on **validation only**.
+4. **Interface** (proposed, to be frozen with the team): `predictions_<split>.parquet` with `complaint_id`, `true_<label>`, `pred_<label>`, `pred_<label>_prob`. Merging the product and issue runs on `complaint_id` gives the downstream table.
 
 **Pair B: regulation corpus.** Download eCFR Title 12 Parts 1005, 1026, 1022, 1006 (XML), chunk by section structure, and verify the Reg V section numbers in Sec. 5. Proposed chunk interface: `chunk_id`, `part`, `section` (e.g. `1026.13`), `paragraph`, `heading`, `text`, `source_url`.
 
@@ -222,3 +231,10 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 ### 2026-10-07: Annotation guide and Jev research
 - Added `annotation/ANNOTATION_GUIDE.md`. It covers what to label (Set A: 120 complaint-to-section pairs; Set B: 50 sentence-support pairs), the rubric decisions left to the drafters, the procedure (10-item pilot, two blind annotators per item, kappa, adjudication), and three LLM prompts: a blind third annotator, an adjudication helper given the full section text, and a support check. LLMs only flag items; human labels stay ground truth.
 - Researched Jev (Sec. 5). Best fit: an extra verifier in the week 3 checker benchmark. API access is unverified.
+
+### 2026-10-10: Classifier code (stage 1) on branch `classifier`
+- Added `src/cfpb/classify/`, `scripts/train_classifier.py`, `scripts/check_splits.py`, `data_fingerprint.json`, `notebooks/train_classifier_colab.ipynb`, `requirements-classifier.txt`, and `tests/test_classify_data.py`. There are 11 unit tests, all passing.
+- **Design:** a plain PyTorch loop instead of the HF Trainer, because Trainer arguments change across transformers versions. Transformers 5 removed `build_inputs_with_special_tokens`, so `[CLS]`/`[SEP]` are added by hand. Batches are length-bucketed to cut padding. Every epoch checkpoints to `last/` for `--resume` after Colab disconnects.
+- **CPU smoke tests** (torch 2.14.1+cpu, transformers 5.19.0, 400 train / 150 eval, max_len 128): ran end to end and wrote every report. Resume from epoch 1 to 4 worked. Val macro-F1 went 0.024, 0.287, 0.326, 0.320 and train loss 2.28 to 1.47, so the model learns; the best epoch (3) was used for the final scores. The issue label (52 classes in that subsample) with `--class-weights` ran, excluding 12 val and 15 test rows with labels unseen in train. **No GPU run yet; no real scores yet.**
+- **Data checks:** the pipeline peaks at 7.7 GB RAM (`--skip-ingest`, measured on Windows), so it fits free Colab (about 12.7 GB) but only just. Split files written by pandas 3.0.6 read correctly in pandas 2.2.3 (Colab's version), and the fingerprint matches. Not verified: whether rebuilding the splits under Colab's library versions reproduces identical rows. `check_splits.py` flags it if not.
+- GitHub repo `Aditya-Datar/cfpb-grounded-rag` is **private** (anonymous API returns 404), so Colab needs a token; see the notebook's intro.

@@ -1,0 +1,18 @@
+{
+  "train": {
+    "rows": 111563,
+    "sha1": "788776bcf969dfab378d2de3cf80daea57da755e"
+  },
+  "val": {
+    "rows": 13945,
+    "sha1": "70315c25794406476df955f7f48c9e3d7ef9315f"
+  },
+  "test": {
+    "rows": 13946,
+    "sha1": "c51ffea8086ae9d96b084244ef41452db4ed1ece"
+  },
+  "annotation_sample": {
+    "rows": 120,
+    "sha1": "18bb7a09b65afe55588044b57d08c03fbaa09259"
+  }
+}

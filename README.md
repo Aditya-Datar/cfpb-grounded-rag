@@ -15,4 +15,6 @@ python -m venv .venv
 .venv/Scripts/python scripts/run_data_pipeline.py
 ```
 
+**Classifier (stage 1):** run [notebooks/train_classifier_colab.ipynb](notebooks/train_classifier_colab.ipynb) on a Colab GPU, or locally `python scripts/train_classifier.py --label product` after `pip install -r requirements-classifier.txt`.
+
 Data files are git-ignored. Narratives come from the CFPB FOIA Reading Room archive, because the live API no longer publishes them (see [CLAUDE_PROGRESS.md](CLAUDE_PROGRESS.md) Sec. 3).
