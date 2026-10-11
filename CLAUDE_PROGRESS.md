@@ -278,3 +278,8 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **v2 data:** 276,378 usable; train/val/test 111,527 / 14,022 / 13,905; 88 issues in train. New `data_fingerprint.json` includes text hashes. Rebuilding under pandas 2.2.3 (Colab) gives identical ids, annotation sample, and test text.
 - 43 unit tests pass.
 - **Action for the team:** upload the new `data/processed/{train,val,test}.parquet` and `annotation_sample.csv` to Drive `Dataset/data/processed/`, replacing the old files. Download a fresh code ZIP, then retrain product and issue. The old Drive files and old results now fail `check_splits.py` by design.
+
+### 2026-10-10: v2 fix pushed (`22da3d9`, branch `classifier`)
+- Simulated the Colab flow from a ZIP of `origin/classifier` with the v2 data files: `check_splits.py` printed all 4 OK, 43 tests passed, and the smoke training run exited 0.
+- Still on the branch: notebook cell 11 (`a4707ea`, results packaging); the revert was not requested.
+- Next: re-upload the v2 data and a fresh ZIP to Drive, clear the old `Dataset/outputs/classifier/`, and retrain product and issue.
