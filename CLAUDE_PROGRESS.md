@@ -36,7 +36,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | Stage | Pair | Branch | Status |
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
-| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **Code ready and CPU-tested; not yet run on a GPU.** Run `notebooks/train_classifier_colab.ipynb` (Sec. 6) |
+| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **First GPU runs done (2026-10-10).** Issue: test macro-F1 0.297, accuracy 0.568. Product: val macro-F1 0.800 (test files not yet downloaded). See Sec. 7 |
 | 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
@@ -247,3 +247,17 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 ### 2026-10-10: Shared Drive folder is `Dataset`
 - The team reuses an existing shared Drive folder named `Dataset`, with `Dataset/data/processed/` holding the 3 parquets and `annotation_sample.csv`. The notebook default changed to `/content/drive/MyDrive/Dataset`. Cell 2 now stops with instructions if the folder is missing, instead of silently creating an empty folder and rebuilding the data.
 - The code ZIP goes at the top level of `Dataset/`. Results are written to `Dataset/outputs/classifier/<label>/`.
+
+### 2026-10-10: First GPU runs (Colab, run by a teammate; analysed by Aditya + Claude)
+- **Environment** (from `run_info.json`): NVIDIA A100-SXM4-80GB, bf16, Python 3.13.15, torch 2.11.0+cu130, transformers 5.18.0, sklearn 1.6.1, pandas 2.2.3. Default settings: 3 epochs, batch 32, lr 5e-5, max_len 512, head 128 + tail. **About 2.2 min per epoch** on the A100; T4 timing is still unmeasured. 14.6% of train narratives exceed 512 tokens, so they are truncated.
+- **Product (11 classes):** per-epoch val macro-F1 0.790, **0.800**, 0.798 (val accuracy 0.827, 0.836, 0.835), so epoch 2 is best. Read from `product/last/training_state.pt`, because only that file was downloaded. **Test metrics are not yet copied from Drive** (`Dataset/outputs/classifier/product/`).
+- **Issue (89 classes):** per-epoch val macro-F1 0.257, 0.290, **0.306**. **Test: macro-F1 0.297, accuracy 0.568, weighted-F1 0.553**, n = 13,946, with no rows excluded for unseen labels.
+- **Why issue macro-F1 is low (from `classification_report_test.csv` and `predictions_test.parquet`):**
+  - *Long tail.* Splits are stratified by product, not issue. 30 of 89 issues have fewer than 20 test examples, and 31 issues score F1 = 0. All 20 issues with 10 or fewer test examples score 0. Mean F1 by test support: 0 for 1 to 10 examples, 0.14 for 11 to 30, 0.26 for 31 to 100, 0.52 for 101 to 300, 0.59 for 301 to 1,000, and 0.64 above 1,000. **Macro-F1 over the 38 issues with at least 100 test examples is 0.546.**
+  - *Overlapping consumer-chosen labels.* The top confusions are near-synonyms within one product. "Problem with a company's investigation" was predicted as "Incorrect information on your report" 169 times, and the reverse 126 times. "Written notification about debt" was predicted as "Attempts to collect debt not owed" 124 times; "False statements or representation" was predicted as the same 111 times. "Problem with a lender … charging your account" was predicted as "Managing an account" 129 times. **66.5% of the 6,030 issue errors pick an issue valid for the true product.** Note that 12 issue names are shared across products.
+  - *Confidence is informative.* Accuracy by predicted probability: 20% at 0.3 or below, 34% from 0.3 to 0.5, 49% from 0.5 to 0.7, 69% from 0.7 to 0.9, and **91% above 0.9** (2,874 test rows). This supports showing confidence in the demo or routing low-confidence cases to a human.
+- **Implications to discuss:**
+  1. The proposal reports "per-category F1". Report product-level macro-F1 as the headline, and treat issue-level results with the long-tail caveat.
+  2. Options for issue: merge issues with very few training examples into "other", group issues by regulation-relevant meaning, or predict issue conditioned on product.
+  3. Compare any changes on **val only**.
+- Model weights (`best/`, `last/`) are about 270 MB each, plus a 536 MB `training_state.pt`, and are git-ignored. The ZIP date used for these runs was not recorded.
