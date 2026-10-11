@@ -261,3 +261,6 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   2. Options for issue: merge issues with very few training examples into "other", group issues by regulation-relevant meaning, or predict issue conditioned on product.
   3. Compare any changes on **val only**.
 - Model weights (`best/`, `last/`) are about 270 MB each, plus a 536 MB `training_state.pt`, and are git-ignored. The ZIP date used for these runs was not recorded.
+
+### 2026-10-10: Results packaging cell
+- Downloading output folders from Drive split them into multi-part ZIPs, because of the 1 GB+ model weights, and files went missing (product arrived with only `last/training_state.pt`). Added notebook cell 11, which writes `Dataset/outputs/results_<label>.zip` with only the result files (about 1 MB). Tested on the real issue outputs: 10 files, 1.0 MB.
