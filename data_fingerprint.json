@@ -1,18 +1,22 @@
 {
   "train": {
-    "rows": 111563,
-    "sha1": "788776bcf969dfab378d2de3cf80daea57da755e"
+    "rows": 111527,
+    "sha1": "59b8caa39660a2cc8b6c25844b7a3ba328a213d0",
+    "text_sha1": "6298566c9865d875a8212238a71a5e0589645daa"
   },
   "val": {
-    "rows": 13945,
-    "sha1": "70315c25794406476df955f7f48c9e3d7ef9315f"
+    "rows": 14022,
+    "sha1": "ae504a9fd950b48dc954c9c870097b7fffae04c4",
+    "text_sha1": "2776151fea3f80a3a96445b98ae8a9d52f4576db"
   },
   "test": {
-    "rows": 13946,
-    "sha1": "c51ffea8086ae9d96b084244ef41452db4ed1ece"
+    "rows": 13905,
+    "sha1": "9a7e71cb545617331f738afc84ec230d5e9cbf41",
+    "text_sha1": "fa1ac589b8c7d55d14bec05c32fb9c315ef92c88"
   },
   "annotation_sample": {
     "rows": 120,
-    "sha1": "18bb7a09b65afe55588044b57d08c03fbaa09259"
+    "sha1": "8a6a5a1660627d82cedc2d2a2601fb19124f2c6c",
+    "text_sha1": "551dd8fbcf02e165feec7abce35debb99b6db663"
   }
 }

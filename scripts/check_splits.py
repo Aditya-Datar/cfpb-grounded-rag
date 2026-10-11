@@ -4,8 +4,11 @@
     python scripts/check_splits.py --write    # record the current splits (do this only
                                               # when the team agrees to change the data)
 
-The fingerprint is a SHA-1 of the sorted complaint_ids in each split, plus
-row counts. If it differs, results are not comparable with the team's.
+The fingerprint has, per split: row count, a SHA-1 of the sorted
+complaint_ids (same rows?), and a SHA-1 of the cleaned narratives in
+complaint_id order (same text?). The text hash catches stale files made by
+an older cleaner, which keep the same rows. If anything differs, results are
+not comparable with the team's.
 """
 import argparse
 import hashlib
@@ -24,14 +27,17 @@ FINGERPRINT = ROOT / "data_fingerprint.json"
 
 def fingerprint(data_dir: Path) -> dict:
     fp = {}
-    for split in ("train", "val", "test"):
-        ids = sorted(pd.read_parquet(data_dir / f"{split}.parquet", columns=["complaint_id"])
-                     ["complaint_id"].astype(str))
-        fp[split] = {"rows": len(ids),
-                     "sha1": hashlib.sha1("\n".join(ids).encode()).hexdigest()}
-    sample = pd.read_csv(data_dir / "annotation_sample.csv", dtype=str)["complaint_id"]
-    fp["annotation_sample"] = {"rows": len(sample),
-                               "sha1": hashlib.sha1("\n".join(sorted(sample)).encode()).hexdigest()}
+    tables = {split: pd.read_parquet(data_dir / f"{split}.parquet",
+                                     columns=["complaint_id", "narrative_clean"])
+              for split in ("train", "val", "test")}
+    tables["annotation_sample"] = pd.read_csv(data_dir / "annotation_sample.csv", dtype=str,
+                                              keep_default_na=False,
+                                              usecols=["complaint_id", "narrative_clean"])
+    for name, df in tables.items():
+        df = df.astype(str).sort_values("complaint_id")
+        fp[name] = {"rows": len(df),
+                    "sha1": hashlib.sha1("\n".join(df["complaint_id"]).encode()).hexdigest(),
+                    "text_sha1": hashlib.sha1("\x1e".join(df["narrative_clean"]).encode()).hexdigest()}
     return fp
 
 

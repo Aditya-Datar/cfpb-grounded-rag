@@ -21,7 +21,7 @@ python -m venv .venv
 .venv/Scripts/python scripts/run_data_pipeline.py         # ~5 min; writes data/processed/ and outputs/
 ```
 
-Data files are git-ignored, so every member regenerates them locally. Check your run against Sec. 3: you should get 276,626 usable narratives. The seed is fixed, but identical output on other machines and library versions has **not** been verified; report any difference in the log.
+Data files are git-ignored, so every member regenerates them locally. Check your run against Sec. 3: you should get 276,378 usable narratives, and `scripts/check_splits.py` must print "All splits match". Splits are hash-based, so they are identical across machines; rebuilding under pandas 2.2.3 and 3.0.6 gives the same rows and text (verified 2026-10-10).
 
 **Working rules for this repo:**
 1. **One branch per stage**, cut from `data-processing` until it is merged to `main`, then from `main`. Suggested names: `classifier`, `retrieval`, `generation-verification`.
@@ -36,7 +36,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | Stage | Pair | Branch | Status |
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
-| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **First GPU runs done (2026-10-10).** Issue: test macro-F1 0.297, accuracy 0.568. Product: val macro-F1 0.800 (test files not yet downloaded). See Sec. 7 |
+| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v1 results are STALE (trained on buggy cleaning and old splits). Retrain on v2 data.** v1 for reference: product test macro-F1 0.798, issue test macro-F1 0.297 (Sec. 7) |
 | 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
@@ -84,8 +84,8 @@ New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, 
 |---|---:|---|
 | `data/raw/foia_archive/*.zip` + `download_log.json` | | raw archive exports and download date |
 | `data/processed/complaints.parquet` | 6,809,200 | every complaint in the window, 12 columns, all strings |
-| `data/processed/narratives_clean.parquet` | 276,626 | usable narratives (schema below) |
-| `data/processed/train.parquet` / `val.parquet` / `test.parquet` | 111,563 / 13,945 / 13,946 | classifier splits (schema below) |
+| `data/processed/narratives_clean.parquet` | 276,378 | usable narratives (schema below) |
+| `data/processed/train.parquet` / `val.parquet` / `test.parquet` | 111,527 / 14,022 / 13,905 | classifier splits (schema below) |
 | `data/processed/annotation_sample.csv` | 120 | gold-annotation sheet |
 | `outputs/profile_all.json`, `outputs/profile_narratives.json` | | profiles |
 | `outputs/pipeline_run.log` | | last pipeline run log |
@@ -105,7 +105,7 @@ New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, 
 - Archive exports may overlap, so the pipeline drops duplicate `complaint_id`s. The archive has no `Consumer consent provided?` column.
 - When citing the data in the report: "CFPB Consumer Complaint Database narratives archive (FOIA Reading Room), exports 12 to 21, downloaded 2026-10-07 UTC."
 
-### Narrative dataset, v1 (pipeline run 2026-10-06, 4.5 min)
+### Narrative dataset, v2 (cleaner fix + hash splits, pipeline run 2026-10-10; v1 numbers are in the Sec. 7 log)
 
 All 10 zips pass the zip integrity test and share one 16-column header.
 
@@ -113,42 +113,43 @@ All 10 zips pass the zip integrity test and share one 16-column header.
 |---|---:|
 | Complaints received 2025-08-14 to 2026-08-14 (deduped on `complaint_id`) | 6,809,200 |
 | With a non-empty narrative | 469,659 (6.9%) |
-| Usable after cleaning (at least 20 words, redaction density 0.5 or less, exact-text dedupe) | 276,626 |
-| Classifier splits (`product`, at most 20k per class before splitting, 80/10/10) | train 111,563 / val 13,945 / test 13,946 |
+| Usable after cleaning (at least 20 words, redaction density 0.5 or less, exact-text dedupe) | 276,378 |
+| Classifier splits (`product`, at most 20k per class before splitting, hash-based ~80/10/10) | train 111,527 / val 14,022 / test 13,905 |
 | Annotation sample | 120 (30 each for E, F, V, Z) |
 
 Usable narratives by product. They are **far less skewed** than all complaints: credit reporting is 90% of complaints but only 33% of usable narratives.
 
 | Product | All complaints | Usable narratives | In `train` | Candidate regulation |
 |---|---:|---:|---:|---|
-| Credit reporting or other personal consumer reports | 6,152,294 | 90,158 | 16,000 | V |
-| Debt collection | 332,548 | 55,544 | 16,000 | F |
-| Checking or savings account | 86,182 | 36,610 | 16,000 | E |
-| Credit card | 95,747 | 34,860 | 16,000 | Z |
-| Money transfer, virtual currency, or money service | 38,283 | 17,601 | 14,081 | E |
-| Mortgage | 31,772 | 13,000 | 10,400 | Z |
-| Vehicle loan or lease | 24,594 | 10,274 | 8,219 | Z |
-| Payday loan, title loan, personal loan, or advance loan | 17,440 | 7,364 | 5,891 | Z |
-| Student loan | 19,671 | 6,617 | 5,294 | Z |
-| Prepaid card | 6,311 | 2,785 | 2,228 | E |
+| Credit reporting or other personal consumer reports | 6,152,294 | 89,993 | 15,971 | V |
+| Debt collection | 332,548 | 55,465 | 15,966 | F |
+| Checking or savings account | 86,182 | 36,606 | 16,024 | E |
+| Credit card | 95,747 | 34,860 | 15,972 | Z |
+| Money transfer, virtual currency, or money service | 38,283 | 17,602 | 14,153 | E |
+| Mortgage | 31,772 | 13,000 | 10,358 | Z |
+| Vehicle loan or lease | 24,594 | 10,275 | 8,241 | Z |
+| Payday loan, title loan, personal loan, or advance loan | 17,440 | 7,362 | 5,878 | Z |
+| Student loan | 19,671 | 6,617 | 5,279 | Z |
+| Prepaid card | 6,311 | 2,785 | 2,235 | E |
 | Debt or credit management | 4,358 | 1,813 | 1,450 | none |
 
-In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; Z 189,224; E 130,776; none 4,358. Usable narratives by candidate regulation: V 90,158; Z 72,115; E 56,996; F 55,544.
+In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; Z 189,224; E 130,776; none 4,358. Usable narratives by candidate regulation: V 89,993; Z 72,114; E 56,993; F 55,465.
 
-- **Classifier labels:** 11 products; 89 distinct issues in `train`. Class sizes in `train` range from 16,000 down to 1,450, so report macro-F1.
+- **Classifier labels:** 11 products; 88 distinct issues in `train` (89 in v1). Class sizes in `train` range from 16,024 down to 1,450, so report macro-F1.
 - **Narrative length** (words, after cleaning): median 175, IQR 93 to 285, mean 229, max 6,089. DistilBERT's 512-token limit will truncate roughly the longest quarter (*estimate: tokens per word not measured*); consider head plus tail truncation.
-- **Redaction density:** median 0.027, 75th percentile 0.05. Most narratives are lightly masked.
-- **Annotation sample mix:** E has 10 each of checking/savings, money transfer, and prepaid; F has 30 debt collection; V has 30 credit reporting; Z has 6 each of credit card, payday/personal loan, student loan, mortgage, and vehicle. It excludes the classifier test set.
+- **Redaction density:** median 0.028, 75th percentile 0.051. Most narratives are lightly masked.
+- **Annotation sample mix:** E has 10 each of checking/savings, money transfer, and prepaid; F has 30 debt collection; V has 30 credit reporting; Z has 6 each of credit card, payday/personal loan, student loan, mortgage, and vehicle. It excludes the classifier test set. The v2 sample shares 119 of 120 complaints with what the hash method gives on v1 data, but **0 of 120 with the original v1 file**, which used the old shuffle. Nobody had annotated yet.
 - **Data-quality observation (prevalence NOT yet measured):** the first sampled debt-collection narrative reads like a credit-repair template, a formal letter citing the FDCPA, FCRA, and Indiana law. Given the CFPB's note about credit-repair and automated submissions (CLAUDE.md Sec. 8), such templates may be common. Measure this before claiming it, for example by counting near-duplicate texts or statute mentions. Template letters cite statutes by name, which may make retrieval look easier than it is on organic complaints, so template vs organic is a candidate error-analysis slice.
 
 ## 4. Design decisions made in code (and why)
 
-- **Redaction cleaning** (`clean.py`): CFPB masks PII as runs of `XXXX`, masks dates as `XX/XX/XXXX`, and wraps amounts in braces like `{$250.00}`. We map these to `[REDACTED]`, `[DATE]`, and `$250.00`, so models see one consistent token.
+- **Redaction cleaning** (`clean.py`): CFPB masks PII as runs of `XXXX`, masks dates in several forms (`XX/XX/XXXX`, `XX/XX/2025`, `XX/XX/year>`, `XX/XX/scrub>/25`, `XX/2024`), and braces amounts (`{$250.00}`, `{>= $9,999,999}`, sometimes unclosed). We map these to `[DATE]`, `[REDACTED]`, and `$250.00`, padding with a space when a mask is glued to a word. The full list of formats is in the `clean.py` docstring and covered by tests. Residue on all 469,659 narratives: 0 with `year>`, `scrub>`, braced `$`, or lowercase `xxxx`; 10 with real words containing XX (DOXXING, EXXON, XXXVI); about 250 with `[REDACTED]/2023`, where the mask may be a month name and is left alone.
 - **Filters:** narratives need at least 20 words and a redaction density of 0.5 or less (`--min-words`, `--max-redaction`). Defaults were not tuned. Given the profile above, the redaction filter removes very little.
 - **Dedupe before splitting:** consumers often file the same narrative against several companies (for example, all three credit bureaus). We dedupe on a SHA-1 of normalized text so copies cannot sit in both train and test. Near-duplicates (for example, templates with different names) are **not** caught.
-- **Class cap:** `--max-per-class 20000` before the 80/10/10 split, stratified by `product`. Classes with fewer than 10 rows go to train only (none at present).
+- **Splits are hash-based (since 2026-10-10):** each complaint's split, cap rank, and annotation rank come from SHA-1 of (seed, purpose, complaint_id), not from shuffling the table. Adding or removing rows never moves other complaints. Proportions per class are about 80/10/10, not exact. `--max-per-class 20000` keeps the lowest-hash rows per product. Classes with fewer than 10 rows go to train only (none at present). *Why:* with the old table-wide shuffle, the cleaner fix (248 fewer rows) moved 93% of the test set; with hashing it moves about 0.1%.
 - **Annotation sample:** `PRODUCT_TO_REGULATION` assigns a *candidate* regulation used only for stratification. Sampling is round-robin across products within each regulation, and the sample is disjoint from the classifier test set.
-- **Seed:** 544 everywhere (`config.RANDOM_SEED`).
+- **Seed:** 544 everywhere (`config.RANDOM_SEED`); it salts the split hashes.
+- **`check_splits.py` hashes ids and text:** `data_fingerprint.json` stores per split a hash of the sorted ids **and** a hash of `narrative_clean`, so files made by an older cleaner, with the same rows but different text, fail the check. Verified: the v1 files are rejected against the v2 reference.
 
 ## 5. Open issues and risks
 
@@ -264,3 +265,16 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 
 ### 2026-10-10: Results packaging cell
 - Downloading output folders from Drive split them into multi-part ZIPs, because of the 1 GB+ model weights, and files went missing (product arrived with only `last/training_state.pt`). Added notebook cell 11, which writes `Dataset/outputs/results_<label>.zip` with only the result files (about 1 MB). Tested on the real issue outputs: 10 files, 1.0 MB.
+
+### 2026-10-10: v1 product test results (from the downloaded files; v1 data)
+- Product test: **macro-F1 0.798, accuracy 0.834, weighted-F1 0.833** (n = 13,946). Val macro-F1 0.800 at epoch 2, the best. Validation and test agree, so there is no sign of overfitting to validation.
+- Per-class test F1: mortgage 0.943, student loan 0.915, vehicle 0.882, credit reporting 0.850, debt collection 0.834, credit card 0.833, money transfer 0.816, checking/savings 0.792, payday/personal 0.753, prepaid 0.643, debt or credit management 0.519 (recall 0.370, n = 181).
+- Top confusions: money transfer to checking 228 and the reverse 207; credit reporting to debt collection 145 and the reverse 131; checking to credit card 99 and the reverse 98. Several high-confidence "errors" read as consumer mislabels; one narrative literally starts "Product : Credit Card" but is filed as money transfer. Accuracy by confidence: 35% at 0.5 or below, 58% from 0.5 to 0.7, 74% from 0.7 to 0.9, 92% from 0.9 to 0.99, and **99.0% above 0.99** (2,622 rows).
+- **These v1 numbers are superseded:** retrain on v2 (next entry).
+
+### 2026-10-10: Cleaning bug fixed, splits made hash-based (v2 data)
+- **Bug:** about 24% of usable narratives (67,735) contained the date mask `XX/XX/year>`, which the cleaner turned into `[REDACTED]/year>` instead of `[DATE]`. It was found while reading classifier errors. A survey of all mask shapes in the 469,659 raw narratives found more unhandled forms: `XX/XX/scrub>` (about 1k per 200k sample), `XX/XX/scrub>/25`, `XX/2024`, `XX/XX/` with no year, masks glued to words (`informationXXXXReason`), lowercase `xxxx`, short masks (`XXX-XX-XXXX`), `{>= $...}`, `{$.99}`, unclosed and nested braces, `{ XXXX }`, and `{ REMOVED }`. All are now handled, with 33 new parametrized tests in `tests/test_clean.py`.
+- **Splits:** rerunning the pipeline after the fix removed 248 rows (new duplicates once mask variants normalize), and the old shuffle-based split then moved 93% of val/test and all 120 annotation items. Replaced it with hash-based assignment (`split.stable_uniform`); see Sec. 4. Applying the hash method to v1 versus v2 data, 99.9% of rows keep their split and 119 of 120 annotation items stay. Tests in `tests/test_split.py` show that dropping 250 rows moves 0 others.
+- **v2 data:** 276,378 usable; train/val/test 111,527 / 14,022 / 13,905; 88 issues in train. New `data_fingerprint.json` includes text hashes. Rebuilding under pandas 2.2.3 (Colab) gives identical ids, annotation sample, and test text.
+- 43 unit tests pass.
+- **Action for the team:** upload the new `data/processed/{train,val,test}.parquet` and `annotation_sample.csv` to Drive `Dataset/data/processed/`, replacing the old files. Download a fresh code ZIP, then retrain product and issue. The old Drive files and old results now fail `check_splits.py` by design.
