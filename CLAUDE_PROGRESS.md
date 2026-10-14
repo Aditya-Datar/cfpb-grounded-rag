@@ -37,7 +37,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v1 results are STALE (trained on buggy cleaning and old splits). Retrain on v2 data.** v1 for reference: product test macro-F1 0.798, issue test macro-F1 0.297 (Sec. 7) |
-| 2. Regulation corpus and retrieval | B | `chunking` (pushed; chunker commit local) | **Parsing done; chunker v1 built and verified on Part 1005 only.** Parser assigns wrong paragraph paths in many sections (23% of numbered paragraphs in Part 1005), so Parts 1026/1022/1006 wait for a parser fix. Retrieval (FAISS, BM25) not started. See Sec. 7, 2026-10-14 |
+| 2. Regulation corpus and retrieval | B | `chunking` (pushed) | **Parsing done; chunker v1 built and verified on Part 1005 only.** Parser assigns wrong paragraph paths in many sections (23% of numbered paragraphs in Part 1005), so Parts 1026/1022/1006 wait for a parser fix. Retrieval (FAISS, BM25) not started. See Sec. 7, 2026-10-14 |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
 
