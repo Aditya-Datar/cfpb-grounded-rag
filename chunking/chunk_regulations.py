@@ -163,6 +163,9 @@ def main(argv=None):
     parser.add_argument("--sections", type=Path, default=Path("data/processed/sections.jsonl"))
     parser.add_argument("--out", type=Path, default=Path("data/processed/chunks.jsonl"))
     parser.add_argument("--parts", nargs="+", default=list(PARTS))
+    parser.add_argument(
+        "--max-chars", type=int, default=MAX_CHARS, help=f"chunk size limit in characters (default {MAX_CHARS})"
+    )
     parser.add_argument("--show", metavar="SECTION", help="print every chunk of one section, e.g. 1005.11")
     args = parser.parse_args(argv)
 
@@ -175,7 +178,7 @@ def main(argv=None):
                 and record["content_type"] == "regulation"
                 and not record["reserved"]
             ):
-                chunks += chunk_record(record)
+                chunks += chunk_record(record, args.max_chars)
 
     ids = [c["chunk_id"] for c in chunks]
     duplicates = sorted({i for i in ids if ids.count(i) > 1})
@@ -187,6 +190,7 @@ def main(argv=None):
         for chunk in chunks:
             out.write(json.dumps(chunk, ensure_ascii=False) + "\n")
 
+    print(f"max chars: {args.max_chars}")
     for part in args.parts:
         mine = [c for c in chunks if c["part"] == part]
         if not mine:
@@ -197,7 +201,7 @@ def main(argv=None):
         print(
             f"Part {part}: {len(mine)} chunks from {len(sections)} sections "
             f"({whole} kept whole)  chars min {min(sizes)} median {statistics.median(sizes):.0f} "
-            f"max {max(sizes)}  over {MAX_CHARS}: {sum(s > MAX_CHARS for s in sizes)}  "
+            f"max {max(sizes)}  over {args.max_chars}: {sum(s > args.max_chars for s in sizes)}  "
             f"uncertain paths: {sum(not c['path_certain'] for c in mine)}"
         )
     print("chunks ->", args.out)

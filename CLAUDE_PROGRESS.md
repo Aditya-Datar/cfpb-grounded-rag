@@ -306,3 +306,10 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   3. **Reg V section numbers** in Sec. 5 are still unverified against eCFR (Pair B task in Sec. 6).
   4. **Retrieval scoring:** gold labels are section-level, but one section can give several chunks, so precision@k should count one hit per section. The size of the "oracle" passage (whole section or one chunk) is undefined; a mismatch would mix chunk length into the retrieved-vs-oracle gap.
   5. **Repo hygiene:** `.gitignore` ignores only top-level `/data/`, so `chunking/data/` (including the 39 MB `ECFR-title12.xml`) is committed, against working rule 5. `chunking/` also departs from the Sec. 2 layout (`src/cfpb/<stage>/` + `scripts/`).
+
+### 2026-10-14: Chunk size is now a command-line option (Ishani + Claude)
+- `chunking/chunk_regulations.py` takes `--max-chars` (default `MAX_CHARS = 2000`, so default output is unchanged). The value is passed through `chunk_record(record, max_chars)` rather than read from a global, and the run summary prints `max chars: <value>`.
+- Example: `cd chunking && python chunk_regulations.py --parts 1005 --max-chars 800 --out data/processed/chunks_800.jsonl`.
+- Re-ran Part 1005 with the default: still 313 chunks from 27 sections, same size stats as the previous entry.
+- Section 1005.11 gives 28 / 24 / 8 / 5 chunks at 500 / 800 / 2,000 / 4,000 chars.
+- 3 new tests on the real 1005.11 record (default gives the same 8 chunks; 800 gives more than 2,000; coverage holds at 500, 800, 2,000, 4,000). All 11 tests pass, run with a plain Python loop; still not run under pytest.
