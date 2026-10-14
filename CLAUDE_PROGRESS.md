@@ -1,6 +1,6 @@
 # CLAUDE_PROGRESS.md: Build Log and Handoff Context
 
-Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-06 (commit after `bbe73e5`).
+Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-14 (branch `chunking`, commit after `a96a752`).
 
 ---
 
@@ -37,7 +37,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v1 results are STALE (trained on buggy cleaning and old splits). Retrain on v2 data.** v1 for reference: product test macro-F1 0.798, issue test macro-F1 0.297 (Sec. 7) |
-| 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
+| 2. Regulation corpus and retrieval | B | `chunking` (pushed; chunker commit local) | **Parsing done; chunker v1 built and verified on Part 1005 only.** Parser assigns wrong paragraph paths in many sections (23% of numbered paragraphs in Part 1005), so Parts 1026/1022/1006 wait for a parser fix. Retrieval (FAISS, BM25) not started. See Sec. 7, 2026-10-14 |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
 
@@ -283,3 +283,26 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - Simulated the Colab flow from a ZIP of `origin/classifier` with the v2 data files: `check_splits.py` printed all 4 OK, 43 tests passed, and the smoke training run exited 0.
 - Still on the branch: notebook cell 11 (`a4707ea`, results packaging); the revert was not requested.
 - Next: re-upload the v2 data and a fresh ZIP to Drive, clear the old `Dataset/outputs/classifier/`, and retrain product and issue.
+
+### 2026-10-14: Regulation chunker v1, verified on Part 1005 (Ishani + Claude)
+- **Context:** branch `chunking` already had the eCFR parser (`2ff6104`, `a96a752`): `chunking/xml_parser.py` cuts the four parts out of `ECFR-title12.xml`, and `chunking/parse_regulations.py` writes `chunking/data/processed/sections.jsonl` (one record per section/appendix, with ordered paragraph blocks and inferred paths such as `(a)(1)(ii)`). Both scripts use paths relative to `chunking/`, so run them from there.
+- **Added `chunking/chunk_regulations.py`.** Reads `sections.jsonl`, writes `chunking/data/processed/chunks.jsonl` (not committed; regenerate with `cd chunking && python chunk_regulations.py --parts 1005`). Regulation text only for now (`content_type == "regulation"`, reserved sections skipped).
+  - A section stays one chunk if its chunk text fits in `MAX_CHARS = 2000` (a constant at the top of the file; provisional until the embedding model is chosen). Longer sections split at paragraph boundaries, one level deeper only where a paragraph is still too long. A paragraph with no sub-paragraphs is never cut, so it can exceed the limit.
+  - Every chunk's text starts with the section heading plus the intro text of each parent paragraph. Fused XML blocks such as `(c) Time limits…—(1) Ten-day period…` are split so `(c)(2)` also carries the `(c)` intro.
+  - Fields: the Sec. 6 proposed interface first (`chunk_id`, `part`, `section`, `paragraph`, `heading`, `text`, `source_url`), then `content_type`, `regulation`, `path_certain`, `n_chars`, `record_id`. `chunk_id` looks like `12-1005-1005.11-c-2`, or `12-1005-1005.11-all` for a whole section.
+  - `source_url` adds a paragraph anchor such as `#p-1005.11(c)(2)`. **Verified 2026-10-14:** the eCFR renderer API (`/api/renderer/v1/content/enhanced/current/title-12?part=1005`) serves 1,082 paragraph ids for Part 1005, all in this form. (The public ecfr.gov page returned a bot-check page to curl.) Chunks with `path_certain: false` get the plain section URL.
+  - Each run checks that every piece of text is a chunk body exactly once (or parent-intro context), that splitting changes no characters, and that `chunk_id`s are unique.
+- **Part 1005 result:** 313 chunks from 27 sections (7 kept whole); chunk text 116 to 3,164 chars, median 825; 20 over 2,000; 67 flagged `path_certain: false`. 1005.11 gives 8 chunks ((a), (b), (c)(1) to (c)(4), (d), (e)), all checked by hand.
+- **Dry run on all four parts** (output not kept; numbers are not trustworthy until the parser fix below): 1026: 1,255 chunks / 58 sections / 712 flagged / 376 over 2,000; 1022: 338 / 36 / 115 / 58; 1006: 97 / 15 / 40 / 8. All coverage checks passed. About 2,000 chunks in total, consistent with CLAUDE.md Sec. 4 "a few thousand".
+- **Tests:** `tests/test_chunk_regulations.py`, 8 tests on small synthetic records, all passing. pytest is not installed on this machine, so they were run with a plain Python loop; **not yet run under pytest**.
+- **Parser bug (in `parse_regulations.py`, not fixed here; owner to discuss).** Every numbered paragraph path in Part 1005 was compared against eCFR's paragraph ids: **171 of 738 (23%) do not exist on eCFR, in 9 of 27 sections** (including 1005.3, .12, .18, .19, .32, .36). The parser flags only 87 of them as uncertain; **84 are wrong but marked `path_certain: true`**.
+  - Cause: the `(i)` letter-vs-roman ambiguity. `PathTracker._push` tries "next sibling at an existing level" before "first child at the next level", so after `(h)(1)` the marker `(i)` becomes the letter `(i)` instead of `(h)(1)(i)` (example: 1005.20). One misread shifts every later path in the section.
+  - Effect on chunks: text is complete, but boundaries and `paragraph` labels can be wrong, and paragraphs that receive the same wrong path are merged into one chunk. This also explains most chunks over 2,000 chars.
+  - Chunk-level flagging catches almost all of it, because a chunk is flagged if any of its text (including parent intros) is uncertain. Of 240 unflagged Part 1005 chunks, only one has an anchor missing on eCFR: `12-1005-1005.20-i` (really `(h)(1)(i)`).
+  - A fix can be checked the same way: compare parser paths against the eCFR renderer ids.
+- **Open questions:**
+  1. **Embedding model** is not chosen (CLAUDE.md Sec. 3 says only "Sentence-BERT"). Its max input length decides `MAX_CHARS`.
+  2. **Supplement I (official interpretations) and appendices** have no owner. Supplement I is large (about 2.7M chars for Part 1026 alone in `sections.jsonl`, versus about 1.3M chars of regulation text across all four parts) and often answers complaints directly. `annotation/ANNOTATION_GUIDE.md` Sec. 2 item 5 suggests labels point to the regulation section, not the commentary. Also, `parse_regulations.py` labels "Appendix C" of Parts 1005 and 1026 as `interpretation`, though it is an ordinary appendix.
+  3. **Reg V section numbers** in Sec. 5 are still unverified against eCFR (Pair B task in Sec. 6).
+  4. **Retrieval scoring:** gold labels are section-level, but one section can give several chunks, so precision@k should count one hit per section. The size of the "oracle" passage (whole section or one chunk) is undefined; a mismatch would mix chunk length into the retrieved-vs-oracle gap.
+  5. **Repo hygiene:** `.gitignore` ignores only top-level `/data/`, so `chunking/data/` (including the 39 MB `ECFR-title12.xml`) is committed, against working rule 5. `chunking/` also departs from the Sec. 2 layout (`src/cfpb/<stage>/` + `scripts/`).
