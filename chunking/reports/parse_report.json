@@ -1,0 +1,667 @@
+{
+  "schema_version": 2,
+  "snapshot_date": "2026-10-13",
+  "parts": {
+    "1005": {
+      "records_by_type": {
+        "regulation": 27,
+        "appendix": 2,
+        "interpretation": 2
+      },
+      "section_ids": [
+        "1005.1",
+        "1005.2",
+        "1005.3",
+        "1005.4",
+        "1005.5",
+        "1005.6",
+        "1005.7",
+        "1005.8",
+        "1005.9",
+        "1005.10",
+        "1005.11",
+        "1005.12",
+        "1005.13",
+        "1005.14",
+        "1005.15",
+        "1005.16",
+        "1005.17",
+        "1005.18",
+        "1005.19",
+        "1005.20",
+        "1005.30",
+        "1005.31",
+        "1005.32",
+        "1005.33",
+        "1005.34",
+        "1005.35",
+        "1005.36"
+      ],
+      "subparts": [
+        "A",
+        "B"
+      ],
+      "reserved": [
+        "12:1005:APPENDIX:Appendix B"
+      ],
+      "empty_not_reserved": [],
+      "block_types": {
+        "paragraph": 1914,
+        "heading": 307,
+        "image": 23
+      },
+      "other_block_tags": {},
+      "n_uncertain_paths": 94,
+      "uncertain_paths_sample": [
+        [
+          "12:1005:SECTION:§ 1005.3",
+          "(ii)",
+          "(ii) The person initiating an electronic fund transfer using"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.3",
+          "(iii)",
+          "(iii) A person may provide notices that are substantially si"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.3",
+          "(iii)(3)(i)",
+          "(3) Collection of returned item fees via electronic fund tra"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.3",
+          "(iii)(3)(c)",
+          "(c) Exclusions from coverage. The term “electronic fund tran"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.3",
+          "(iii)(1)",
+          "(1) Checks. Any transfer of funds originated by check, draft"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.6",
+          "(ii)",
+          "(ii) The consumer may notify the institution in person, by t"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.6",
+          "(iii)",
+          "(iii) Written notice is considered given at the time the con"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.6",
+          "(iii)(6)",
+          "(6) Liability under state law or agreement. If state law or "
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(i)",
+          "(i) The addition to an accepted credit card, as defined in R"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(ii)",
+          "(ii) The issuance of an access device (other than an access "
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(iii)",
+          "(iii) The addition of an overdraft service, as defined in § "
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(iii)",
+          "(iv) A consumer's liability for an unauthorized electronic f"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(iii)",
+          "(A) Except with respect to a prepaid account, an extension o"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(iii)",
+          "(B) With respect to transactions that involve a covered sepa"
+        ],
+        [
+          "12:1005:SECTION:§ 1005.12",
+          "(iii)",
+          "(C) Transactions that involves credit extended through a neg"
+        ]
+      ],
+      "interpretation_blocks_with_ref": 1262,
+      "node_types": {
+        "PART": 1,
+        "SUBPART": 2,
+        "SECTION": 27,
+        "N": 20,
+        "APPENDIX": 4
+      },
+      "raw_tag_counts": {
+        "TABLE": 0,
+        "GPOTABLE": 0,
+        "FTNT": 0,
+        "FTREF": 0,
+        "SU": 0,
+        "EXTRACT": 0,
+        "XREF": 0,
+        "EDNOTE": 0,
+        "img": 23,
+        "GPH": 0
+      },
+      "low_coverage": []
+    },
+    "1026": {
+      "records_by_type": {
+        "regulation": 59,
+        "appendix": 16,
+        "interpretation": 2
+      },
+      "section_ids": [
+        "1026.1",
+        "1026.2",
+        "1026.3",
+        "1026.4",
+        "1026.5",
+        "1026.6",
+        "1026.7",
+        "1026.8",
+        "1026.9",
+        "1026.10",
+        "1026.11",
+        "1026.12",
+        "1026.13",
+        "1026.14",
+        "1026.15",
+        "1026.16",
+        "1026.17",
+        "1026.18",
+        "1026.19",
+        "1026.20",
+        "1026.21",
+        "1026.22",
+        "1026.23",
+        "1026.24",
+        "1026.25",
+        "1026.26",
+        "1026.27",
+        "1026.28",
+        "1026.29",
+        "1026.30",
+        "1026.31",
+        "1026.32",
+        "1026.33",
+        "1026.34",
+        "1026.35",
+        "1026.36",
+        "1026.37",
+        "1026.38",
+        "1026.39",
+        "1026.40",
+        "1026.41",
+        "1026.42",
+        "1026.43",
+        "1026.44",
+        "1026.46",
+        "1026.47",
+        "1026.48",
+        "1026.51",
+        "1026.52",
+        "1026.53",
+        "1026.54",
+        "1026.55",
+        "1026.56",
+        "1026.57",
+        "1026.58",
+        "1026.59",
+        "1026.60",
+        "1026.61",
+        "1026.62"
+      ],
+      "subparts": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G"
+      ],
+      "reserved": [
+        "12:1026:SECTION:§§ 1026.44-1026.45",
+        "12:1026:APPENDIX:Appendix I",
+        "12:1026:APPENDIX:Appendix P"
+      ],
+      "empty_not_reserved": [],
+      "block_types": {
+        "paragraph": 9807,
+        "heading": 1064,
+        "image": 280,
+        "table": 7
+      },
+      "other_block_tags": {},
+      "n_uncertain_paths": 515,
+      "uncertain_paths_sample": [
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(i)",
+          "(i) The credit is offered or extended to consumers;"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(ii)",
+          "(ii) The offering or extension of credit is done regularly;"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(iii)",
+          "(iii) The credit is subject to a finance charge or is payabl"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(iii)",
+          "(iv) The credit is primarily for personal, family, or househ"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(iii)(2)",
+          "(2) If a credit card is involved, however, certain provision"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(iii)(6)(d)",
+          "(d) Organization. The regulation is divided into subparts an"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(iii)(1)",
+          "(1) Subpart A contains general information. It sets forth:"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.1",
+          "(iii)(8)",
+          "(e) Enforcement and liability. Section 108 of the Truth in L"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.3",
+          "(a)(2)",
+          "(2) An extension of credit to other than a natural person, i"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.3",
+          "(ii)",
+          "(ii) Property rehabilitation assistance;"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.3",
+          "(iii)",
+          "(iii) Energy efficiency assistance; or"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.3",
+          "(iii)",
+          "(iv) Foreclosure avoidance or prevention;"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.3",
+          "(iii)(3)",
+          "(3) The credit contract does not require the payment of inte"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.3",
+          "(iii)(6)(i)",
+          "(i) The exemptions in this section are not applicable to § 1"
+        ],
+        [
+          "12:1026:SECTION:§ 1026.5",
+          "(ii)",
+          "(ii) The creditor shall make the disclosures required by thi"
+        ]
+      ],
+      "interpretation_blocks_with_ref": 5621,
+      "node_types": {
+        "PART": 1,
+        "SUBPART": 8,
+        "SECTION": 59,
+        "N": 45,
+        "APPENDIX": 18
+      },
+      "raw_tag_counts": {
+        "TABLE": 7,
+        "GPOTABLE": 0,
+        "FTNT": 0,
+        "FTREF": 0,
+        "SU": 1,
+        "EXTRACT": 0,
+        "XREF": 1,
+        "EDNOTE": 1,
+        "img": 280,
+        "GPH": 0
+      },
+      "low_coverage": []
+    },
+    "1022": {
+      "records_by_type": {
+        "regulation": 45,
+        "appendix": 14
+      },
+      "section_ids": [
+        "1022.1",
+        "1022.2",
+        "1022.3",
+        "1022.20",
+        "1022.21",
+        "1022.22",
+        "1022.23",
+        "1022.24",
+        "1022.25",
+        "1022.26",
+        "1022.27",
+        "1022.30",
+        "1022.31",
+        "1022.32",
+        "1022.33",
+        "1022.38",
+        "1022.40",
+        "1022.41",
+        "1022.42",
+        "1022.43",
+        "1022.50",
+        "1022.54",
+        "1022.55",
+        "1022.70",
+        "1022.71",
+        "1022.72",
+        "1022.73",
+        "1022.74",
+        "1022.75",
+        "1022.80",
+        "1022.82",
+        "1022.120",
+        "1022.121",
+        "1022.122",
+        "1022.123",
+        "1022.124",
+        "1022.130",
+        "1022.131",
+        "1022.136",
+        "1022.137",
+        "1022.138",
+        "1022.139",
+        "1022.140",
+        "1022.141",
+        "1022.142"
+      ],
+      "subparts": [
+        "A",
+        "C",
+        "D",
+        "E",
+        "F",
+        "H",
+        "I",
+        "M",
+        "N",
+        "O"
+      ],
+      "reserved": [
+        "12:1022:SECTION:§§ 1022.33-1022.37",
+        "12:1022:SECTION:§§ 1022.50-1022.53",
+        "12:1022:SECTION:§§ 1022.55-1022.59",
+        "12:1022:SECTION:§§ 1022.80-1022.81",
+        "12:1022:SECTION:§ 1022.120",
+        "12:1022:SECTION:§ 1022.122",
+        "12:1022:SECTION:§§ 1022.124-1022.129",
+        "12:1022:SECTION:§§ 1022.131-1022.135",
+        "12:1022:SECTION:§ 1022.139",
+        "12:1022:APPENDIX:Appendix A",
+        "12:1022:APPENDIX:appendixes-f-g-to-part-1022-reserved",
+        "12:1022:APPENDIX:Appendix J"
+      ],
+      "empty_not_reserved": [
+        "12:1022:APPENDIX:Appendix L"
+      ],
+      "block_types": {
+        "paragraph": 922,
+        "heading": 10,
+        "image": 39
+      },
+      "other_block_tags": {},
+      "n_uncertain_paths": 90,
+      "uncertain_paths_sample": [
+        [
+          "12:1022:SECTION:§ 1022.1",
+          "(b)(2)",
+          "(2) Institutions covered. (i) Except as otherwise provided i"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.1",
+          "(ii)",
+          "(ii) For purposes of appendix B to this part, financial inst"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.1",
+          "(ii)(1)",
+          "(c) Model forms and disclosures—(1) Use. Appendices D, H, I,"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.20",
+          "(b)(4)(ii)(B)",
+          "(B) If a consumer obtained a certificate of deposit from a f"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.20",
+          "(b)(4)(iii)(B)",
+          "(B) If a consumer who has a deposit account with a financial"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(b)(5)(ii)(B)",
+          "(B) The specific terms and conditions established by your af"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(ii)",
+          "(ii) The same facts as in the example in paragraph (b)(6)(i)"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)",
+          "(iii) The same facts as in the example in paragraph (b)(6)(i"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)",
+          "(iv) The same facts as in the example in paragraph (b)(6)(ii"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)",
+          "(v) An affiliated group of companies includes a financial in"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)",
+          "(vi) The same facts as in the example in paragraph (b)(6)(v)"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)",
+          "(c) Exceptions. The provisions of this subpart do not apply "
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)(1)",
+          "(d) Examples of exceptions—(1) Example of the pre-existing b"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)(2)(ii)",
+          "(ii) The same facts as in paragraph (d)(2)(i) of this sectio"
+        ],
+        [
+          "12:1022:SECTION:§ 1022.21",
+          "(iii)(3)(ii)",
+          "(ii) A consumer who has a deposit account with a financial i"
+        ]
+      ],
+      "interpretation_blocks_with_ref": 0,
+      "node_types": {
+        "PART": 1,
+        "SUBPART": 14,
+        "SECTION": 45,
+        "N": 10,
+        "APPENDIX": 14
+      },
+      "raw_tag_counts": {
+        "TABLE": 0,
+        "GPOTABLE": 0,
+        "FTNT": 0,
+        "FTREF": 0,
+        "SU": 0,
+        "EXTRACT": 0,
+        "XREF": 0,
+        "EDNOTE": 0,
+        "img": 39,
+        "GPH": 0
+      },
+      "low_coverage": []
+    },
+    "1006": {
+      "records_by_type": {
+        "regulation": 15,
+        "appendix": 3,
+        "interpretation": 1
+      },
+      "section_ids": [
+        "1006.1",
+        "1006.2",
+        "1006.6",
+        "1006.10",
+        "1006.14",
+        "1006.18",
+        "1006.22",
+        "1006.26",
+        "1006.30",
+        "1006.34",
+        "1006.38",
+        "1006.42",
+        "1006.100",
+        "1006.104",
+        "1006.108"
+      ],
+      "subparts": [
+        "A",
+        "B",
+        "D"
+      ],
+      "reserved": [],
+      "empty_not_reserved": [],
+      "block_types": {
+        "paragraph": 562,
+        "heading": 146,
+        "image": 1
+      },
+      "other_block_tags": {},
+      "n_uncertain_paths": 40,
+      "uncertain_paths_sample": [
+        [
+          "12:1006:SECTION:§ 1006.1",
+          "(c)(2)",
+          "(2) Section 1006.34(c)(2)(iii) and (c)(3)(iv) applies to deb"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.6",
+          "(c)(2)",
+          "(2) Exceptions. The prohibition in paragraph (c)(1) of this "
+        ],
+        [
+          "12:1006:SECTION:§ 1006.6",
+          "(d)(4)(i)(B)",
+          "(B) The debt collector has received directly from the consum"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.6",
+          "(d)(4)(ii)(B)",
+          "(B) The creditor used the email address to communicate with "
+        ],
+        [
+          "12:1006:SECTION:§ 1006.6",
+          "(d)(4)(iii)(B)",
+          "(B) The immediately prior debt collector used the email addr"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(b)(2)",
+          "(A) More than seven times within seven consecutive days; nor"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(b)(2)",
+          "(B) Within a period of seven consecutive days after having h"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)",
+          "(ii) Subject to the exclusions in paragraph (b)(3) of this s"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(3)",
+          "(3) Certain telephone calls excluded from the telephone call"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(4)(c)",
+          "(c) Violence or other criminal means. In connection with the"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(4)(d)",
+          "(d) Obscene or profane language. In connection with the coll"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(4)(d)",
+          "(e) Debtor's list. In connection with the collection of a de"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(4)(d)",
+          "(f) Coercive advertisements. In connection with the collecti"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(4)(d)",
+          "(g) Meaningful disclosure of identity. In connection with th"
+        ],
+        [
+          "12:1006:SECTION:§ 1006.14",
+          "(ii)(1)",
+          "(h) Prohibited communication media—(1) In general. In connec"
+        ]
+      ],
+      "interpretation_blocks_with_ref": 329,
+      "node_types": {
+        "PART": 1,
+        "SUBPART": 4,
+        "SECTION": 15,
+        "N": 10,
+        "APPENDIX": 4
+      },
+      "raw_tag_counts": {
+        "TABLE": 0,
+        "GPOTABLE": 0,
+        "FTNT": 0,
+        "FTREF": 0,
+        "SU": 0,
+        "EXTRACT": 0,
+        "XREF": 0,
+        "EDNOTE": 0,
+        "img": 1,
+        "GPH": 0
+      },
+      "low_coverage": []
+    }
+  }
+}
