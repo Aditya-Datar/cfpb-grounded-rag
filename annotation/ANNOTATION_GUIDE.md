@@ -2,7 +2,17 @@
 
 Draft, 2026-10-07. The **rubric decisions marked TBD belong to the two rubric drafters** (CLAUDE.md Sec. 5). Everything else is procedure.
 
-**Ground rule (CLAUDE.md Sec. 5): human labels are ground truth.** LLMs (Claude, and optionally Jev) only *flag* items for a human to re-check. An LLM answer never overwrites a human label, and an item is never labeled by an LLM alone.
+> **Update 2026-10-15: the TA allowed LLM annotation.** The course TA told the team that annotation may be done with LLMs (Claude Code, ChatGPT, and so on), and that LLM bias is acceptable given the team's lack of legal expertise. This supersedes the ground rule below, which stays for history. Labels produced this way are **silver labels** and must be reported as such. Protocol:
+>
+> 1. **Annotator A:** Claude Code with the project skill `.claude/skills/regulation-annotator/`. It reads the eCFR text through `scripts/reg_lookup.py`, runs an elements test, and quotes verbatim. Output goes to `annotation/llm_labels_<model>.jsonl`, checked by `scripts/check_llm_labels.py` (quote verbatim, section exists).
+> 2. **Annotator B:** a **different model family** (for example ChatGPT), labelling blind with the same rubric and access to the same regulation text. Inter-annotator agreement becomes Cohen's kappa between A and B, at regulation and section level.
+> 3. **Adjudication:** every A/B disagreement goes to a human team member, who uses Prompt 2 below with the full section text and makes the final call.
+> 4. **Human spot-check:** a team member re-checks a random 20 of the agreed items, which estimates the precision of the silver labels.
+> 5. **Circularity:** if the target generator or LLM judge is the same family as an annotator, say so in the report.
+>
+> A 3-item pilot by Annotator A is in `annotation/llm_labels_claude-opus-5-5.jsonl` (`"batch": "pilot"`).
+
+**Ground rule (CLAUDE.md Sec. 5, before 2026-10-15): human labels are ground truth.** LLMs (Claude, and optionally Jev) only *flag* items for a human to re-check. An LLM answer never overwrites a human label, and an item is never labeled by an LLM alone.
 
 ---
 

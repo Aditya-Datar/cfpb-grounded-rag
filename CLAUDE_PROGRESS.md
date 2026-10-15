@@ -37,9 +37,9 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
-| 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
+| 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built (2026-10-15):** 4,070 structure-aware chunks from eCFR (as of 2026-10-13); retriever (BM25, dense, hybrid) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
+| Annotation (120 gold pairs) | all | `regulation-corpus` | **TA allowed LLM annotation (2026-10-15).** Skill, lookup and validator tools built; 3-item pilot labelled by Claude; 117 to go; Annotator B (a different LLM) not chosen yet |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
 
@@ -67,6 +67,15 @@ src/cfpb/classify/data.py           tokenization (head+tail truncation), length-
 src/cfpb/classify/train.py          plain-PyTorch fine-tuning loop, evaluation, reports, resume
 scripts/train_classifier.py         stage 1 CLI (--label product|issue, --resume, --max-train ...)
 scripts/check_splits.py             verifies local splits match data_fingerprint.json
+src/cfpb/regs/ecfr.py               eCFR API download (needs Accept-Encoding: gzip)
+src/cfpb/regs/parse.py              eCFR XML -> structure-aware chunks (regulation / interpretation / appendix)
+scripts/build_reg_corpus.py         builds data/processed/reg_chunks.parquet + annotation/regulation_sections.md
+scripts/reg_lookup.py               print section/paragraph text, keyword search, annotation complaints
+scripts/check_llm_labels.py         validates LLM label files (section exists, quote verbatim)
+.claude/skills/regulation-annotator/SKILL.md   project skill: grounded complaint -> section labelling
+docs/INTERFACES.md                  PROPOSED stage interfaces (freeze after team review)
+annotation/regulation_sections.md   the 146-section list (generated)
+tests/test_regs_parse.py            parser tests (paragraph grouping, roman numerals, interpretations)
 data_fingerprint.json               SHA-1 of sorted complaint_ids per split (team reference)
 notebooks/train_classifier_colab.ipynb   step-by-step Colab runner (fresh-session safe)
 requirements-classifier.txt         torch, transformers, matplotlib on top of requirements.txt
@@ -157,7 +166,7 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 
 ## 5. Open issues and risks
 
-- **Reg V coverage gap (important for annotation).** Most credit-reporting complaints concern bureau dispute investigations. Those duties sit in the FCRA statute (15 U.S.C. 1681i), not in Reg V (12 CFR 1022), which covers narrower ground such as furnisher accuracy and direct disputes. Credit reporting is 33% of usable narratives, so many may have **no governing section in our four-part corpus**. The rubric needs a "no in-scope section" label; the team decides whether to accept that or add FCRA text. *Section numbers here are unverified; check them against eCFR during corpus parsing.*
+- **Reg V coverage gap (important for annotation).** Most credit-reporting complaints concern bureau dispute investigations. Those duties sit in the FCRA statute (15 U.S.C. 1681i), not in Reg V (12 CFR 1022), which covers narrower ground such as furnisher accuracy and direct disputes. Credit reporting is 33% of usable narratives, so many may have **no governing section in our four-part corpus**. The rubric needs a "no in-scope section" label; the team decides whether to accept that or add FCRA text. *Verified against eCFR (2026-10-15): Reg V has 1022.40 Scope, 1022.41 Definitions, 1022.42 accuracy and integrity policies, 1022.43 Direct disputes; Reg V has no Official Interpretations supplement.*
 - The same applies, to a smaller degree, to mortgages (RESPA / Reg X) and deposit accounts (Reg DD), both out of scope.
 - `PRODUCT_TO_REGULATION` works at product level. An issue-level mapping would be more precise: an unauthorized credit card charge falls under Reg Z billing errors, while the same problem on a debit card falls under Reg E. Revisit with the rubric.
 - **Stage interfaces are not frozen** (CLAUDE.md week 2 milestone). Proposals are in Sec. 6. Agree them before Pairs B and C build against stubs.
@@ -185,7 +194,7 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 3. **Log the results** in Sec. 7: GPU, minutes per epoch, val and test macro-F1, and the weakest classes. Compare settings (for example `--class-weights` or `--head-tokens 510`) on **validation only**.
 4. **Interface** (proposed, to be frozen with the team): `predictions_<split>.parquet` with `complaint_id`, `true_<label>`, `pred_<label>`, `pred_<label>_prob`. Merging the product and issue runs on `complaint_id` gives the downstream table.
 
-**Pair B: regulation corpus.** Download eCFR Title 12 Parts 1005, 1026, 1022, 1006 (XML), chunk by section structure, and verify the Reg V section numbers in Sec. 5. Proposed chunk interface: `chunk_id`, `part`, `section` (e.g. `1026.13`), `paragraph`, `heading`, `text`, `source_url`.
+**Pair B: retrieval (corpus done).** Build BM25, dense (Sentence-BERT + FAISS) and hybrid retrievers over `reg_chunks.parquet`, following `docs/INTERFACES.md` Sec. 2. Decide whether interpretation chunks are indexed (ablation).
 
 **Everyone.** Draft the annotation rubric (two people), including the "no in-scope section" label, then annotate `annotation_sample.csv` with overlap for inter-annotator agreement.
 
@@ -313,3 +322,21 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Model loading:** `ComplaintClassifier("outputs/classifier/<label>/best")` reads the truncation settings from `run_info.json`, cleans raw CFPB text automatically, and returns label, prob, and top-k. Verified on CPU: on 150 random test complaints per model, it gives **100% label agreement** with the Colab predictions; probability differences are median 0.0003 (product) / 0.0013 (issue) and at most 0.008, from bf16 on GPU versus fp32 on CPU. Raw and pre-cleaned input give the same labels. Speed is about 3 narratives/sec on Aditya's CPU. The weights (`best/`, about 268 MB each) live on Drive `Dataset/outputs/classifier/<label>/best/` and on Aditya's laptop; they are git-ignored.
 - 46 unit tests pass.
 - **eCFR facts for Pair B** (API, 2026-10-15; Title 12 up to date as of 2026-10-13): section/appendix counts are Part 1005 (Reg E) 27/4, Part 1006 (Reg F) 15/4, Part 1022 (Reg V) 45/14, Part 1026 (Reg Z) 59/18, so **146 sections** in total. Table-of-contents endpoint: `https://www.ecfr.gov/api/versioner/v1/structure/<date>/title-12.json?part=<n>`. The full-text endpoint `.../full/<date>/title-12.xml?part=<n>` returned HTTP 406 to a range request; work out the right request when building the corpus.
+
+### 2026-10-15: Regulation corpus, interfaces, LLM annotation tooling (branch `regulation-corpus`)
+- **eCFR download:** Title 12 up to date as of 2026-10-13. Parts 1005, 1006, 1022, 1026 were fetched as full XML through the eCFR API; the full-text endpoint returns HTTP 406 unless the request sends `Accept-Encoding: gzip`. Transfer was about 1.1 MB compressed and 5.3 MB of XML, stored in `data/raw/ecfr/` (git-ignored).
+- **Corpus:** `data/processed/reg_chunks.parquet` has **4,070 chunks**: 1,540 regulation, 2,418 interpretation (Supplement I), 112 appendix. By part: E 236/388/15, F 91/111/9, V 255/0/19, Z 958/1,919/69. There are 146 sections, 10 of them reserved.
+  - Regulation chunks are top-level paragraphs, split at numbered subparagraphs when over 350 words; the median is 94 words.
+  - Interpretation chunks are grouped by commentary heading and mapped to a section or paragraph; 97.8% map to a rule section, and the rest are appendix commentary.
+  - 380 chunks are word-window pieces (`#k`) of 106 over-long single comments or paragraphs.
+  - Coverage: 99.3% to 100% of source words land in chunks; the dropped text is heading-only blocks.
+  - Spot checks: 1006.18(b)'s roman items stay inside (b), 1026.13 runs (a) to (i), and 1006.34 splits into (b)(1) to (5).
+- **`docs/INTERFACES.md`** (PROPOSED) covers complaint records, classifier output, chunks, retriever output and section-level scoring, gold labels, generation (retrieved vs oracle conditions, caching), and verification. Freeze it after team review.
+- **TA ruling, 2026-10-15:** LLMs may do the annotation (Claude Code, ChatGPT, ...); LLM bias is acceptable given the team's lack of legal expertise. This supersedes CLAUDE.md Sec. 5's "human labels are ground truth" for annotation; CLAUDE.md is unchanged pending a team edit. Report these as *silver* labels. The protocol is in `annotation/ANNOTATION_GUIDE.md`: Annotator A is Claude with the skill; Annotator B is a different LLM family, blind; kappa between A and B; humans adjudicate disagreements and spot-check 20.
+- **Legal-skill search (TA suggestion):** reviewed Anthropic's `anthropics/claude-for-legal` (Apache-2.0; plugins for commercial, corporate, employment, privacy, product, regulatory monitoring, IP, litigation, legal clinic, law student) and community skills (contract review, GDPR-style compliance). **None targets consumer-finance complaint-to-regulation mapping**, and several bundle hooks, scripts, or MCP connectors, so none were installed. We wrote a project skill instead (`.claude/skills/regulation-annotator/SKILL.md`). It follows the useful conventions (grounded citations, flag unverified items, "draft, not legal advice"). The method is: facts, coverage gate, read the section text with interpretations, elements test, conclusion with a verbatim quote. Every section number in its decision table was checked against the corpus; two remembered Reg V numbers (1022.80, 1022.90) were not in the corpus and were left out. The prepaid claim (1005.18(e)) and the "debt collector" definition (1006.2(i)) were also checked against the text.
+- **Pilot (Annotator A = claude-opus-5-5, 3 items):**
+  - 16625083 (Equifax dispute letter): NONE, governed by FCRA 1681i, confidence 2.
+  - 16779625 (card payment marked late): Z 1026.10(a), confidence 2, runner-up 1026.13.
+  - 23571192 (Wells Fargo denied an unauthorized-EFT claim without documents): E 1005.11(d)(1), confidence 3.
+  - `check_llm_labels.py` passes all 3 and rejects a copy with a one-word quote change.
+- `scripts/reg_lookup.py --search` is a crude TF-IDF helper; for "unauthorized debit card" it ranks 1005.17 (overdraft) above 1005.11, so the skill relies on its decision table plus reading, not on search.
