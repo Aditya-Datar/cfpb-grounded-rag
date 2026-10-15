@@ -37,7 +37,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v1 results are STALE (trained on buggy cleaning and old splits). Retrain on v2 data.** v1 for reference: product test macro-F1 0.798, issue test macro-F1 0.297 (Sec. 7) |
-| 2. Regulation corpus and retrieval | B | `chunking` (pushed) | **Parsing and chunking done for regulation text in all four parts** (2,104 chunks). After Ujjwal's parser fix (`232a564`), 5 of 5,006 paragraph paths still disagree with eCFR (all in 1026.19). Supplement I and appendices not chunked. Embedding model not chosen. Retrieval (FAISS, BM25) not started. See Sec. 7, 2026-10-14 (parser fix entry) |
+| 2. Regulation corpus and retrieval | B | `chunking` (pushed) | **Parsing and chunking done for regulation text in all four parts** (2,629 chunks at `--max-chars 1400`). Embedding model: `all-mpnet-base-v2` (384 tokens); 66 chunks still exceed it. After Ujjwal's parser fix (`232a564`), 5 of 5,006 paragraph paths still disagree with eCFR (all in 1026.19). Supplement I and appendices not chunked. Retrieval (FAISS, BM25) not started. See Sec. 7, 2026-10-14 entries |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
 
@@ -321,3 +321,21 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Result, all four parts, default `--max-chars 2000`:** 1005: 309 chunks, 0 flagged, 2 over 2,000; 1026: 1,362, 1 flagged, 31 over; 1022: 341, 0, 3 over (max 3,450); 1006: 92, 0, 0 over. Total 2,104. Chunks missing a parent intro: **0**. Paragraph anchors not on eCFR: 5 of 2,072 (the 1026.19 case above). `chunking/data/processed/chunks.jsonl` regenerated locally, not committed.
 - **Tests:** 16, all passing (plain Python loop; pytest still not run). New: period-form split, a cross-reference that must not split, the real 1005.12(a)(2) case, and a corpus-wide check that every chunk contains the words of all its parent paragraphs at 500 and 2,000 chars. That check finds parent intros independently of the chunker (parser markers plus a plain text search for the next marker); run on the old chunker's output it reports the same 205 chunks.
 - **Still open:** the 1026.19 path; `parse_report.json` stores `§` as a broken character (`write_text` without `encoding="utf-8"`); the parser exits 1 because 1022 Appendix L is empty but not marked reserved; embedding model; Supplement I owner; Reg V section check.
+
+### 2026-10-14: Embedding model chosen; chunk size set to 1,400 chars (Ishani + Claude)
+- **Decision (Ishani with Ujjwal):** retrieval uses `sentence-transformers/all-mpnet-base-v2`. Its `max_seq_length` is 384 tokens (from the model's `sentence_bert_config.json`); longer input is cut from the end, and the 2 special tokens count toward the 384.
+- **Measurement:** every chunk tokenized with the model's own tokenizer (`tokenizers` 0.23.3 in the repo `.venv`, tokenizer files only, no model weights). The shipped `tokenizer.json` pads and truncates to 128 tokens, so both must be turned off before counting. Regulation text averages about 4.5 chars per token, so 384 tokens is roughly 1,700 chars.
+
+  | `--max-chars` | Chunks | Avg tokens | Over 384 | Could be split further | Cannot be split |
+  |---:|---:|---:|---:|---:|---:|
+  | 2000 | 2,104 | 198 | 160 | 124 | 36 |
+  | 1500 | 2,519 | 181 | 69 | 3 | 66 |
+  | 1450 | 2,566 | 179 | 67 | | |
+  | **1400** | **2,629** | **177** | **66** | **0** | **66** |
+  | 1200 | 2,920 | 168 | 66 | 0 | 66 |
+  | 1000 | 3,262 | 159 | 66 | 0 | 66 |
+  | 800 | 3,599 | 151 | 66 | 0 | 66 |
+
+  "Cannot be split" means a paragraph with no sub-paragraphs that is over the character limit. Smaller limits only add chunks once the over-384 count reaches 66.
+- **Change:** `MAX_CHARS` (default of `--max-chars`) is now 1400, the largest value that reaches 66. `chunks.jsonl` regenerated locally (not committed): 1005: 395 chunks; 1026: 1,706; 1022: 409; 1006: 119; total 2,629, 66 over 384 tokens. Tests: 1005.11 now gives 14 chunks at the default (the old 8-chunk test is pinned to 2,000), and the parent-intro check also runs at 1,400. 17 tests pass (plain Python loop).
+- **The 66 that no limit fixes:** only 8 are over 384 tokens because the paragraph itself is (e.g. 1022.30(e)(6), 651 tokens). The other 58 are over because of the parent intros the team rule requires (e.g. every 1026.20(c)(2) chunk repeats the (c) and (c)(2) intros, about 400 tokens together). Because the model cuts from the end and a chunk's own text comes last, **15 chunks lose their own text entirely and 30 lose more than half** (e.g. `1026.20-c-2-v-A`: 11 tokens of its own after about 420 of intros). Next: measure shortening parent intros to their headings for these chunks (team decision needed, since it changes the parent-intro rule).

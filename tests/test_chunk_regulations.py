@@ -106,10 +106,18 @@ def test_continuation_stays_with_previous_paragraph():
     assert chunks[0]["text"].endswith("More about (a).")
 
 
-def test_default_gives_same_chunks_for_1005_11():
-    chunks = chunk_record(_real_record("1005.11"))
+def test_1005_11_chunks_at_2000():
+    chunks = chunk_record(_real_record("1005.11"), max_chars=2000)
     assert [c["paragraph"] for c in chunks] == [
         "(a)", "(b)", "(c)(1)", "(c)(2)", "(c)(3)", "(c)(4)", "(d)", "(e)",
+    ]
+
+
+def test_default_1400_chunks_for_1005_11():
+    chunks = chunk_record(_real_record("1005.11"))
+    assert [c["paragraph"] for c in chunks] == [
+        "(a)", "(b)(1)", "(b)(2)", "(b)(3)", "(c)(1)", "(c)(2)(i)", "(c)(2)(ii)", "(c)(2)(iii)",
+        "(c)(2)(iv)", "(c)(3)", "(c)(4)", "(d)(1)", "(d)(2)", "(e)",
     ]
 
 
@@ -204,7 +212,7 @@ def _all_regulation_records():
 
 
 def test_every_chunk_contains_all_parent_intros():
-    for max_chars in (500, 2000):
+    for max_chars in (500, 1400, 2000):
         missing = []
         for record in _all_regulation_records():
             missing += _missing_parent_intros(record, chunk_record(record, max_chars=max_chars))

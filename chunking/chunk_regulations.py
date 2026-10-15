@@ -18,7 +18,9 @@ from pathlib import Path
 
 from parse_regulations import COMPOUND_RE, PARTS, RUN_RE, RUNIN_RE, SINGLE_RE, candidates, leading_markers
 
-MAX_CHARS = 2000  # Chunk size limit; revisit once the embedding model is chosen.
+# Chunk size limit. 1400 keeps chunks within all-mpnet-base-v2's 384 tokens, except
+# for chunks that cannot be split further (see CLAUDE_PROGRESS.md, 2026-10-14).
+MAX_CHARS = 1400
 
 
 class Node:
