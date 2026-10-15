@@ -8,9 +8,15 @@ section is split at paragraph boundaries, going one level deeper only
 where a paragraph is still too long. Every chunk starts with the section
 heading and the intro text of each parent paragraph, so a chunk for
 (c)(2) also carries the words of (c).
+
+`embed_text` is the text to embed for search. It equals `text`, except when
+`text` is over the embedding model's token limit: then each parent intro is
+shortened to its heading, so the model still sees the chunk's own words.
+Needs the `tokenizers` package and downloads the model's tokenizer once.
 """
 
 import argparse
+import functools
 import json
 import re
 import statistics
@@ -21,6 +27,38 @@ from parse_regulations import COMPOUND_RE, PARTS, RUN_RE, RUNIN_RE, SINGLE_RE, c
 # Chunk size limit. 1400 keeps chunks within all-mpnet-base-v2's 384 tokens, except
 # for chunks that cannot be split further (see CLAUDE_PROGRESS.md, 2026-10-14).
 MAX_CHARS = 1400
+EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
+EMBED_MAX_TOKENS = 384  # max_seq_length in the model's sentence_bert_config.json
+# A heading ends at the first dash, or at a period followed by a space ("1026.20" does not count).
+HEADING_END_RE = re.compile(r"[—–]|\.(?=\s|$)")
+
+
+@functools.lru_cache(maxsize=None)
+def load_token_counter(model=EMBED_MODEL):
+    """Token count as the embedding model sees it: special tokens included, no padding or truncation."""
+    try:
+        from tokenizers import Tokenizer
+    except ImportError:
+        raise SystemExit(
+            "chunk_regulations.py needs the 'tokenizers' package to build embed_text.\n"
+            "Install it in the repo venv:\n"
+            "  .venv/bin/python -m pip install tokenizers        (macOS/Linux)\n"
+            "  .venv\\Scripts\\python -m pip install tokenizers    (Windows)"
+        ) from None
+    try:
+        tokenizer = Tokenizer.from_pretrained(model)
+    except Exception as e:
+        raise SystemExit(f"Could not load the {model} tokenizer from Hugging Face: {e}") from None
+    # The shipped tokenizer.json pads and truncates to 128 tokens, which would hide long chunks.
+    tokenizer.no_truncation()
+    tokenizer.no_padding()
+    return lambda text: len(tokenizer.encode(text).ids)
+
+
+def heading_only(text):
+    """'(2) Timing and content. Except as ...' -> '(2) Timing and content.'"""
+    m = HEADING_END_RE.search(text)
+    return text[: m.end()].strip() if m else text
 
 
 class Node:
@@ -101,13 +139,22 @@ def build_tree(blocks):
     return root
 
 
-def chunk_record(record, max_chars=MAX_CHARS):
-    """Chunks for one regulation record, as a list of dicts in document order."""
+def chunk_record(record, max_chars=MAX_CHARS, count_tokens=None):
+    """Chunks for one regulation record, as a list of dicts in document order.
+
+    count_tokens defaults to the embedding model's tokenizer; tests may pass their own.
+    """
+    count_tokens = count_tokens or load_token_counter()
     heading_line = record["heading"]
     chunks = []
 
     def make_text(context, body):
         return "\n".join([heading_line] + [p[1] for p in context + body])
+
+    def make_embed_text(context, body, text):
+        if count_tokens(text) <= EMBED_MAX_TOKENS:
+            return text
+        return "\n".join([heading_line] + [heading_only(p[1]) for p in context] + [p[1] for p in body])
 
     def visit(node, context):
         body = node.subtree_pieces()
@@ -122,10 +169,10 @@ def chunk_record(record, max_chars=MAX_CHARS):
     root = build_tree(record["blocks"])
     visit(root, [])
     check_coverage(record, root, chunks)
-    return [to_output(record, *c) for c in chunks]
+    return [to_output(record, *c, make_embed_text(c[1], c[2], c[3])) for c in chunks]
 
 
-def to_output(record, node, context, body, text):
+def to_output(record, node, context, body, text, embed_text):
     section = record["section"]
     label = "".join(f"({p})" for p in node.path)
     certain = all(p[2] for p in context + body)
@@ -139,6 +186,7 @@ def to_output(record, node, context, body, text):
         "heading": record["section_heading"],
         "text": text,
         "source_url": record["source_url"] + anchor,
+        "embed_text": embed_text,
         "content_type": record["content_type"],
         "regulation": record["regulation"],
         "path_certain": certain,
@@ -176,6 +224,7 @@ def main(argv=None):
     )
     parser.add_argument("--show", metavar="SECTION", help="print every chunk of one section, e.g. 1005.11")
     args = parser.parse_args(argv)
+    count_tokens = load_token_counter()  # fail early if the tokenizer is unavailable
 
     chunks = []
     with args.sections.open(encoding="utf-8") as f:
@@ -186,7 +235,7 @@ def main(argv=None):
                 and record["content_type"] == "regulation"
                 and not record["reserved"]
             ):
-                chunks += chunk_record(record, args.max_chars)
+                chunks += chunk_record(record, args.max_chars, count_tokens)
 
     ids = [c["chunk_id"] for c in chunks]
     duplicates = sorted({i for i in ids if ids.count(i) > 1})
@@ -212,6 +261,13 @@ def main(argv=None):
             f"max {max(sizes)}  over {args.max_chars}: {sum(s > args.max_chars for s in sizes)}  "
             f"uncertain paths: {sum(not c['path_certain'] for c in mine)}"
         )
+    over_text = sum(count_tokens(c["text"]) > EMBED_MAX_TOKENS for c in chunks)
+    over_embed = sum(count_tokens(c["embed_text"]) > EMBED_MAX_TOKENS for c in chunks)
+    shortened = sum(c["embed_text"] != c["text"] for c in chunks)
+    print(
+        f"over {EMBED_MAX_TOKENS} tokens ({EMBED_MODEL}): text {over_text}, embed_text {over_embed}  "
+        f"(embed_text shortened for {shortened} chunks)"
+    )
     print("chunks ->", args.out)
 
     if args.show:

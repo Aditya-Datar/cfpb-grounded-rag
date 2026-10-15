@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import sys
@@ -6,7 +7,8 @@ from pathlib import Path
 CHUNKING = Path(__file__).resolve().parents[1] / "chunking"
 sys.path.insert(0, str(CHUNKING))
 
-from chunk_regulations import chunk_record, split_at_markers  # noqa: E402
+import chunk_regulations  # noqa: E402
+from chunk_regulations import EMBED_MAX_TOKENS, chunk_record, heading_only, load_token_counter, split_at_markers  # noqa: E402
 from parse_regulations import SINGLE_RE, leading_markers  # noqa: E402
 
 URL = "https://www.ecfr.gov/current/title-12/part-1005/section-1005.99"
@@ -217,3 +219,85 @@ def test_every_chunk_contains_all_parent_intros():
         for record in _all_regulation_records():
             missing += _missing_parent_intros(record, chunk_record(record, max_chars=max_chars))
         assert missing == [], (max_chars, len(missing), missing[:5])
+
+
+# ---- embed_text
+
+# SHA-1 over every regulation chunk's chunk_id and text, all four parts, made by the
+# code before embed_text existed (commit 8f7b9f2). embed_text must not change text.
+TEXT_FINGERPRINTS = {
+    1400: (2629, "6371522a5e6aecc4d0ca4cda18f51c8cab8ca0a0"),
+    2000: (2104, "1d25c90a41431469359f81d56e6b07d6c0b48ad9"),
+}
+
+
+def _words(text):
+    """Stand-in token counter for synthetic records: one token per word."""
+    return len(text.split())
+
+
+def test_embed_text_comes_right_after_the_seven_fields():
+    chunk = chunk_record(_record([("(a) First.", ["a"], False, True)]), count_tokens=_words)[0]
+    assert list(chunk)[7] == "embed_text"
+
+
+def test_heading_only():
+    assert heading_only("(2) Timing and content. Except as otherwise provided") == "(2) Timing and content."
+    assert heading_only("(b) Pre-acquisition disclosure requirements—") == "(b) Pre-acquisition disclosure requirements—"
+    # A period inside a section number is not the end of a heading.
+    assert heading_only("(c) Rules in § 1026.20(d) apply. More text") == "(c) Rules in § 1026.20(d) apply."
+    assert heading_only("(3) For each employee who is not licensed:") == "(3) For each employee who is not licensed:"
+
+
+def test_embed_text_equals_text_when_short():
+    chunk = chunk_record(_record([("(a) First.", ["a"], False, True)]), count_tokens=_words)[0]
+    assert chunk["embed_text"] == chunk["text"]
+
+
+def test_embed_text_shortens_parent_intros_when_too_long():
+    chunks = chunk_record(_record([
+        ("(c) Time limits. " + "intro " * 400, ["c"], False, True),
+        ("(1) First rule.", ["c", "1"], False, True),
+        ("(2) Second rule.", ["c", "2"], False, True),
+    ]), max_chars=400, count_tokens=_words)
+    c1 = chunks[0]
+    assert c1["paragraph"] == "(c)(1)"
+    assert c1["text"].startswith("§ 1005.99 Test section.\n(c) Time limits. intro intro")
+    assert c1["embed_text"] == "§ 1005.99 Test section.\n(c) Time limits.\n(1) First rule."
+
+
+def test_missing_tokenizers_package_gives_install_message():
+    saved = sys.modules.get("tokenizers")
+    sys.modules["tokenizers"] = None  # makes "from tokenizers import ..." raise ImportError
+    load_token_counter.cache_clear()
+    try:
+        chunk_regulations.load_token_counter()
+        raise AssertionError("expected SystemExit")
+    except SystemExit as e:
+        assert "pip install tokenizers" in str(e)
+    finally:
+        if saved is None:
+            del sys.modules["tokenizers"]
+        else:
+            sys.modules["tokenizers"] = saved
+        load_token_counter.cache_clear()
+
+
+def test_text_unchanged_by_embed_text():
+    records = _all_regulation_records()
+    for max_chars, (n_expected, sha_expected) in TEXT_FINGERPRINTS.items():
+        h, n = hashlib.sha1(), 0
+        for record in records:
+            for c in chunk_record(record, max_chars=max_chars):
+                h.update((c["chunk_id"] + "\n" + c["text"] + "\n\0").encode("utf-8"))
+                n += 1
+        assert (n, h.hexdigest()) == (n_expected, sha_expected), max_chars
+
+
+def test_embed_text_never_more_tokens_than_text():
+    count = load_token_counter()
+    for record in _all_regulation_records():
+        for c in chunk_record(record):
+            assert count(c["embed_text"]) <= count(c["text"]), c["chunk_id"]
+            if count(c["text"]) <= EMBED_MAX_TOKENS:
+                assert c["embed_text"] == c["text"], c["chunk_id"]
