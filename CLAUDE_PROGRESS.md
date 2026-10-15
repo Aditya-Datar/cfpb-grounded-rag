@@ -36,7 +36,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | Stage | Pair | Branch | Status |
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
-| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v1 results are STALE (trained on buggy cleaning and old splits). Retrain on v2 data.** v1 for reference: product test macro-F1 0.798, issue test macro-F1 0.297 (Sec. 7) |
+| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 0.310 over all 88 train labels (0.325 over the 84 labels present in test), accuracy 0.581. See Sec. 7 |
 | 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
@@ -283,3 +283,22 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - Simulated the Colab flow from a ZIP of `origin/classifier` with the v2 data files: `check_splits.py` printed all 4 OK, 43 tests passed, and the smoke training run exited 0.
 - Still on the branch: notebook cell 11 (`a4707ea`, results packaging); the revert was not requested.
 - Next: re-upload the v2 data and a fresh ZIP to Drive, clear the old `Dataset/outputs/classifier/`, and retrain product and issue.
+
+### 2026-10-15: v2 classifier baseline (Colab A100, run by a teammate; analysed by Aditya + Claude)
+- **Verified fresh v2 runs:** run_info rows are 111,527 / 14,022 / 13,905, and the prediction ids equal the v2 val/test ids exactly. Each history has 3 new epochs that differ from v1, so nothing resumed from stale checkpoints. The reported val score equals the best epoch. Environment: A100-SXM4-80GB, bf16, transformers 5.18.0, pandas 2.2.3, about 2.2 min per epoch, default settings. 14.4% of train narratives are truncated at 512 tokens.
+- **Product (11 classes):** val macro-F1 by epoch 0.782, 0.799, **0.801** (best is epoch 3, still rising slightly). **Test: macro-F1 0.808, accuracy 0.843, weighted-F1 0.842.**
+  - Per-class test F1: mortgage 0.951, student loan 0.917, vehicle 0.883, credit reporting 0.865, credit card 0.851, debt collection 0.837, money transfer 0.810, checking/savings 0.801, payday/personal 0.764, prepaid 0.696 (recall 0.621), debt or credit management 0.509 (recall 0.384, n = 190).
+  - Top confusions: money transfer to checking 228 and the reverse 215; credit reporting to debt collection 131 and the reverse 127; credit card to checking 95 and the reverse 78.
+  - Accuracy by confidence: 41% at 0.5 or below, 54% from 0.5 to 0.7, 71% from 0.7 to 0.9, 90% from 0.9 to 0.99, and **98.5% above 0.99** (4,128 of 13,905 test rows).
+- **Issue (88 train labels):** val macro-F1 by epoch 0.255, 0.293, **0.307**. **Test: macro-F1 0.310 over all 88 labels / 0.325 over the 84 labels present in test, accuracy 0.581, weighted-F1 0.564.**
+  - Four labels have no test examples and were never predicted ("Credit limit changed", "Incorrect exchange rate", "Problem with overdraft", "Property was sold"). `train.evaluate` passes all train labels to sklearn, so they count as F1 = 0. **Proposed fix (not yet applied):** average over labels present in the true or predicted labels, which is sklearn's default.
+  - 29 labels have test F1 = 0; all 22 labels with 10 or fewer test examples score 0. Mean F1 by test support: 0 for 10 or fewer, 0.17 for 11 to 30, 0.30 for 31 to 100, 0.52 for 101 to 300, 0.57 for 301 to 1,000, and 0.65 above 1,000. **Macro-F1 over the 39 issues with at least 100 test examples is 0.538.**
+  - Top confusions are near-synonym consumer labels: "Problem with a company's investigation" predicted as "Incorrect information on your report" 192 times; "Problem with a lender … charging your account" as "Managing an account" 134; "False statements or representation" as "Attempts to collect debt not owed" 120; "Improper use of your report" as "Incorrect information" 114. **65.9% of the 5,828 issue errors are an issue valid for the true product.**
+  - Accuracy by confidence: 21% at 0.3 or below, 35% from 0.3 to 0.5, 51% from 0.5 to 0.7, 68% from 0.7 to 0.9, and **91.5% above 0.9**.
+  - One val row is excluded because its label ("Lost or stolen refund") never appears in train.
+- **Versus v1:** the test sets differ (v2 test overlaps v1 test only partly, and the row count changed), so the numbers are **not** a controlled comparison. Product is 0.808 vs 0.798 and issue (all labels) 0.310 vs 0.297. Treat v2 as the official baseline.
+- **Open items for Pair A:**
+  1. Approve the macro-F1 convention fix above.
+  2. Decide on issue-label handling (merge rare issues, or report the at-least-100-examples subset alongside).
+  3. Optional: a 4th epoch for product, since val was still rising.
+  4. Freeze the output interface with Pairs B and C.
