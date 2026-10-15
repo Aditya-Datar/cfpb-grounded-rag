@@ -16,7 +16,7 @@ import re
 import statistics
 from pathlib import Path
 
-from parse_regulations import COMPOUND_RE, PARTS, RUN_RE, SINGLE_RE, get_leading_markers
+from parse_regulations import COMPOUND_RE, PARTS, RUN_RE, RUNIN_RE, SINGLE_RE, candidates, leading_markers
 
 MAX_CHARS = 2000  # Chunk size limit; revisit once the embedding model is chosen.
 
@@ -40,6 +40,7 @@ def split_at_markers(text):
     """Split a block's text where each leading marker starts.
 
     '(c) Time limits—(1) Ten-day period.' -> ['(c) Time limits—', '(1) Ten-day period.']
+    '(b) Record retention. (1) Any person' -> ['(b) Record retention. ', '(1) Any person']
     A marker with no words of its own stays with the next one:
     '(a)(1) “Access device” means' -> ['', '(a)(1) “Access device” means']
     """
@@ -48,9 +49,14 @@ def split_at_markers(text):
         return [text]
     starts = [m.start(1) + s.start() for s in SINGLE_RE.finditer(m.group(1))]
     offset = m.end()
-    # Same loop as get_leading_markers, but keeping positions.
+    # Same loop as parse_regulations.leading_markers, but keeping positions.
     while True:
         c = COMPOUND_RE.match(text[offset:])
+        if not c:
+            # Heading ending in '.' or ':', then a marker that can start a list: (1), (i), (A), (a).
+            c = RUNIN_RE.match(text[offset:])
+            if c and 1 not in candidates(SINGLE_RE.findall(c.group(2))[0]).values():
+                c = None
         if not c:
             break
         starts += [offset + c.start(2) + s.start() for s in SINGLE_RE.finditer(c.group(2))]
@@ -77,7 +83,7 @@ def build_tree(blocks):
         if not block["text"]:
             continue
         path, certain = tuple(block["path"]), block["path_certain"]
-        markers = [] if block["continuation"] else get_leading_markers(block["text"])[0]
+        markers = [] if block["continuation"] else leading_markers(block["text"])[0]
         k = len(markers)
         segments = split_at_markers(block["text"]) if k > 1 else []
         # A fused block like '(c) Intro—(1) Text' feeds both (c) and (c)(1).

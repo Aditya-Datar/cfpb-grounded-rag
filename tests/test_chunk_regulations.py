@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -6,6 +7,7 @@ CHUNKING = Path(__file__).resolve().parents[1] / "chunking"
 sys.path.insert(0, str(CHUNKING))
 
 from chunk_regulations import chunk_record, split_at_markers  # noqa: E402
+from parse_regulations import SINGLE_RE, leading_markers  # noqa: E402
 
 URL = "https://www.ecfr.gov/current/title-12/part-1005/section-1005.99"
 SECTIONS = CHUNKING / "data/processed/sections.jsonl"
@@ -126,3 +128,84 @@ def test_every_block_in_one_chunk_at_several_limits():
             # Fused blocks are split across parent and child, so check the tail.
             tail = text[-40:]
             assert any(tail in c["text"] for c in chunks), (max_chars, tail)
+
+
+def test_split_period_form():
+    assert split_at_markers("(b) Record retention. (1) Any person shall retain") == [
+        "(b) Record retention. ", "(1) Any person shall retain",
+    ]
+
+
+def test_period_form_needs_a_list_start():
+    # "(ii)" cannot start a list, so it is a cross-reference, not a new paragraph.
+    assert split_at_markers("(2) Coverage. (ii) applies here") == ["(2) Coverage. (ii) applies here"]
+
+
+def test_period_form_intro_reaches_every_child_chunk():
+    filler = "word " * 60
+    chunks = chunk_record(_record([
+        ("(b) Record retention. (1) First rule. " + filler, ["b", "1"], False, True),
+        ("(2) Second rule. " + filler, ["b", "2"], False, True),
+    ]), max_chars=400)
+    assert [c["paragraph"] for c in chunks] == ["(b)(1)", "(b)(2)"]
+    assert all("\n(b) Record retention.\n" in c["text"] for c in chunks)
+
+
+def test_real_period_form_1005_12():
+    chunks = {c["paragraph"]: c for c in chunk_record(_real_record("1005.12"))}
+    assert "(a) Relation to Truth in Lending." in chunks["(a)(2)"]["text"]
+
+
+def _squash(s):
+    return " ".join(s.split())
+
+
+def _own_texts(record):
+    """(paragraph path, text written directly under it), found without the chunker's code.
+
+    The parser gives each block's markers; a marker's own words run up to where
+    the next marker's "(x)" first appears in the text.
+    """
+    out = []
+    for b in record["blocks"]:
+        path, text = tuple(b["path"]), b["text"]
+        markers = [] if b["continuation"] else leading_markers(text)[0]
+        k = len(markers)
+        if k < 2 or list(path[-k:]) != markers:
+            out.append((path, text))
+            continue
+        start = 0
+        for j in range(k):
+            end = text.find(f"({markers[j + 1]})", start + 1) if j + 1 < k else len(text)
+            words = SINGLE_RE.sub("", text[start:end]).strip()
+            if words:
+                out.append((path[: len(path) - k + 1 + j], text[start:end]))
+            start = end if words or j + 1 == k else start
+    return out
+
+
+def _missing_parent_intros(record, chunks):
+    """Chunks whose text lacks the words of one of their parent paragraphs."""
+    own = _own_texts(record)
+    missing = []
+    for c in chunks:
+        path = tuple(re.findall(r"\(([^)]+)\)", c["paragraph"]))
+        text = _squash(c["text"])
+        for parent, intro in own:
+            if len(parent) < len(path) and path[: len(parent)] == parent and _squash(intro) not in text:
+                missing.append((c["chunk_id"], intro[:60]))
+    return missing
+
+
+def _all_regulation_records():
+    with SECTIONS.open(encoding="utf-8") as f:
+        records = [json.loads(line) for line in f]
+    return [r for r in records if r["content_type"] == "regulation" and not r["reserved"]]
+
+
+def test_every_chunk_contains_all_parent_intros():
+    for max_chars in (500, 2000):
+        missing = []
+        for record in _all_regulation_records():
+            missing += _missing_parent_intros(record, chunk_record(record, max_chars=max_chars))
+        assert missing == [], (max_chars, len(missing), missing[:5])
