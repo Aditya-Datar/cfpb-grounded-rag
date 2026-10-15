@@ -46,9 +46,44 @@ def predict(model, enc: list[list[int]], batch_size: int, device, dtype, pad_id:
     return probs
 
 
+def compute_metrics(preds: pd.DataFrame, labels: list[str], label_col: str) -> dict:
+    """Metrics from a predictions table (columns true_<label>, pred_<label>).
+
+    Rows whose true label never appeared in train cannot be predicted, so they
+    are excluded and counted. Macro-F1 averages over labels that occur in the
+    true or predicted labels of this split (sklearn's default). A train label
+    with no examples here that is never predicted has no defined F1 and is
+    listed in labels_without_examples instead of counting as 0. Before
+    2026-10-15 all train labels were averaged, which pulled issue macro-F1
+    down (0.310 vs 0.325 on v2 test).
+    """
+    known = preds[f"true_{label_col}"].isin(labels)
+    y_true, y_pred = preds.loc[known, f"true_{label_col}"], preds.loc[known, f"pred_{label_col}"]
+    scored = sorted(set(y_true) | set(y_pred))
+    return {
+        "n": int(known.sum()),
+        "n_excluded_unseen_label": int((~known).sum()),
+        "n_labels_scored": len(scored),
+        "labels_without_examples": [lab for lab in labels if lab not in scored],
+        "accuracy": accuracy_score(y_true, y_pred),
+        "macro_f1": f1_score(y_true, y_pred, labels=scored, average="macro", zero_division=0),
+        "macro_f1_all_train_labels": f1_score(y_true, y_pred, labels=labels, average="macro",
+                                              zero_division=0),
+        "weighted_f1": f1_score(y_true, y_pred, labels=scored, average="weighted", zero_division=0),
+        "per_class": classification_report(y_true, y_pred, labels=scored, output_dict=True,
+                                           zero_division=0),
+    }
+
+
+def summarize(metrics: dict) -> dict:
+    """The headline numbers stored in run_info.json."""
+    return {k: metrics[k] for k in ("n", "n_excluded_unseen_label", "n_labels_scored",
+                                    "accuracy", "macro_f1", "macro_f1_all_train_labels",
+                                    "weighted_f1")}
+
+
 def evaluate(df: pd.DataFrame, probs: np.ndarray, labels: list[str], label_col: str) -> tuple[dict, pd.DataFrame]:
-    """Metrics plus a predictions table. Rows whose true label never appeared in
-    train cannot be predicted, so they are excluded from metrics and counted."""
+    """Metrics plus a predictions table for one split."""
     pred_idx = probs.argmax(1)
     preds = pd.DataFrame({
         "complaint_id": df["complaint_id"].values,
@@ -56,18 +91,7 @@ def evaluate(df: pd.DataFrame, probs: np.ndarray, labels: list[str], label_col: 
         f"pred_{label_col}": [labels[i] for i in pred_idx],
         f"pred_{label_col}_prob": probs.max(1).round(4),
     })
-    known = preds[f"true_{label_col}"].isin(labels)
-    y_true, y_pred = preds.loc[known, f"true_{label_col}"], preds.loc[known, f"pred_{label_col}"]
-    metrics = {
-        "n": int(known.sum()),
-        "n_excluded_unseen_label": int((~known).sum()),
-        "accuracy": accuracy_score(y_true, y_pred),
-        "macro_f1": f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0),
-        "weighted_f1": f1_score(y_true, y_pred, labels=labels, average="weighted", zero_division=0),
-        "per_class": classification_report(y_true, y_pred, labels=labels, output_dict=True,
-                                           zero_division=0),
-    }
-    return metrics, preds
+    return compute_metrics(preds, labels, label_col), preds
 
 
 def save_reports(out: Path, split: str, metrics: dict, preds: pd.DataFrame,
@@ -222,8 +246,7 @@ def train(args, train_df, val_df, test_df) -> dict:
         metrics, preds = evaluate(df, predict(model, enc[split], args.batch_size, device, dtype,
                                               pad_id), labels, label_col)
         save_reports(out, split, metrics, preds, labels, label_col)
-        results[split] = {k: metrics[k] for k in ("n", "n_excluded_unseen_label", "accuracy",
-                                                   "macro_f1", "weighted_f1")}
+        results[split] = summarize(metrics)
 
     run_info = {
         "args": vars(args), "labels": labels, "history": history, "results": results,

@@ -36,7 +36,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | Stage | Pair | Branch | Status |
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
-| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 0.310 over all 88 train labels (0.325 over the 84 labels present in test), accuracy 0.581. See Sec. 7 |
+| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
 | 2. Regulation corpus and retrieval | B | not created | Not started; does not depend on complaints, so it can start now |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
@@ -72,6 +72,10 @@ notebooks/train_classifier_colab.ipynb   step-by-step Colab runner (fresh-sessio
 requirements-classifier.txt         torch, transformers, matplotlib on top of requirements.txt
 tests/test_clean.py                  unit tests for cleaning and dedupe
 tests/test_classify_data.py         unit tests for truncation, batching, padding
+src/cfpb/classify/predict.py        ComplaintClassifier: load a trained best/ model, predict on new text
+scripts/evaluate_classifier.py      re-score a finished run from saved predictions (or --repredict)
+tests/test_split.py                 hash-split stability tests
+tests/test_metrics.py               macro-F1 convention tests
 ```
 
 New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, a runnable script in `scripts/`, and tests in `tests/`. Scripts add `src/` to `sys.path`, so no package install is needed.
@@ -302,3 +306,10 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   2. Decide on issue-label handling (merge rare issues, or report the at-least-100-examples subset alongside).
   3. Optional: a 4th epoch for product, since val was still rising.
   4. Freeze the output interface with Pairs B and C.
+
+### 2026-10-15: Macro-F1 convention fixed, models reusable without retraining (Aditya + Claude)
+- **Fix:** `train.compute_metrics` now averages macro-F1 over the labels present in the split's true or predicted labels, sklearn's default. Train labels with no examples in the split and never predicted are listed in `labels_without_examples` instead of scoring 0. A predicted-but-absent label still counts as 0. The old number is kept as `macro_f1_all_train_labels`, and three tests are in `tests/test_metrics.py`. This does not change best-epoch selection: absent labels were never predicted, so the old score is a fixed rescaling of the new one.
+- **Re-scored v2 runs from the saved predictions, no retraining** (`scripts/evaluate_classifier.py`): issue val 0.3066 to **0.3137** (86 labels scored), issue test 0.3100 to **0.3248** (84 labels scored; no test examples for "Credit limit changed", "Incorrect exchange rate", "Problem with overdraft", "Property was sold"). Product is unchanged (val 0.8011, test 0.8077). `run_info.json` records the rescoring under `"rescored"`. Original files are backed up in the session scratchpad only.
+- **Model loading:** `ComplaintClassifier("outputs/classifier/<label>/best")` reads the truncation settings from `run_info.json`, cleans raw CFPB text automatically, and returns label, prob, and top-k. Verified on CPU: on 150 random test complaints per model, it gives **100% label agreement** with the Colab predictions; probability differences are median 0.0003 (product) / 0.0013 (issue) and at most 0.008, from bf16 on GPU versus fp32 on CPU. Raw and pre-cleaned input give the same labels. Speed is about 3 narratives/sec on Aditya's CPU. The weights (`best/`, about 268 MB each) live on Drive `Dataset/outputs/classifier/<label>/best/` and on Aditya's laptop; they are git-ignored.
+- 46 unit tests pass.
+- **eCFR facts for Pair B** (API, 2026-10-15; Title 12 up to date as of 2026-10-13): section/appendix counts are Part 1005 (Reg E) 27/4, Part 1006 (Reg F) 15/4, Part 1022 (Reg V) 45/14, Part 1026 (Reg Z) 59/18, so **146 sections** in total. Table-of-contents endpoint: `https://www.ecfr.gov/api/versioner/v1/structure/<date>/title-12.json?part=<n>`. The full-text endpoint `.../full/<date>/title-12.xml?part=<n>` returned HTTP 406 to a range request; work out the right request when building the corpus.
