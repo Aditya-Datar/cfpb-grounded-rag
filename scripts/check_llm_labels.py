@@ -18,6 +18,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from cfpb.annotation import load_items  # noqa: E402
 from cfpb.config import PROCESSED_DIR  # noqa: E402
 
 REQUIRED = ["complaint_id", "annotator", "date", "main_grievance", "gold_regulation",
@@ -31,8 +32,8 @@ def norm(s: str) -> str:
 def main() -> None:
     path = Path(sys.argv[1])
     chunks = pd.read_parquet(PROCESSED_DIR / "reg_chunks.parquet")
-    sample_ids = set(pd.read_csv(PROCESSED_DIR / "annotation_sample.csv", dtype=str)["complaint_id"])
-    sec_reg = chunks[chunks["kind"] == "regulation"].groupby("section")["regulation"].first()
+    sample_ids = set(load_items()["complaint_id"])
+    sec_reg = chunks[chunks["kind"].isin(["regulation", "statute"])].groupby("section")["regulation"].first()
     sec_text = chunks.groupby("section")["text"].apply(lambda t: norm(" ".join(t)))
     problems, seen, n = [], set(), 0
     for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -43,11 +44,11 @@ def main() -> None:
         err = [f"missing {k}" for k in REQUIRED if k not in r]
         cid, reg, sec = r.get("complaint_id"), r.get("gold_regulation"), r.get("gold_section")
         if cid not in sample_ids:
-            err.append("complaint_id not in annotation_sample.csv")
+            err.append("complaint_id not in the annotation items (sample + top-up)")
         if cid in seen:
             err.append("duplicate complaint_id")
         seen.add(cid)
-        if reg not in {"E", "F", "V", "Z", "NONE"}:
+        if reg not in {"E", "F", "V", "Z", "FCRA", "NONE"}:
             err.append(f"bad regulation {reg}")
         if reg == "NONE":
             if sec:
@@ -74,7 +75,7 @@ def main() -> None:
     for i, cid, err in problems:
         print(f"line {i} ({cid}): " + "; ".join(err))
     print(f"{n} labels checked, {len(problems)} invalid, "
-          f"{len(sample_ids - seen)} of {len(sample_ids)} sample complaints not yet labelled")
+          f"{len(sample_ids - seen)} of {len(sample_ids)} annotation items not yet labelled")
     sys.exit(1 if problems else 0)
 
 

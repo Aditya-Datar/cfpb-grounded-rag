@@ -5,10 +5,11 @@ and by human annotators. Reads data/processed/reg_chunks.parquet
 (scripts/build_reg_corpus.py) and data/processed/annotation_sample.csv.
 
     python scripts/reg_lookup.py --section 1026.13                 # rule text
+    python scripts/reg_lookup.py --section 1681i                   # FCRA statute section
     python scripts/reg_lookup.py --section 1026.13 --interp        # + official interpretations
     python scripts/reg_lookup.py --paragraph "1026.13(a)"          # one paragraph (prefix match)
     python scripts/reg_lookup.py --search "unauthorized debit card charge" --reg E --k 8
-    python scripts/reg_lookup.py --complaints 0 5                  # annotation items 0..4
+    python scripts/reg_lookup.py --complaints 121 5                # annotation items 121..125 (1-based)
     python scripts/reg_lookup.py --complaint 18240318              # one item by complaint_id
 """
 import argparse
@@ -20,6 +21,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from cfpb.annotation import load_items  # noqa: E402
 from cfpb.config import PROCESSED_DIR  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -38,27 +40,26 @@ def main() -> None:
     ap.add_argument("--paragraph")
     ap.add_argument("--interp", action="store_true", help="include official interpretations")
     ap.add_argument("--search")
-    ap.add_argument("--reg", choices=list("EFVZ"))
+    ap.add_argument("--reg", choices=["E", "F", "V", "Z", "FCRA"])
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--complaints", nargs=2, type=int, metavar=("START", "N"))
     ap.add_argument("--complaint")
     args = ap.parse_args()
 
     if args.complaints or args.complaint:
-        a = pd.read_csv(PROCESSED_DIR / "annotation_sample.csv", dtype=str, keep_default_na=False)
-        a = a.reset_index().rename(columns={"index": "item"})
+        a = load_items()  # 1-based items: sample 1-120, then the in-scope top-up
         sel = (a[a["complaint_id"] == args.complaint] if args.complaint
-               else a.iloc[args.complaints[0]:args.complaints[0] + args.complaints[1]])
+               else a[a["item"].between(args.complaints[0], args.complaints[0] + args.complaints[1] - 1)])
         for _, r in sel.iterrows():
             # regulation_candidate is deliberately NOT shown (sampling heuristic; would bias labels)
-            print(f"\n##### item {r['item']} | complaint_id {r['complaint_id']}\n"
+            print(f"\n##### item {r['item']} ({r['subset']}) | complaint_id {r['complaint_id']}\n"
                   f"product: {r['product']} | sub_product: {r['sub_product']}\n"
                   f"issue: {r['issue']} | sub_issue: {r['sub_issue']} | company: {r['company']}\n")
             print(textwrap.fill(r["narrative_clean"], 100))
         return
 
     chunks = pd.read_parquet(PROCESSED_DIR / "reg_chunks.parquet")
-    kinds = ["regulation", "interpretation"] if args.interp else ["regulation"]
+    kinds = ["regulation", "statute", "interpretation"] if args.interp else ["regulation", "statute"]
     if args.section:
         show(chunks[(chunks["section"] == args.section) & chunks["kind"].isin(kinds)])
     elif args.paragraph:

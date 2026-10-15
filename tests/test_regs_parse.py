@@ -59,3 +59,37 @@ def test_supplement_maps_comments_to_paragraphs():
     assert ("1006.2", "1006.2(j)(1)") in refs
     b = next(c for c in chunks if c.paragraph == "1006.2(b)")
     assert "Assume a debt collector" in b.text and b.kind == "interpretation"
+
+
+FCRA_HTML = """<html><body>
+<!-- documentid:15_1681i  usckey:x -->
+<h3 class="section-head">&sect;1681i. Procedure in case of disputed accuracy</h3>
+<!-- field-start:statute -->
+<h4 class="subsection-head">(a) Reinvestigations of disputed information</h4>
+<h4 class="paragraph-head">(1) Reinvestigation required</h4>
+<p class="statutory-body-2em">The agency shall conduct a reasonable reinvestigation.</p>
+<h4 class="subsection-head">(b) Statement of dispute</h4>
+<p class="statutory-body">If the reinvestigation does not resolve the dispute, the consumer may file a statement.</p>
+<!-- field-end:statute -->
+<!-- field-start:notes -->
+<p class="note-body">Editorial note that must not appear in the corpus.</p>
+<!-- documentid:15_1681c-2  usckey:y -->
+<h3 class="section-head">&sect;1681c&#8211;2. Block of information resulting from identity theft</h3>
+<!-- field-start:statute -->
+<h4 class="subsection-head">(a) Block</h4>
+<p class="statutory-body">A consumer reporting agency shall block the reporting of any information.</p>
+<!-- field-end:statute -->
+</body></html>"""
+
+
+def test_fcra_sections_subsections_and_notes(tmp_path):
+    from cfpb.regs.fcra import parse_fcra
+    p = tmp_path / "fcra.htm"
+    p.write_text(FCRA_HTML, encoding="utf-8")
+    chunks, sections = parse_fcra(p)
+    assert [s["section"] for s in sections] == ["1681i", "1681c-2"]
+    assert sections[1]["title"] == "Block of information resulting from identity theft"
+    assert [c.chunk_id for c in chunks] == ["S:1681i(a)", "S:1681i(b)", "S:1681c-2(a)"]
+    assert all(c.kind == "statute" and c.regulation == "FCRA" for c in chunks)
+    assert "Editorial note" not in " ".join(c.text for c in chunks)
+    assert "section1681i" in chunks[0].source_url

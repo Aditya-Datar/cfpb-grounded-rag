@@ -6,7 +6,7 @@ Stage outputs are Parquet files under `outputs/` (git-ignored), keyed by
 `complaint_id` (string). **Changing a format after freeze needs a note in
 CLAUDE_PROGRESS.md and a heads-up to every pair.**
 
-Status: (0) and (1) are implemented; (2) is implemented as a corpus, with the retriever still to build; (3) to (6) are proposals.
+Status: (0) and (1) are implemented; (2) is implemented as a corpus (regulations + FCRA statute), with the retriever still to build; (3) has silver labels from Annotator A (198 items), with Annotator B pending; (4) to (7) are proposals.
 
 ---
 
@@ -23,7 +23,7 @@ Status: (0) and (1) are implemented; (2) is implemented as a corpus, with the re
 | `company`, `state`, `date_received`, `company_response`, ... | str | metadata |
 | `n_words`, `redaction_density`, `text_hash` | int/float/str | cleaning stats |
 
-The evaluation subset for stages 2 to 4 is `annotation_sample.csv` (120 complaints, ~30 per regulation), plus any held-out set the team adds.
+The evaluation set for stages 2 to 4 is the **annotation items** (`cfpb.annotation.load_items()`): `annotation_sample.csv` (120, stratified) plus `annotation_topup.csv` (78, in-scope top-up), 198 items in total. Of these, 129 have an in-scope gold section and 69 are NONE (see Sec. 7).
 
 ## 1. Classifier output (implemented, Pair A)
 
@@ -47,14 +47,14 @@ Combined per complaint (merge the product and issue runs on `complaint_id`):
 
 ## 2. Regulation chunks (implemented corpus, Pair B)
 
-`data/processed/reg_chunks.parquet` (`scripts/build_reg_corpus.py`; eCFR as of 2026-10-13; 4,070 chunks).
+`data/processed/reg_chunks.parquet` (`scripts/build_reg_corpus.py`; eCFR as of 2026-10-13 plus the FCRA statute, U.S. Code 2024 edition; 4,319 chunks).
 
 | Column | Type | Example |
 |---|---|---|
-| `chunk_id` | str, unique | `R:1026.13(b)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`; `#k` suffix = word-window piece |
-| `regulation` | str | `E`, `F`, `V`, `Z` |
+| `chunk_id` | str, unique | `R:1026.13(b)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`, `S:1681i(a)(1)`; `#k` suffix = word-window piece |
+| `regulation` | str | `E`, `F`, `V`, `Z`, `FCRA` |
 | `part` | str | `1026` |
-| `kind` | str | `regulation` (rule text), `interpretation` (Supplement I official commentary), `appendix` |
+| `kind` | str | `regulation` (rule text), `interpretation` (Supplement I official commentary), `appendix`, `statute` (FCRA) |
 | `section` | str | `1026.13` (appendices: `1026 Appendix G`) |
 | `paragraph` | str | most specific reference, `1026.13(b)(1)` |
 | `heading` | str | `§ 1026.13 Billing error resolution.` |
@@ -79,7 +79,7 @@ Python: `retrieve(query: str, k: int = 10) -> list[dict(chunk_id, score)]`.
 **Scoring against gold (proposal; owner of the shared eval script decides):**
 - A retrieved chunk is a **hit** if `chunk.section == gold_section`. Paragraph-level hits are reported as a secondary metric.
 - Interpretation chunks count for the section they interpret. Report runs with and without interpretations as an ablation.
-- Complaints whose gold label is `NONE` (no in-scope section) are excluded from precision@k and recall@k and reported separately.
+- Complaints whose gold label is `NONE` (no in-scope section) are excluded from precision@k and recall@k, and are scored as abstention instead (Sec. 7).
 
 ## 3. Gold labels (annotation output, proposal)
 
@@ -89,8 +89,8 @@ Python: `retrieve(query: str, k: int = 10) -> list[dict(chunk_id, score)]`.
 |---|---|---|
 | `complaint_id` | str | from `annotation_sample.csv` |
 | `annotator` | str | initials, or `llm:<model-id>` |
-| `gold_regulation` | str | `E`/`F`/`V`/`Z`/`NONE` |
-| `gold_section` | str | `1026.13`, or empty for NONE; must exist in `annotation/regulation_sections.md` |
+| `gold_regulation` | str | `E`/`F`/`V`/`Z`/`FCRA`/`NONE` |
+| `gold_section` | str | `1026.13` or `1681i`, or empty for NONE; must exist in `annotation/regulation_sections.md` |
 | `gold_paragraph` | str | optional, e.g. `1026.13(a)(1)` |
 | `confidence` | int | 1 guess, 2 probable, 3 sure |
 | `evidence_quote` | str | verbatim sentence of the section that applies (required for LLM labels) |
@@ -133,3 +133,17 @@ The checker validation set (50 human or LLM labelled pairs) uses the same `sente
 - `complaint_id` and `chunk_id` are strings everywhere. Never use row positions.
 - Every run folder has a `run_info.json`: settings, model ids, data fingerprint (`data_fingerprint.json`), library versions, date.
 - Evaluate on val while developing and touch test once. Splits are fixed by `data_fingerprint.json`.
+
+## 7. Abstention: NONE as a first-class outcome (team decision 2026-10-15)
+
+About a third of real complaints are governed by law outside the corpus: federal student loans, RESPA/Reg X, state title law, scams the consumer authorized, and so on. In the annotation, 69 of 198 items are NONE. A compliance assistant must say "no governing section in our corpus; route to a human" rather than cite a wrong section. So:
+
+- **Every stage may output `NONE`.**
+  - The retriever returns `abstain_score` (float) with its ranking, for example 1 minus the top similarity, or a calibrated classifier.
+  - The pipeline abstains when that score passes a threshold tuned on a held-out split.
+  - Generation, when abstaining, drafts a referral ("this complaint appears to fall outside Regulations E/F/V/Z and the FCRA; escalate to compliance") and cites nothing.
+- **Metrics:**
+  - abstention precision, recall, and F1 on all 198 items (positive class = NONE)
+  - retrieval precision@k and recall@k on the 129 in-scope items only
+  - end-to-end accuracy: correct section, or correct abstention
+- **The attribution experiment** (retrieved vs oracle passage) uses in-scope items only, since NONE items have no oracle passage.

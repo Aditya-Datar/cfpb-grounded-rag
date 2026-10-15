@@ -37,9 +37,9 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
-| 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built (2026-10-15):** 4,070 structure-aware chunks from eCFR (as of 2026-10-13); retriever (BM25, dense, hybrid) not started |
+| 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Annotation (120 gold pairs) | all | `regulation-corpus` | **TA allowed LLM annotation (2026-10-15).** Skill, lookup and validator tools built; 3-item pilot labelled by Claude; 117 to go; Annotator B (a different LLM) not chosen yet |
+| Annotation (gold pairs) | all | `regulation-corpus` | **Annotator A (Claude) done: 198 items** (120 sample + 78 in-scope top-up), all validated. 129 in-scope pairs (E 29, F 32, Z 29, FCRA 36, V 3), 69 NONE. ChatGPT cross-check (Annotator B) ready to run; human adjudication pending |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
 
@@ -68,6 +68,11 @@ src/cfpb/classify/train.py          plain-PyTorch fine-tuning loop, evaluation, 
 scripts/train_classifier.py         stage 1 CLI (--label product|issue, --resume, --max-train ...)
 scripts/check_splits.py             verifies local splits match data_fingerprint.json
 src/cfpb/regs/ecfr.py               eCFR API download (needs Accept-Encoding: gzip)
+src/cfpb/regs/fcra.py               FCRA statute download (GovInfo, U.S. Code 2024) and parsing into statute chunks
+src/cfpb/annotation.py              annotation item set: load_items() = sample + top-up; in-scope top-up plan
+scripts/make_topup_sample.py        draws the 78-item in-scope top-up (hash-ordered, reproducible)
+scripts/make_chatgpt_package.py     builds annotation/chatgpt_package/generated/ (rubric copied from the skill)
+scripts/compare_annotators.py       kappa and agreement between two label files, plus a disagreements.md report
 src/cfpb/regs/parse.py              eCFR XML -> structure-aware chunks (regulation / interpretation / appendix)
 scripts/build_reg_corpus.py         builds data/processed/reg_chunks.parquet + annotation/regulation_sections.md
 scripts/reg_lookup.py               print section/paragraph text, keyword search, annotation complaints
@@ -340,3 +345,80 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   - 23571192 (Wells Fargo denied an unauthorized-EFT claim without documents): E 1005.11(d)(1), confidence 3.
   - `check_llm_labels.py` passes all 3 and rejects a copy with a one-word quote change.
 - `scripts/reg_lookup.py --search` is a crude TF-IDF helper; for "unauthorized debit card" it ranks 1005.17 (overdraft) above 1005.11, so the skill relies on its decision table plus reading, not on search.
+
+### 2026-10-15: Annotator A labels for all 120 complaints, plus the ChatGPT package
+- **Labels:** `annotation/llm_labels_claude-opus-5-5.jsonl`, 120/120, made by claude-opus-5-5 with the `regulation-annotator` skill in 11 batches. Every batch passed `check_llm_labels.py` (section exists and matches the regulation, paragraph under section, quote verbatim, NONE names the governing law).
+  - A batch-9 slip (two complaint_ids swapped between items) was caught before saving by an id-to-company cross-check, and every label was then re-checked against its company.
+- **Distribution:** NONE 77, F 22, E 12, Z 7, V 2. Confidence 1/2/3 = 20/47/53.
+  - Sections: 1005.11 ×10, 1006.18 ×10, 1006.38 ×8, 1006.14 ×3, 1005.6, 1022.43 and 1026.12 ×2 each, and 1026.10, 1026.13, 1026.18, 1026.53, 1026.19, 1006.34 ×1 each.
+- **Key finding (sampling heuristic vs label):**
+
+  | Candidate | E | F | NONE | V | Z |
+  |---|---:|---:|---:|---:|---:|
+  | E | 12 | 0 | 18 | 0 | 0 |
+  | F | 0 | 19 | 11 | 0 | 0 |
+  | **V** | 0 | 1 | **29** | 0 | 0 |
+  | Z | 0 | 2 | 19 | 2 | 7 |
+
+  - Credit-reporting complaints are almost entirely CRA disputes or identity-theft blocks under the **FCRA statute** (36 of the 77 NONE cite the FCRA).
+  - Many Reg Z-candidate complaints are federal student loans, RESPA/Reg X servicing, title release, or other law.
+  - **Only 43 items are in scope for retrieval evaluation, and V (2) and Z (7) are too few** for the planned ~30 per regulation. This confirms the Sec. 5 risk. **The team must decide:**
+    - (a) add the FCRA statute (15 U.S.C. 1681) and/or RESPA/Reg X to the corpus;
+    - (b) resample using issue-level filters to reach about 30 in-scope items per regulation; or
+    - (c) keep NONE as a first-class outcome the system must detect, and report retrieval on in-scope items only.
+- **Labelling conventions** that emerged, written into `annotation/chatgpt_package/01_INSTRUCTIONS.md` for the team to ratify:
+  - CRA disputes and blocks: NONE.
+  - Consumer-initiated scam payments: NONE (1005.2(m)).
+  - Denied unauthorized-EFT claims: 1005.11 by paragraph; loss only: 1005.6.
+  - Payment not credited: 1026.13 with a written dispute, else 1026.10.
+  - Collector ignores a written validation request: 1006.38(d)(2). Collector reports disputed or false data: 1006.18(c)(2). No validation notice: 1006.34(a).
+  - Original creditors are not Reg F debt collectors.
+- **ChatGPT package (Annotator B):**
+  - `annotation/chatgpt_package/` holds `README.md`, `PROMPTS.md` (step 1 blind in batches of 20, step 2 compare), and `01_INSTRUCTIONS.md` (the rubric).
+  - `scripts/make_chatgpt_package.py` regenerates `generated/` (git-ignored): complaints without labels, the section list, full rule text for E/F/V/Z (about 1.3 MB), and Claude's labels for step 2 only.
+  - `scripts/compare_annotators.py` reports agreement and kappa at regulation and section level and writes `annotation/disagreements.md` for human adjudication. It was tested on a doctored copy (2 changes gave section kappa 0.971 and the right confusion table), and `check_llm_labels.py` rejected that copy's mismatched quote, as intended.
+
+### 2026-10-15: FCRA added, in-scope top-up, abstention design (all 198 items labelled)
+- **Why:** Annotator A's 120 labels gave only 43 in-scope items (E 12, F 22, Z 7, V 2), and 64% were NONE, with 36 of those governed by the FCRA statute. The team chose three things together:
+  1. Add the FCRA to the corpus.
+  2. Top up the in-scope items for E, F, and Z.
+  3. Treat NONE as a first-class abstention outcome.
+- **FCRA corpus:**
+  - Source: GovInfo `USCODE-2024-title15-chap41-subchapIII.htm` (513 KB, current through 2025-01-06).
+  - `src/cfpb/regs/fcra.py` keeps only the statute text (between `field-start:statute` and `field-end:statute`, so editorial notes are dropped) and chunks by subsection, splitting long subsections at paragraph headings and merging heading-only pieces.
+  - Result: 31 sections (1681 to 1681x), 249 `statute` chunks (`S:<section>(<sub>)(<para>)`), with 100% of statute words covered and no duplicate ids. Tested in `tests/test_regs_parse.py`.
+  - The corpus is now **4,319 chunks** and 177 listed sections. FCRA sections appear in `annotation/regulation_sections.md` as "15 U.S.C. 1681i", and labels use "1681i".
+  - Tools updated: `reg_lookup.py` (`--reg FCRA`, statute kind) and `check_llm_labels.py` (accepts FCRA).
+- **Relabel:** 36 NONE-because-FCRA items moved to FCRA sections: 1681i(a)(1) for CRA disputes, 1681i(a)(7) for method of verification, 1681c-2(a) for identity-theft blocks, 1681b(a), 1681e(b), and 1681s-2(a)(2)/(a)(6)/(b) for furnishers. Three NONE items stay NONE with corrected governing-law text. The full list is in `annotation/label_revisions.md`. The scratchpad holds a v1 copy only; the 3 pushed pilot lines are in git history.
+- **Top-up:** `scripts/make_topup_sample.py` draws 78 items, hash-ordered and round-robin over sub-issues, excluding the classifier test set and the sample:
+  - E: 30 from unauthorized, debit card, and banking-error sub-issues
+  - Z: 36 from card purchase disputes, unauthorized charges, cards opened without consent, payment problems, and fees or interest
+  - F: 12 from validation, notice, calls, and old-debt suit sub-issues
+
+  Ids are in `annotation/annotation_topup_ids.txt`. 64% of the top-up landed in scope.
+- **All 198 labelled by Annotator A** (claude-opus-5-5, skill), in batches of 10 to 12. Each batch passed `check_llm_labels.py` and an id-to-company cross-check. 5 runner-ups equal to the gold section were cleared.
+  - **Final:** in scope **129** (E 29, F 32, Z 29, FCRA 36, V 3), NONE **69**. Confidence 1/2/3 = 45/99/54.
+  - Top sections: 1005.11 ×25, 1681i ×19, 1006.18 ×12, 1681c-2 ×11, 1026.13 ×10, 1006.38 ×9, 1026.12 ×7.
+- **New rubric conventions from the top-up**, all verified in the text:
+  - Merchant disputes over authorized debit purchases are not Reg E errors (NONE).
+  - Gift cards are excluded from "prepaid account" (1005.2, quoted: "(D)(1) A gift certificate ... (2) A store gift card"), so only 1005.20 applies.
+  - Paper checks, business accounts, and wires: NONE.
+  - A prepaid card denied only for late reporting: 1005.18(e)(1).
+  - Credit card fraud: 1026.13(a)(1) if the issuer investigated and denied, 1026.12(b) if only the use is described.
+  - No statement delivered before the due date: 1026.5(b)(2)(ii)(A).
+  - Collector reporting before any contact: 1006.30(a)(1).
+  - Written cease-communication notice ignored: 1006.6(c)(1).
+
+  The single source of the rubric is now the conventions section of `.claude/skills/regulation-annotator/SKILL.md`, rewritten for FCRA and NONE; all 50 section numbers it cites were checked against the corpus.
+- **Abstention** (`docs/INTERFACES.md` Sec. 7): every stage may output NONE.
+  - The retriever exposes `abstain_score`; generation drafts a referral when abstaining.
+  - Metrics: abstention P/R/F1 on all 198, retrieval P@k/R@k on the 129, and end-to-end accuracy.
+  - The attribution experiment uses in-scope items only.
+- **ChatGPT package regenerated:** 198 complaints, the FCRA text (`08_FCRA_1681.md`), the rubric auto-copied from the skill (`01_INSTRUCTIONS.template.md` -> `generated/01_INSTRUCTIONS.md`), and Claude's labels in `09_claude_labels.md` for step 2. `PROMPTS.md` now covers 10 batches of 20.
+- `docs/INTERFACES.md`, `annotation/ANNOTATION_GUIDE.md`, and this file are updated. 50 unit tests pass.
+- **Open:**
+  - Run the ChatGPT cross-check.
+  - Have a human adjudicate disagreements and spot-check 20 items.
+  - Ratify the rubric conventions as a team.
+  - Update CLAUDE.md's scope ("four regulations", "120 pairs", "human labels are ground truth") once the team agrees.
+  - Tell the TA about the FCRA scope addition.

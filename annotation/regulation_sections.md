@@ -161,3 +161,37 @@ Gold labels use these section numbers; retrieval chunk ids start with them.
 - **1026.60** Credit and charge card applications and solicitations
 - **1026.61** Hybrid prepaid-credit cards
 - **1026.62** Overdraft credit
+
+## Fair Credit Reporting Act (statute), 15 U.S.C. 1681-1681x (U.S. Code 2024 ed.)
+
+- **15 U.S.C. 1681** Congressional findings and statement of purpose
+- **15 U.S.C. 1681a** Definitions; rules of construction
+- **15 U.S.C. 1681b** Permissible purposes of consumer reports
+- **15 U.S.C. 1681c** Requirements relating to information contained in consumer reports
+- **15 U.S.C. 1681c-1** Identity theft prevention; fraud alerts and active duty alerts
+- **15 U.S.C. 1681c-2** Block of information resulting from identity theft
+- **15 U.S.C. 1681c-3** Adverse information in cases of trafficking
+- **15 U.S.C. 1681d** Disclosure of investigative consumer reports
+- **15 U.S.C. 1681e** Compliance procedures
+- **15 U.S.C. 1681f** Disclosures to governmental agencies
+- **15 U.S.C. 1681g** Disclosures to consumers
+- **15 U.S.C. 1681h** Conditions and form of disclosure to consumers
+- **15 U.S.C. 1681i** Procedure in case of disputed accuracy
+- **15 U.S.C. 1681j** Charges for certain disclosures
+- **15 U.S.C. 1681k** Public record information for employment purposes
+- **15 U.S.C. 1681l** Restrictions on investigative consumer reports
+- **15 U.S.C. 1681m** Requirements on users of consumer reports
+- **15 U.S.C. 1681n** Civil liability for willful noncompliance
+- **15 U.S.C. 1681o** Civil liability for negligent noncompliance
+- **15 U.S.C. 1681p** Jurisdiction of courts; limitation of actions
+- **15 U.S.C. 1681q** Obtaining information under false pretenses
+- **15 U.S.C. 1681r** Unauthorized disclosures by officers or employees
+- **15 U.S.C. 1681s** Administrative enforcement
+- **15 U.S.C. 1681s-1** Information on overdue child support obligations
+- **15 U.S.C. 1681s-2** Responsibilities of furnishers of information to consumer reporting agencies
+- **15 U.S.C. 1681s-3** Affiliate sharing
+- **15 U.S.C. 1681t** Relation to State laws
+- **15 U.S.C. 1681u** Disclosures to FBI for counterintelligence purposes
+- **15 U.S.C. 1681v** Disclosures to governmental agencies for counterterrorism purposes
+- **15 U.S.C. 1681w** Disposal of records
+- **15 U.S.C. 1681x** Corporate and technological circumvention prohibited
