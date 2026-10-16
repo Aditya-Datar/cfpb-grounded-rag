@@ -444,3 +444,27 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   2. Fill `- **Check (human):**` for the 20 agreed items in `annotation/spot_check.md` (hash-selected) with `OK` or a corrected label.
   3. Run `python scripts/build_gold.py`. It writes `annotation/gold_final.jsonl` only when every item is decided. The builder was tested with simulated decisions on copies: 198 written, source counts correct; the real files were restored with decisions blank.
 - **Report wording:** silver labels from two LLM annotators of different families under a shared rubric, kappa 0.904 (regulation) and 0.845 (section), with human adjudication of disagreements and a 20-item human spot check.
+
+### 2026-10-15: Overlap found with branch `chunking` (Ishani + Ujjwal, Pair B), not yet merged
+- Branch `chunking` was cut from `classifier` at `09914e7`, before `regulation-corpus` existed, so the two branches built **regulation parsing and chunking twice**.
+  - Theirs: `chunking/xml_parser.py`, `parse_regulations.py`, `chunk_regulations.py`; 2,629 chunks committed as `chunking/data/processed/chunks.jsonl`; 24 tests.
+  - Ours: `src/cfpb/regs/parse.py` and `scripts/build_reg_corpus.py`, giving `data/processed/reg_chunks.parquet`.
+- **Compared on 2026-10-15:**
+  - **Source:** both use eCFR Title 12 as of 2026-10-13. Theirs is the bulk XML (AMDDATE Oct. 1, 2026); ours is the eCFR API.
+  - **Coverage:** the same **136 regulation sections**; theirs has regulation text only (`content_type` = regulation).
+  - **Annotation compatibility:** **all 93 Claude and all 100 ChatGPT regulation evidence quotes appear verbatim in their chunks** for the cited section, so the gold labels are fully compatible with their corpus. The only difference is paragraph format: theirs is relative (`(b)(1)`), ours is full (`1005.11(b)(1)`).
+  - **Theirs is stronger for retrieval:**
+    - paragraph paths checked against eCFR renderer ids, with 0 mismatches after Ujjwal's `(i)` fix
+    - chunk size tuned to the chosen embedding model, `all-mpnet-base-v2` (384 tokens, `--max-chars 1400`)
+    - parent-paragraph intros carried into each chunk, plus `embed_text`
+    - paragraph anchors in `source_url`
+    - a fixed, committed corpus file
+  - **Ours adds what theirs lacks:** the **FCRA statute** (249 chunks; 36 gold items are FCRA), **Supplement I official interpretations** (2,418 chunks; their open question 2), appendices (112), and the annotation tooling that reads the corpus (`reg_lookup.py`, `check_llm_labels.py`, `make_chatgpt_package.py`).
+  - Ours also answers some of their open questions: Reg V sections verified (1022.40-.43), and section-level scoring plus abstention specified in `docs/INTERFACES.md`.
+- **Recommendation (needs Pair B and the team):**
+  - Make their `chunks.jsonl` **the** retrieval corpus.
+  - Add the FCRA statute to it in their schema (and optionally Supplement I as a separate `content_type` for an ablation).
+  - Point our annotation tools at it.
+  - Retire `src/cfpb/regs/parse.py` for retrieval use.
+  - Merge `regulation-corpus` and `chunking` with one reconciled `CLAUDE_PROGRESS.md`.
+- **Conflicts to expect when merging:** `CLAUDE_PROGRESS.md` (both appended), `.gitignore`, `requirements.txt`, `README.md`. Also, `chunking/data/raw/ECFR-title12.xml` (39 MB) is committed on their branch, against working rule 5; their own log flags this.
