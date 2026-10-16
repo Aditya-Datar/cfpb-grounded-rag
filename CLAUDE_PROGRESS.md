@@ -453,7 +453,7 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   - **Source:** both use eCFR Title 12 as of 2026-10-13. Theirs is the bulk XML (AMDDATE Oct. 1, 2026); ours is the eCFR API.
   - **Coverage:** the same **136 regulation sections**; theirs has regulation text only (`content_type` = regulation).
   - **Annotation compatibility:** **all 93 Claude and all 100 ChatGPT regulation evidence quotes appear verbatim in their chunks** for the cited section, so the gold labels are fully compatible with their corpus. The only difference is paragraph format: theirs is relative (`(b)(1)`), ours is full (`1005.11(b)(1)`).
-  - **Theirs is stronger for retrieval:**
+  - **Theirs has design features *expected* to help retrieval (untested; no retrieval run on either corpus yet):**
     - paragraph paths checked against eCFR renderer ids, with 0 mismatches after Ujjwal's `(i)` fix
     - chunk size tuned to the chosen embedding model, `all-mpnet-base-v2` (384 tokens, `--max-chars 1400`)
     - parent-paragraph intros carried into each chunk, plus `embed_text`
@@ -462,9 +462,10 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   - **Ours adds what theirs lacks:** the **FCRA statute** (249 chunks; 36 gold items are FCRA), **Supplement I official interpretations** (2,418 chunks; their open question 2), appendices (112), and the annotation tooling that reads the corpus (`reg_lookup.py`, `check_llm_labels.py`, `make_chatgpt_package.py`).
   - Ours also answers some of their open questions: Reg V sections verified (1022.40-.43), and section-level scoring plus abstention specified in `docs/INTERFACES.md`.
 - **Recommendation (needs Pair B and the team):**
-  - Make their `chunks.jsonl` **the** retrieval corpus.
+  - Choose the retrieval corpus by **measuring**, not by design argument: run the same retriever over both chunk sets on the 129 in-scope gold items, and compare section-level precision@k and recall@k (this is the planned chunking ablation; Pair B to own it). Until then, their `chunks.jsonl` is the default, because Pair B owns it and it is tuned to the chosen model.
   - Add the FCRA statute to it in their schema (and optionally Supplement I as a separate `content_type` for an ablation).
   - Point our annotation tools at it.
   - Retire `src/cfpb/regs/parse.py` for retrieval use.
   - Merge `regulation-corpus` and `chunking` with one reconciled `CLAUDE_PROGRESS.md`.
 - **Conflicts to expect when merging:** `CLAUDE_PROGRESS.md` (both appended), `.gitignore`, `requirements.txt`, `README.md`. Also, `chunking/data/raw/ECFR-title12.xml` (39 MB) is committed on their branch, against working rule 5; their own log flags this.
+- **Correction (same day):** the comparison above first said "theirs is stronger for retrieval". That was a design-based expectation, not a measurement. Their token counts and their 0-mismatch paragraph check come from their log and were not re-verified here; only the section coverage and the quote compatibility were checked directly.
