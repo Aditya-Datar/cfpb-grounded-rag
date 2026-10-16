@@ -39,7 +39,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
 | 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Annotation (gold pairs) | all | `regulation-corpus` | **Annotator A (Claude) done: 198 items** (120 sample + 78 in-scope top-up), all validated. 129 in-scope pairs (E 29, F 32, Z 29, FCRA 36, V 3), 69 NONE. ChatGPT cross-check (Annotator B) ready to run; human adjudication pending |
+| Annotation (gold pairs) | all | `regulation-corpus` | **Both LLM annotators done (198 items).** Agreement: regulation kappa 0.904, section kappa 0.845, abstention kappa 0.898. **Waiting on a human:** 26 disagreements (`annotation/disagreements.md`) and a 20-item spot check (`annotation/spot_check.md`), then `scripts/build_gold.py` writes `annotation/gold_final.jsonl` |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
 
@@ -73,6 +73,7 @@ src/cfpb/annotation.py              annotation item set: load_items() = sample +
 scripts/make_topup_sample.py        draws the 78-item in-scope top-up (hash-ordered, reproducible)
 scripts/make_chatgpt_package.py     builds annotation/chatgpt_package/generated/ (rubric copied from the skill)
 scripts/compare_annotators.py       kappa and agreement between two label files, plus a disagreements.md report
+scripts/build_gold.py               spot-check list (--init) and final gold assembly from agreed labels plus human decisions
 src/cfpb/regs/parse.py              eCFR XML -> structure-aware chunks (regulation / interpretation / appendix)
 scripts/build_reg_corpus.py         builds data/processed/reg_chunks.parquet + annotation/regulation_sections.md
 scripts/reg_lookup.py               print section/paragraph text, keyword search, annotation complaints
@@ -422,3 +423,24 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   - Ratify the rubric conventions as a team.
   - Update CLAUDE.md's scope ("four regulations", "120 pairs", "human labels are ground truth") once the team agrees.
   - Tell the TA about the FCRA scope addition.
+
+### 2026-10-15: Annotator B (ChatGPT) cross-check and agreement
+- Aditya ran the package in ChatGPT. The model recorded itself as `llm:chatgpt-gpt-6` (model name as reported by ChatGPT, not verified). Outputs: `annotation/llm_labels_chatgpt.jsonl` (198 lines) and `annotation/chatgpt_review.jsonl` (26 lines, one per disagreement).
+- **Validation:** `check_llm_labels.py` passes all 198 ChatGPT labels: sections exist and all quotes are verbatim.
+- **Agreement (Claude A vs ChatGPT B, `compare_annotators.py`):**
+  - Regulation level: 92.4%, **Cohen's kappa 0.904**.
+  - Section level: 86.9%, **kappa 0.845**.
+  - Abstention (NONE vs in scope): 95.5%, kappa 0.898.
+  - By subset: sample 88.3%, top-up 84.6% section agreement.
+  - By A's confidence: 66.7% (conf 1), 89.9% (conf 2), 98.1% (conf 3). Confidence is informative.
+- **The 26 disagreements:**
+  - 11 same regulation, different section (e.g. 1681i vs 1681c-2 on mixed dispute/identity-theft complaints; vague Reg Z interest complaints, where B chose 1026.13(a)(6)).
+  - 9 NONE vs in scope.
+  - 6 different regulation (mostly furnisher cases on the FCRA/Reg V/Reg F boundary).
+  - B's own review preferred B in 13, A in 12, and neither in 1.
+  - One note for the adjudicator: on 21757875, B's reason cites the prepaid rule (1005.18(e)(1)), but the card is Direct Express, a government benefit account, so 1005.15's modified rules may be the better reference.
+- **Human steps remaining (annotators A and B must not adjudicate):**
+  1. Fill `- **Final (human):**` for the 26 items in `annotation/disagreements.md` with `A`, `B`, or an explicit label, plus initials, e.g. `B [AD]`.
+  2. Fill `- **Check (human):**` for the 20 agreed items in `annotation/spot_check.md` (hash-selected) with `OK` or a corrected label.
+  3. Run `python scripts/build_gold.py`. It writes `annotation/gold_final.jsonl` only when every item is decided. The builder was tested with simulated decisions on copies: 198 written, source counts correct; the real files were restored with decisions blank.
+- **Report wording:** silver labels from two LLM annotators of different families under a shared rubric, kappa 0.904 (regulation) and 0.845 (section), with human adjudication of disagreements and a 20-item human spot check.
