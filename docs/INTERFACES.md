@@ -96,7 +96,7 @@ Python: `retrieve(query: str, k: int = 10) -> list[dict(chunk_id, score)]`.
 | `evidence_quote` | str | verbatim sentence of the section that applies (required for LLM labels) |
 | `notes` | str | |
 
-`annotation/gold_final.csv` holds the adjudicated label per complaint, with the same columns plus `adjudicator` and `agreement` (whether the annotators agreed).
+**`annotation/gold_final.jsonl` (built 2026-10-16) is the official gold set**: one line per complaint (198), with `complaint_id`, `gold_regulation`, `gold_section`, `gold_paragraph`, `source` (`agreed`, `agreed_spot_checked`, `adjudicated`, `spot_corrected`), `adjudicator`, `label_a`, and `label_b`. It is built by `scripts/build_gold.py` from the two LLM annotators plus the human decisions in `annotation/disagreements.md` and `annotation/spot_check.md`. Evaluation code should read only this file. It is JSONL rather than CSV because `*.csv` is git-ignored.
 
 ## 4. Generation (proposal, Pair C)
 

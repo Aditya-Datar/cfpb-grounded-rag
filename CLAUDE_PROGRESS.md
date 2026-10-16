@@ -39,7 +39,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
 | 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Annotation (gold pairs) | all | `regulation-corpus` | **Both LLM annotators done (198 items).** Agreement: regulation kappa 0.904, section kappa 0.845, abstention kappa 0.898. **Waiting on a human:** 26 disagreements (`annotation/disagreements.md`) and a 20-item spot check (`annotation/spot_check.md`), then `scripts/build_gold.py` writes `annotation/gold_final.jsonl` |
+| Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
 
@@ -469,3 +469,17 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   - Merge `regulation-corpus` and `chunking` with one reconciled `CLAUDE_PROGRESS.md`.
 - **Conflicts to expect when merging:** `CLAUDE_PROGRESS.md` (both appended), `.gitignore`, `requirements.txt`, `README.md`. Also, `chunking/data/raw/ECFR-title12.xml` (39 MB) is committed on their branch, against working rule 5; their own log flags this.
 - **Correction (same day):** the comparison above first said "theirs is stronger for retrieval". That was a design-based expectation, not a measurement. Their token counts and their 0-mismatch paragraph check come from their log and were not re-verified here; only the section coverage and the quote compatibility were checked directly.
+
+### 2026-10-16: Gold set finalised (`annotation/gold_final.jsonl`)
+- **Human adjudication by Aditya (initials AD), who is not one of the LLM annotators:**
+  - 26 disagreements: took A in 12, B in 13, and an own label in 1. That one, 20834286, became NONE: both LLMs chose a Reg Z section, but the facts show bad payment-date advice, not a crediting failure.
+  - 20-item hash-selected spot check of agreed items: **20/20 OK**, 0 corrected.
+- **Final gold:** 198 items. **127 in scope** (E 29, F 30, Z 27, FCRA 36, V 5) and **71 NONE**. By source: 152 agreed, 20 agreed and spot-checked, 26 adjudicated. Every section exists and matches its regulation; every paragraph sits under its section; NONE items have no section; all 198 annotation items are covered.
+- **Annotator accuracy against the final gold:**
+  - Claude: regulation 0.965, section 0.929.
+  - ChatGPT: regulation 0.949, section 0.934.
+  - On the 26 disputed items: Claude 46.2%, ChatGPT 50.0% (section).
+  - *Caveat:* these are inflated as overall measures, because 172 gold labels are the annotators' agreed labels. The informative numbers are the inter-annotator kappa, the 20/20 spot check, and the near-even split on disputed items.
+- **Adjudicator's call to note:** 21757875 (a Direct Express government benefit card) was settled as B, `1005.18(e)(1)`, the prepaid late-reporting rule. Claude had flagged that the benefit-card rule 1005.15 might fit better. The gold keeps the human decision.
+- `docs/INTERFACES.md` Sec. 3 now names `annotation/gold_final.jsonl` as the official gold set (JSONL, since `*.csv` is git-ignored).
+- **Report wording:** 198 complaints labelled by two LLM annotators from different families (Claude Opus 5.5, ChatGPT) under a shared written rubric with verbatim-quote validation. Cohen's kappa 0.904 (regulation) and 0.845 (section); disagreements adjudicated by a team member; 20/20 human spot check. Gold: 127 in-scope complaint-to-section pairs plus 71 out-of-scope (NONE).
