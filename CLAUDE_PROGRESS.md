@@ -36,10 +36,10 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | Stage | Pair | Branch | Status |
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
-| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v1 results are STALE (trained on buggy cleaning and old splits). Retrain on v2 data.** v1 for reference: product test macro-F1 0.798, issue test macro-F1 0.297 (Sec. 7) |
-| 2. Regulation corpus and retrieval | B | `chunking` (pushed) | **Parsing and chunking done for regulation text in all four parts** (2,629 chunks at `--max-chars 1400`). Embedding model: `all-mpnet-base-v2` (384 tokens); embed with the `embed_text` field (9 chunks over 384, versus 66 by `text`). After Ujjwal's parser fix (`232a564`), 5 of 5,006 paragraph paths still disagree with eCFR (all in 1026.19). Supplement I and appendices not chunked. Retrieval (FAISS, BM25) not started. See Sec. 7, 2026-10-14 and 2026-10-15 entries |
+| 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
+| 2. Regulation corpus and retrieval | B | `chunking` | **Pair B corpus (retrieval default):** 2,629 regulation-text chunks (`chunking/data/processed/chunks.jsonl`, `--max-chars 1400`, embedding model `all-mpnet-base-v2`, 384 tokens, `embed_text` field). **Merged in from `regulation-corpus` (2026-10-19):** a second corpus (`data/processed/reg_chunks.parquet`, 4,319 chunks) that adds the **FCRA statute** (249 chunks), Supplement I interpretations and appendices, plus the gold set and annotation tooling; see Sec. 6.5. **Retriever not started; BM25 baseline is the next task (Sec. 6.5.6, new branch `retrieval-bm25`).** |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Annotation rubric and 120 gold pairs | all | n/a | Sample ready; procedure and LLM cross-check prompts drafted in `annotation/ANNOTATION_GUIDE.md`; **rubric decisions TBD, 0 items labeled** |
+| Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
 
@@ -67,11 +67,30 @@ src/cfpb/classify/data.py           tokenization (head+tail truncation), length-
 src/cfpb/classify/train.py          plain-PyTorch fine-tuning loop, evaluation, reports, resume
 scripts/train_classifier.py         stage 1 CLI (--label product|issue, --resume, --max-train ...)
 scripts/check_splits.py             verifies local splits match data_fingerprint.json
+src/cfpb/regs/ecfr.py               eCFR API download (needs Accept-Encoding: gzip)
+src/cfpb/regs/fcra.py               FCRA statute download (GovInfo, U.S. Code 2024) and parsing into statute chunks
+src/cfpb/annotation.py              annotation item set: load_items() = sample + top-up; in-scope top-up plan
+scripts/make_topup_sample.py        draws the 78-item in-scope top-up (hash-ordered, reproducible)
+scripts/make_chatgpt_package.py     builds annotation/chatgpt_package/generated/ (rubric copied from the skill)
+scripts/compare_annotators.py       kappa and agreement between two label files, plus a disagreements.md report
+scripts/build_gold.py               spot-check list (--init) and final gold assembly from agreed labels plus human decisions
+src/cfpb/regs/parse.py              eCFR XML -> structure-aware chunks (regulation / interpretation / appendix)
+scripts/build_reg_corpus.py         builds data/processed/reg_chunks.parquet + annotation/regulation_sections.md
+scripts/reg_lookup.py               print section/paragraph text, keyword search, annotation complaints
+scripts/check_llm_labels.py         validates LLM label files (section exists, quote verbatim)
+.claude/skills/regulation-annotator/SKILL.md   project skill: grounded complaint -> section labelling
+docs/INTERFACES.md                  PROPOSED stage interfaces (freeze after team review)
+annotation/regulation_sections.md   the 146-section list (generated)
+tests/test_regs_parse.py            parser tests (paragraph grouping, roman numerals, interpretations)
 data_fingerprint.json               SHA-1 of sorted complaint_ids per split (team reference)
 notebooks/train_classifier_colab.ipynb   step-by-step Colab runner (fresh-session safe)
 requirements-classifier.txt         torch, transformers, matplotlib on top of requirements.txt
 tests/test_clean.py                  unit tests for cleaning and dedupe
 tests/test_classify_data.py         unit tests for truncation, batching, padding
+src/cfpb/classify/predict.py        ComplaintClassifier: load a trained best/ model, predict on new text
+scripts/evaluate_classifier.py      re-score a finished run from saved predictions (or --repredict)
+tests/test_split.py                 hash-split stability tests
+tests/test_metrics.py               macro-F1 convention tests
 ```
 
 New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, a runnable script in `scripts/`, and tests in `tests/`. Scripts add `src/` to `sys.path`, so no package install is needed.
@@ -153,7 +172,7 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 
 ## 5. Open issues and risks
 
-- **Reg V coverage gap (important for annotation).** Most credit-reporting complaints concern bureau dispute investigations. Those duties sit in the FCRA statute (15 U.S.C. 1681i), not in Reg V (12 CFR 1022), which covers narrower ground such as furnisher accuracy and direct disputes. Credit reporting is 33% of usable narratives, so many may have **no governing section in our four-part corpus**. The rubric needs a "no in-scope section" label; the team decides whether to accept that or add FCRA text. *Section numbers here are unverified; check them against eCFR during corpus parsing.*
+- **Reg V coverage gap (important for annotation).** Most credit-reporting complaints concern bureau dispute investigations. Those duties sit in the FCRA statute (15 U.S.C. 1681i), not in Reg V (12 CFR 1022), which covers narrower ground such as furnisher accuracy and direct disputes. Credit reporting is 33% of usable narratives, so many may have **no governing section in our four-part corpus**. The rubric needs a "no in-scope section" label; the team decides whether to accept that or add FCRA text. *Verified against eCFR (2026-10-15): Reg V has 1022.40 Scope, 1022.41 Definitions, 1022.42 accuracy and integrity policies, 1022.43 Direct disputes; Reg V has no Official Interpretations supplement.*
 - The same applies, to a smaller degree, to mortgages (RESPA / Reg X) and deposit accounts (Reg DD), both out of scope.
 - `PRODUCT_TO_REGULATION` works at product level. An issue-level mapping would be more precise: an unauthorized credit card charge falls under Reg Z billing errors, while the same problem on a debit card falls under Reg E. Revisit with the rubric.
 - **Stage interfaces are not frozen** (CLAUDE.md week 2 milestone). Proposals are in Sec. 6. Agree them before Pairs B and C build against stubs.
@@ -181,9 +200,117 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 3. **Log the results** in Sec. 7: GPU, minutes per epoch, val and test macro-F1, and the weakest classes. Compare settings (for example `--class-weights` or `--head-tokens 510`) on **validation only**.
 4. **Interface** (proposed, to be frozen with the team): `predictions_<split>.parquet` with `complaint_id`, `true_<label>`, `pred_<label>`, `pred_<label>_prob`. Merging the product and issue runs on `complaint_id` gives the downstream table.
 
-**Pair B: regulation corpus.** Download eCFR Title 12 Parts 1005, 1026, 1022, 1006 (XML), chunk by section structure, and verify the Reg V section numbers in Sec. 5. Proposed chunk interface: `chunk_id`, `part`, `section` (e.g. `1026.13`), `paragraph`, `heading`, `text`, `source_url`.
+**Pair B: retrieval.** **Next: BM25 baseline on a new branch `retrieval-bm25`, as specified in Sec. 6.5.6.** Then dense (`all-mpnet-base-v2` + FAISS) and hybrid, following `docs/INTERFACES.md` Sec. 2 and Sec. 7 (abstention). Decide which corpus to index (6.5.5) and add the FCRA to it.
 
 **Everyone.** Draft the annotation rubric (two people), including the "no in-scope section" label, then annotate `annotation_sample.csv` with overlap for inter-annotator agreement.
+
+---
+
+## 6.5 Regulation corpora: our implementation, FCRA, design decisions, and the BM25 task (added 2026-10-19 when `regulation-corpus` was merged into `chunking`)
+
+Branch `chunking` (Pair B, Ishani + Ujjwal) now also contains all of branch `regulation-corpus` (Aditya + Claude). That includes a **second, independently built regulation corpus**, the **FCRA statute**, the annotation work, and the **gold set**. This section records everything about the `regulation-corpus` side so Pair B can decide what to keep. Pair B owns chunking and retrieval from here.
+
+### 6.5.1 Two corpora now in this branch
+
+| | Pair B corpus (retrieval default) | `regulation-corpus` corpus |
+|---|---|---|
+| Code | `chunking/xml_parser.py`, `parse_regulations.py`, `chunk_regulations.py` | `src/cfpb/regs/ecfr.py`, `parse.py`, `fcra.py`; `scripts/build_reg_corpus.py` |
+| Output | `chunking/data/processed/chunks.jsonl` (tracked) | `data/processed/reg_chunks.parquet` (git-ignored; regenerate with `python scripts/build_reg_corpus.py`) |
+| Source | bulk eCFR Title 12 XML (AMDDATE Oct. 1, 2026; snapshot 2026-10-13) | eCFR API point-in-time **2026-10-13**; FCRA from U.S. Code 2024 edition |
+| Content | regulation text of Parts 1005, 1006, 1022, 1026 | regulation text **+ FCRA statute + Supplement I official interpretations + appendices** |
+| Chunks | 2,629 | **4,319** (regulation 1,540; interpretation 2,418; appendix 112; statute 249) |
+| Sections | 136 regulation sections | the same 136, plus 31 FCRA sections (167 in total) |
+| Sized for | `all-mpnet-base-v2` (384 tokens), `--max-chars 1400`, parent intros, `embed_text` | **not tuned to any embedding model**: word-based limit of 350 words (see 6.5.3) |
+| chunk_id | `12-1005-1005.11-c-2` | `R:1005.11(c)(2)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`, `S:1681i(a)(1)`, with `#k` for word-window pieces |
+| Tests | `tests/test_chunk_regulations.py` (24) | `tests/test_regs_parse.py` (4, including FCRA) |
+
+**Gold compatibility (checked 2026-10-15):** the gold set is labelled by **section** (`gold_section`, e.g. `1005.11` or `1681i`), so it can be scored against either corpus. All 93 Claude and all 100 ChatGPT regulation evidence quotes occur verbatim in Pair B's chunks for the cited section. **But 36 of the 127 in-scope gold items are FCRA sections, which Pair B's corpus does not contain yet** (6.5.6).
+
+### 6.5.2 Sources and download facts (all verified when run)
+- **eCFR API** (`src/cfpb/regs/ecfr.py`):
+  - Full text: `https://www.ecfr.gov/api/versioner/v1/full/2026-10-13/title-12.xml?part=<n>`. **It returns HTTP 406 unless the request sends `Accept-Encoding: gzip`.**
+  - Table of contents: `.../structure/<date>/title-12.json?part=<n>`.
+  - Title 12 was up to date as of 2026-10-13. XML sizes: 1005 0.86 MB, 1006 0.23 MB, 1022 0.27 MB, 1026 3.95 MB. Saved to `data/raw/ecfr/`.
+- **FCRA** (`src/cfpb/regs/fcra.py`):
+  - GovInfo `https://www.govinfo.gov/content/pkg/USCODE-2024-title15/html/USCODE-2024-title15-chap41-subchapIII.htm` (513 KB, U.S. Code 2024 edition, current through 2025-01-06), covering 15 U.S.C. 1681-1681x.
+  - Saved to `data/raw/fcra/`. Per-section citation links use `https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title15-section<n>`.
+
+### 6.5.3 Our chunking design (`src/cfpb/regs/parse.py`, `fcra.py`)
+
+**Principle:** chunk by legal structure, not fixed token windows (CLAUDE.md Sec. 4). Each chunk is labelled with its `section` and its most specific `paragraph`.
+- **`regulation` (rule text):**
+  - One chunk per **top-level paragraph** `(a)`, `(b)`, ...
+  - Text before `(a)` becomes the section's own chunk.
+  - A top-level paragraph over **350 words** is split at its numbered subparagraphs `(1)`, `(2)`, ... (ids such as `R:1006.34(b)(1)`).
+  - Only a piece still over **700 words** falls back to 350-word windows (`#1`, `#2`, ...).
+  - **Roman vs letter `(i)`:** a marker is roman if the previous marker is the preceding numeral, or the next is the following numeral (`(i)` followed by `(ii)`). This keeps `1006.18(b)(i)`-`(vii)` inside `(b)` while still recognising a real top-level `(i)` (e.g. `1026.13(i)`). Unit-tested.
+- **`interpretation` (Supplement I, official commentary):**
+  - Grouped under commentary headings (`Section 1026.13—...`, `13(b) ...`, `Paragraph 6(a)(1)`) and mapped to the section or paragraph they interpret (97.8% map to a rule section; the rest is appendix commentary).
+  - Groups over 350 words are split between numbered comments (`1.`, `2.`, ...).
+- **`appendix`:** consecutive blocks packed up to 350 words.
+- **`statute` (FCRA):**
+  - Only the law text, between `field-start:statute` and `field-end:statute`; editorial and amendment notes are dropped.
+  - One chunk per subsection `(a)`, `(b)`, ...; long subsections split at paragraph headings `(1)`, `(2)`, ...; a heading-only first piece is merged into the next.
+- **Fields** (dataclass `Chunk`): `chunk_id`, `regulation` (E/F/V/Z/FCRA), `part`, `kind`, `section`, `paragraph`, `heading`, `text`, `n_words`, `source_url`.
+- **Size statistics (words per chunk):**
+
+  | kind | count | median | 90th percentile | max |
+  |---|---:|---:|---:|---:|
+  | regulation | 1,540 | 94 | 334 | 670 |
+  | interpretation | 2,418 | 212 | 377 | 694 |
+  | appendix | 112 | 322 | 348 | 475 |
+  | statute | 249 | 113 | 350 | 573 |
+
+  401 chunks are word-window pieces (interpretation 281, regulation 99, statute 21).
+- **Coverage:** 99.3% to 100% of source words land in chunks (the dropped text is heading-only blocks); FCRA is 100%.
+- **"Chunking model" (what the sizes are tuned to):** **none.** Our limit is in words (350), chosen before an embedding model was picked. Token lengths under `all-mpnet-base-v2` were **not measured**, so a share of our chunks probably exceeds its 384-token limit and would be truncated. Measure with Pair B's tokenizer before indexing our corpus with that model. Pair B's corpus *is* tuned to it.
+
+### 6.5.4 Design decisions behind this corpus (and status)
+1. **FCRA statute added (team decision 2026-10-15).** The first 120 annotations gave 64% NONE, 36 of them governed by the FCRA itself: CRA reinvestigation (1681i), identity-theft blocks (1681c-2), permissible purpose (1681b), and furnisher duties (1681s-2). Reg V does not implement these. **Scope is now Regs E/F/V/Z + FCRA**; CLAUDE.md still says four regulations (update pending a team decision; tell the TA).
+2. **Interpretations and appendices are kept as separate `kind`s**, so retrieval can include or exclude them as an ablation. Pair B's open question "Supplement I has no owner" is covered here.
+3. **Gold and scoring are section-level.** A retrieved chunk is a hit if `chunk.section == gold_section`; paragraph hits are secondary (`docs/INTERFACES.md` Sec. 2).
+4. **NONE is a first-class abstention outcome** (`docs/INTERFACES.md` Sec. 7). 71 of 198 gold items are NONE. Retrieval is scored on the 127 in-scope items; abstention P/R/F1 is scored on all 198.
+5. **Pinned to one date** (eCFR 2026-10-13) for reproducibility; gold quotes were validated against this text.
+6. **Reg V sections verified:** 1022.40 Scope, 1022.41 Definitions, 1022.42 accuracy and integrity policies, 1022.43 Direct disputes. Reg V has no Supplement I.
+7. **The annotation tools read this corpus:** `scripts/reg_lookup.py`, `scripts/check_llm_labels.py` (verbatim-quote check), and `scripts/make_chatgpt_package.py`. If it is retired, repoint them at the chosen corpus first.
+
+### 6.5.5 What is decided vs open
+- **Decided:** gold set (`annotation/gold_final.jsonl`); section-level scoring; abstention; FCRA in scope.
+- **Open, for Pair B:**
+  - **Which corpus to index.** Default: Pair B's, because they own it and it is model-tuned. The claim that it "retrieves better" is **untested**, so decide by measurement (6.5.6).
+  - How to add the FCRA to Pair B's format.
+  - Whether to index interpretations.
+  - Remove the 39 MB `chunking/data/raw/ECFR-title12.xml` from git before merging to `main` (working rule 5).
+
+### 6.5.6 TODO for Pair B: BM25 baseline (do this on a NEW branch)
+
+```bash
+git fetch origin
+git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the gold set and FCRA code
+```
+
+1. **Corpus:** Pair B's `chunking/data/processed/chunks.jsonl` (index `text`). **Add the FCRA:**
+   - **Preferred:** port the FCRA into Pair B's chunk format.
+   - **Quick first pass:** append the 249 `kind == "statute"` rows from `data/processed/reg_chunks.parquet` (run `python scripts/build_reg_corpus.py` first), mapping `chunk_id`, `section`, `paragraph`, `heading`, `text`, `source_url`.
+   - Report results **with and without FCRA**: without it, 36 FCRA gold items have no correct chunk.
+2. **Queries and gold:**
+   - Query text = `narrative_clean` of the annotation items (`from cfpb.annotation import load_items`; 198 items: 120 sample + 78 top-up).
+   - Gold = `annotation/gold_final.jsonl` (`gold_regulation`, `gold_section`).
+3. **Retriever:** `rank_bm25.BM25Okapi` (add `rank-bm25` to requirements). Lowercase, alphanumeric tokens; stopword removal optional (log the choice).
+4. **Metrics on the 127 in-scope items (section level):**
+   - Deduplicate ranked chunks by section, keeping the first occurrence.
+   - Report hit@k and recall@k for k = 1, 5, 10 (one gold section per item), and MRR.
+   - Break down by regulation (E 29, F 30, Z 27, FCRA 36, V 5).
+5. **Abstention on all 198:** use the top BM25 score as the abstain signal. Report AUROC (in scope vs NONE) and P/R/F1 at a threshold. If you tune the threshold, tune it on a fixed half of the items and report on the other half; 198 items is small.
+6. **Outputs:**
+   - Ranked lists: `outputs/retrieval/bm25/ranked.parquet`, in the format of `docs/INTERFACES.md` Sec. 2 (`complaint_id`, `retriever`, `corpus`, `rank`, `chunk_id`, `score`).
+   - Numbers: `results/retrieval_bm25.json` (tracked).
+   - Add a dated entry to Sec. 7.
+7. **Chunking ablation (optional, cheap with BM25):** run the same BM25 on `reg_chunks.parquet` (regulation + statute, then also + interpretation) and compare section-level hit@k. This replaces the untested "which corpus is better" argument with a measurement.
+8. **Rules:**
+   - Do not edit `annotation/gold_final.jsonl`.
+   - Keep the gold items out of any training.
+   - Commits and pushes on `retrieval-bm25`; open a PR into `chunking` (or `main`, once merged) when done.
 
 ---
 
@@ -354,3 +481,200 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Why:** everyone, including Colab runs from a code ZIP, must index and score against the same chunks. Gold labels, retrieval results (precision@k, recall@k) and the oracle passages refer to `chunk_id`s, so silently different local chunks would make numbers incomparable. Regenerating also needs the `tokenizers` package and a Hugging Face download, which a fixed file avoids.
 - **Exception to working rule 5** ("Never commit data", Sec. 0): this is a deliberate exception for a small derived file that defines an experiment input, like `data_fingerprint.json`. Its inputs (`sections.jsonl`, the part XML) are already tracked under `chunking/data/`.
 - **When to regenerate:** only on purpose, if the parser, the chunker or `--max-chars` changes. Then commit the new file in the same commit as the code change, log the new SHA-1 and chunk count here, and tell Pair C and the eval owner, since `chunk_id`s may change.
+
+### 2026-10-15: v2 classifier baseline (Colab A100, run by a teammate; analysed by Aditya + Claude)
+- **Verified fresh v2 runs:** run_info rows are 111,527 / 14,022 / 13,905, and the prediction ids equal the v2 val/test ids exactly. Each history has 3 new epochs that differ from v1, so nothing resumed from stale checkpoints. The reported val score equals the best epoch. Environment: A100-SXM4-80GB, bf16, transformers 5.18.0, pandas 2.2.3, about 2.2 min per epoch, default settings. 14.4% of train narratives are truncated at 512 tokens.
+- **Product (11 classes):** val macro-F1 by epoch 0.782, 0.799, **0.801** (best is epoch 3, still rising slightly). **Test: macro-F1 0.808, accuracy 0.843, weighted-F1 0.842.**
+  - Per-class test F1: mortgage 0.951, student loan 0.917, vehicle 0.883, credit reporting 0.865, credit card 0.851, debt collection 0.837, money transfer 0.810, checking/savings 0.801, payday/personal 0.764, prepaid 0.696 (recall 0.621), debt or credit management 0.509 (recall 0.384, n = 190).
+  - Top confusions: money transfer to checking 228 and the reverse 215; credit reporting to debt collection 131 and the reverse 127; credit card to checking 95 and the reverse 78.
+  - Accuracy by confidence: 41% at 0.5 or below, 54% from 0.5 to 0.7, 71% from 0.7 to 0.9, 90% from 0.9 to 0.99, and **98.5% above 0.99** (4,128 of 13,905 test rows).
+- **Issue (88 train labels):** val macro-F1 by epoch 0.255, 0.293, **0.307**. **Test: macro-F1 0.310 over all 88 labels / 0.325 over the 84 labels present in test, accuracy 0.581, weighted-F1 0.564.**
+  - Four labels have no test examples and were never predicted ("Credit limit changed", "Incorrect exchange rate", "Problem with overdraft", "Property was sold"). `train.evaluate` passes all train labels to sklearn, so they count as F1 = 0. **Proposed fix (not yet applied):** average over labels present in the true or predicted labels, which is sklearn's default.
+  - 29 labels have test F1 = 0; all 22 labels with 10 or fewer test examples score 0. Mean F1 by test support: 0 for 10 or fewer, 0.17 for 11 to 30, 0.30 for 31 to 100, 0.52 for 101 to 300, 0.57 for 301 to 1,000, and 0.65 above 1,000. **Macro-F1 over the 39 issues with at least 100 test examples is 0.538.**
+  - Top confusions are near-synonym consumer labels: "Problem with a company's investigation" predicted as "Incorrect information on your report" 192 times; "Problem with a lender … charging your account" as "Managing an account" 134; "False statements or representation" as "Attempts to collect debt not owed" 120; "Improper use of your report" as "Incorrect information" 114. **65.9% of the 5,828 issue errors are an issue valid for the true product.**
+  - Accuracy by confidence: 21% at 0.3 or below, 35% from 0.3 to 0.5, 51% from 0.5 to 0.7, 68% from 0.7 to 0.9, and **91.5% above 0.9**.
+  - One val row is excluded because its label ("Lost or stolen refund") never appears in train.
+- **Versus v1:** the test sets differ (v2 test overlaps v1 test only partly, and the row count changed), so the numbers are **not** a controlled comparison. Product is 0.808 vs 0.798 and issue (all labels) 0.310 vs 0.297. Treat v2 as the official baseline.
+- **Open items for Pair A:**
+  1. Approve the macro-F1 convention fix above.
+  2. Decide on issue-label handling (merge rare issues, or report the at-least-100-examples subset alongside).
+  3. Optional: a 4th epoch for product, since val was still rising.
+  4. Freeze the output interface with Pairs B and C.
+
+### 2026-10-15: Macro-F1 convention fixed, models reusable without retraining (Aditya + Claude)
+- **Fix:** `train.compute_metrics` now averages macro-F1 over the labels present in the split's true or predicted labels, sklearn's default. Train labels with no examples in the split and never predicted are listed in `labels_without_examples` instead of scoring 0. A predicted-but-absent label still counts as 0. The old number is kept as `macro_f1_all_train_labels`, and three tests are in `tests/test_metrics.py`. This does not change best-epoch selection: absent labels were never predicted, so the old score is a fixed rescaling of the new one.
+- **Re-scored v2 runs from the saved predictions, no retraining** (`scripts/evaluate_classifier.py`): issue val 0.3066 to **0.3137** (86 labels scored), issue test 0.3100 to **0.3248** (84 labels scored; no test examples for "Credit limit changed", "Incorrect exchange rate", "Problem with overdraft", "Property was sold"). Product is unchanged (val 0.8011, test 0.8077). `run_info.json` records the rescoring under `"rescored"`. Original files are backed up in the session scratchpad only.
+- **Model loading:** `ComplaintClassifier("outputs/classifier/<label>/best")` reads the truncation settings from `run_info.json`, cleans raw CFPB text automatically, and returns label, prob, and top-k. Verified on CPU: on 150 random test complaints per model, it gives **100% label agreement** with the Colab predictions; probability differences are median 0.0003 (product) / 0.0013 (issue) and at most 0.008, from bf16 on GPU versus fp32 on CPU. Raw and pre-cleaned input give the same labels. Speed is about 3 narratives/sec on Aditya's CPU. The weights (`best/`, about 268 MB each) live on Drive `Dataset/outputs/classifier/<label>/best/` and on Aditya's laptop; they are git-ignored.
+- 46 unit tests pass.
+- **eCFR facts for Pair B** (API, 2026-10-15; Title 12 up to date as of 2026-10-13): section/appendix counts are Part 1005 (Reg E) 27/4, Part 1006 (Reg F) 15/4, Part 1022 (Reg V) 45/14, Part 1026 (Reg Z) 59/18, so **146 sections** in total. Table-of-contents endpoint: `https://www.ecfr.gov/api/versioner/v1/structure/<date>/title-12.json?part=<n>`. The full-text endpoint `.../full/<date>/title-12.xml?part=<n>` returned HTTP 406 to a range request; work out the right request when building the corpus.
+
+### 2026-10-15: Regulation corpus, interfaces, LLM annotation tooling (branch `regulation-corpus`)
+- **eCFR download:** Title 12 up to date as of 2026-10-13. Parts 1005, 1006, 1022, 1026 were fetched as full XML through the eCFR API; the full-text endpoint returns HTTP 406 unless the request sends `Accept-Encoding: gzip`. Transfer was about 1.1 MB compressed and 5.3 MB of XML, stored in `data/raw/ecfr/` (git-ignored).
+- **Corpus:** `data/processed/reg_chunks.parquet` has **4,070 chunks**: 1,540 regulation, 2,418 interpretation (Supplement I), 112 appendix. By part: E 236/388/15, F 91/111/9, V 255/0/19, Z 958/1,919/69. There are 146 sections, 10 of them reserved.
+  - Regulation chunks are top-level paragraphs, split at numbered subparagraphs when over 350 words; the median is 94 words.
+  - Interpretation chunks are grouped by commentary heading and mapped to a section or paragraph; 97.8% map to a rule section, and the rest are appendix commentary.
+  - 380 chunks are word-window pieces (`#k`) of 106 over-long single comments or paragraphs.
+  - Coverage: 99.3% to 100% of source words land in chunks; the dropped text is heading-only blocks.
+  - Spot checks: 1006.18(b)'s roman items stay inside (b), 1026.13 runs (a) to (i), and 1006.34 splits into (b)(1) to (5).
+- **`docs/INTERFACES.md`** (PROPOSED) covers complaint records, classifier output, chunks, retriever output and section-level scoring, gold labels, generation (retrieved vs oracle conditions, caching), and verification. Freeze it after team review.
+- **TA ruling, 2026-10-15:** LLMs may do the annotation (Claude Code, ChatGPT, ...); LLM bias is acceptable given the team's lack of legal expertise. This supersedes CLAUDE.md Sec. 5's "human labels are ground truth" for annotation; CLAUDE.md is unchanged pending a team edit. Report these as *silver* labels. The protocol is in `annotation/ANNOTATION_GUIDE.md`: Annotator A is Claude with the skill; Annotator B is a different LLM family, blind; kappa between A and B; humans adjudicate disagreements and spot-check 20.
+- **Legal-skill search (TA suggestion):** reviewed Anthropic's `anthropics/claude-for-legal` (Apache-2.0; plugins for commercial, corporate, employment, privacy, product, regulatory monitoring, IP, litigation, legal clinic, law student) and community skills (contract review, GDPR-style compliance). **None targets consumer-finance complaint-to-regulation mapping**, and several bundle hooks, scripts, or MCP connectors, so none were installed. We wrote a project skill instead (`.claude/skills/regulation-annotator/SKILL.md`). It follows the useful conventions (grounded citations, flag unverified items, "draft, not legal advice"). The method is: facts, coverage gate, read the section text with interpretations, elements test, conclusion with a verbatim quote. Every section number in its decision table was checked against the corpus; two remembered Reg V numbers (1022.80, 1022.90) were not in the corpus and were left out. The prepaid claim (1005.18(e)) and the "debt collector" definition (1006.2(i)) were also checked against the text.
+- **Pilot (Annotator A = claude-opus-5-5, 3 items):**
+  - 16625083 (Equifax dispute letter): NONE, governed by FCRA 1681i, confidence 2.
+  - 16779625 (card payment marked late): Z 1026.10(a), confidence 2, runner-up 1026.13.
+  - 23571192 (Wells Fargo denied an unauthorized-EFT claim without documents): E 1005.11(d)(1), confidence 3.
+  - `check_llm_labels.py` passes all 3 and rejects a copy with a one-word quote change.
+- `scripts/reg_lookup.py --search` is a crude TF-IDF helper; for "unauthorized debit card" it ranks 1005.17 (overdraft) above 1005.11, so the skill relies on its decision table plus reading, not on search.
+
+### 2026-10-15: Annotator A labels for all 120 complaints, plus the ChatGPT package
+- **Labels:** `annotation/llm_labels_claude-opus-5-5.jsonl`, 120/120, made by claude-opus-5-5 with the `regulation-annotator` skill in 11 batches. Every batch passed `check_llm_labels.py` (section exists and matches the regulation, paragraph under section, quote verbatim, NONE names the governing law).
+  - A batch-9 slip (two complaint_ids swapped between items) was caught before saving by an id-to-company cross-check, and every label was then re-checked against its company.
+- **Distribution:** NONE 77, F 22, E 12, Z 7, V 2. Confidence 1/2/3 = 20/47/53.
+  - Sections: 1005.11 ×10, 1006.18 ×10, 1006.38 ×8, 1006.14 ×3, 1005.6, 1022.43 and 1026.12 ×2 each, and 1026.10, 1026.13, 1026.18, 1026.53, 1026.19, 1006.34 ×1 each.
+- **Key finding (sampling heuristic vs label):**
+
+  | Candidate | E | F | NONE | V | Z |
+  |---|---:|---:|---:|---:|---:|
+  | E | 12 | 0 | 18 | 0 | 0 |
+  | F | 0 | 19 | 11 | 0 | 0 |
+  | **V** | 0 | 1 | **29** | 0 | 0 |
+  | Z | 0 | 2 | 19 | 2 | 7 |
+
+  - Credit-reporting complaints are almost entirely CRA disputes or identity-theft blocks under the **FCRA statute** (36 of the 77 NONE cite the FCRA).
+  - Many Reg Z-candidate complaints are federal student loans, RESPA/Reg X servicing, title release, or other law.
+  - **Only 43 items are in scope for retrieval evaluation, and V (2) and Z (7) are too few** for the planned ~30 per regulation. This confirms the Sec. 5 risk. **The team must decide:**
+    - (a) add the FCRA statute (15 U.S.C. 1681) and/or RESPA/Reg X to the corpus;
+    - (b) resample using issue-level filters to reach about 30 in-scope items per regulation; or
+    - (c) keep NONE as a first-class outcome the system must detect, and report retrieval on in-scope items only.
+- **Labelling conventions** that emerged, written into `annotation/chatgpt_package/01_INSTRUCTIONS.md` for the team to ratify:
+  - CRA disputes and blocks: NONE.
+  - Consumer-initiated scam payments: NONE (1005.2(m)).
+  - Denied unauthorized-EFT claims: 1005.11 by paragraph; loss only: 1005.6.
+  - Payment not credited: 1026.13 with a written dispute, else 1026.10.
+  - Collector ignores a written validation request: 1006.38(d)(2). Collector reports disputed or false data: 1006.18(c)(2). No validation notice: 1006.34(a).
+  - Original creditors are not Reg F debt collectors.
+- **ChatGPT package (Annotator B):**
+  - `annotation/chatgpt_package/` holds `README.md`, `PROMPTS.md` (step 1 blind in batches of 20, step 2 compare), and `01_INSTRUCTIONS.md` (the rubric).
+  - `scripts/make_chatgpt_package.py` regenerates `generated/` (git-ignored): complaints without labels, the section list, full rule text for E/F/V/Z (about 1.3 MB), and Claude's labels for step 2 only.
+  - `scripts/compare_annotators.py` reports agreement and kappa at regulation and section level and writes `annotation/disagreements.md` for human adjudication. It was tested on a doctored copy (2 changes gave section kappa 0.971 and the right confusion table), and `check_llm_labels.py` rejected that copy's mismatched quote, as intended.
+
+### 2026-10-15: FCRA added, in-scope top-up, abstention design (all 198 items labelled)
+- **Why:** Annotator A's 120 labels gave only 43 in-scope items (E 12, F 22, Z 7, V 2), and 64% were NONE, with 36 of those governed by the FCRA statute. The team chose three things together:
+  1. Add the FCRA to the corpus.
+  2. Top up the in-scope items for E, F, and Z.
+  3. Treat NONE as a first-class abstention outcome.
+- **FCRA corpus:**
+  - Source: GovInfo `USCODE-2024-title15-chap41-subchapIII.htm` (513 KB, current through 2025-01-06).
+  - `src/cfpb/regs/fcra.py` keeps only the statute text (between `field-start:statute` and `field-end:statute`, so editorial notes are dropped) and chunks by subsection, splitting long subsections at paragraph headings and merging heading-only pieces.
+  - Result: 31 sections (1681 to 1681x), 249 `statute` chunks (`S:<section>(<sub>)(<para>)`), with 100% of statute words covered and no duplicate ids. Tested in `tests/test_regs_parse.py`.
+  - The corpus is now **4,319 chunks** and 177 listed sections. FCRA sections appear in `annotation/regulation_sections.md` as "15 U.S.C. 1681i", and labels use "1681i".
+  - Tools updated: `reg_lookup.py` (`--reg FCRA`, statute kind) and `check_llm_labels.py` (accepts FCRA).
+- **Relabel:** 36 NONE-because-FCRA items moved to FCRA sections: 1681i(a)(1) for CRA disputes, 1681i(a)(7) for method of verification, 1681c-2(a) for identity-theft blocks, 1681b(a), 1681e(b), and 1681s-2(a)(2)/(a)(6)/(b) for furnishers. Three NONE items stay NONE with corrected governing-law text. The full list is in `annotation/label_revisions.md`. The scratchpad holds a v1 copy only; the 3 pushed pilot lines are in git history.
+- **Top-up:** `scripts/make_topup_sample.py` draws 78 items, hash-ordered and round-robin over sub-issues, excluding the classifier test set and the sample:
+  - E: 30 from unauthorized, debit card, and banking-error sub-issues
+  - Z: 36 from card purchase disputes, unauthorized charges, cards opened without consent, payment problems, and fees or interest
+  - F: 12 from validation, notice, calls, and old-debt suit sub-issues
+
+  Ids are in `annotation/annotation_topup_ids.txt`. 64% of the top-up landed in scope.
+- **All 198 labelled by Annotator A** (claude-opus-5-5, skill), in batches of 10 to 12. Each batch passed `check_llm_labels.py` and an id-to-company cross-check. 5 runner-ups equal to the gold section were cleared.
+  - **Final:** in scope **129** (E 29, F 32, Z 29, FCRA 36, V 3), NONE **69**. Confidence 1/2/3 = 45/99/54.
+  - Top sections: 1005.11 ×25, 1681i ×19, 1006.18 ×12, 1681c-2 ×11, 1026.13 ×10, 1006.38 ×9, 1026.12 ×7.
+- **New rubric conventions from the top-up**, all verified in the text:
+  - Merchant disputes over authorized debit purchases are not Reg E errors (NONE).
+  - Gift cards are excluded from "prepaid account" (1005.2, quoted: "(D)(1) A gift certificate ... (2) A store gift card"), so only 1005.20 applies.
+  - Paper checks, business accounts, and wires: NONE.
+  - A prepaid card denied only for late reporting: 1005.18(e)(1).
+  - Credit card fraud: 1026.13(a)(1) if the issuer investigated and denied, 1026.12(b) if only the use is described.
+  - No statement delivered before the due date: 1026.5(b)(2)(ii)(A).
+  - Collector reporting before any contact: 1006.30(a)(1).
+  - Written cease-communication notice ignored: 1006.6(c)(1).
+
+  The single source of the rubric is now the conventions section of `.claude/skills/regulation-annotator/SKILL.md`, rewritten for FCRA and NONE; all 50 section numbers it cites were checked against the corpus.
+- **Abstention** (`docs/INTERFACES.md` Sec. 7): every stage may output NONE.
+  - The retriever exposes `abstain_score`; generation drafts a referral when abstaining.
+  - Metrics: abstention P/R/F1 on all 198, retrieval P@k/R@k on the 129, and end-to-end accuracy.
+  - The attribution experiment uses in-scope items only.
+- **ChatGPT package regenerated:** 198 complaints, the FCRA text (`08_FCRA_1681.md`), the rubric auto-copied from the skill (`01_INSTRUCTIONS.template.md` -> `generated/01_INSTRUCTIONS.md`), and Claude's labels in `09_claude_labels.md` for step 2. `PROMPTS.md` now covers 10 batches of 20.
+- `docs/INTERFACES.md`, `annotation/ANNOTATION_GUIDE.md`, and this file are updated. 50 unit tests pass.
+- **Open:**
+  - Run the ChatGPT cross-check.
+  - Have a human adjudicate disagreements and spot-check 20 items.
+  - Ratify the rubric conventions as a team.
+  - Update CLAUDE.md's scope ("four regulations", "120 pairs", "human labels are ground truth") once the team agrees.
+  - Tell the TA about the FCRA scope addition.
+
+### 2026-10-15: Annotator B (ChatGPT) cross-check and agreement
+- Aditya ran the package in ChatGPT. The model recorded itself as `llm:chatgpt-gpt-6` (model name as reported by ChatGPT, not verified). Outputs: `annotation/llm_labels_chatgpt.jsonl` (198 lines) and `annotation/chatgpt_review.jsonl` (26 lines, one per disagreement).
+- **Validation:** `check_llm_labels.py` passes all 198 ChatGPT labels: sections exist and all quotes are verbatim.
+- **Agreement (Claude A vs ChatGPT B, `compare_annotators.py`):**
+  - Regulation level: 92.4%, **Cohen's kappa 0.904**.
+  - Section level: 86.9%, **kappa 0.845**.
+  - Abstention (NONE vs in scope): 95.5%, kappa 0.898.
+  - By subset: sample 88.3%, top-up 84.6% section agreement.
+  - By A's confidence: 66.7% (conf 1), 89.9% (conf 2), 98.1% (conf 3). Confidence is informative.
+- **The 26 disagreements:**
+  - 11 same regulation, different section (e.g. 1681i vs 1681c-2 on mixed dispute/identity-theft complaints; vague Reg Z interest complaints, where B chose 1026.13(a)(6)).
+  - 9 NONE vs in scope.
+  - 6 different regulation (mostly furnisher cases on the FCRA/Reg V/Reg F boundary).
+  - B's own review preferred B in 13, A in 12, and neither in 1.
+  - One note for the adjudicator: on 21757875, B's reason cites the prepaid rule (1005.18(e)(1)), but the card is Direct Express, a government benefit account, so 1005.15's modified rules may be the better reference.
+- **Human steps remaining (annotators A and B must not adjudicate):**
+  1. Fill `- **Final (human):**` for the 26 items in `annotation/disagreements.md` with `A`, `B`, or an explicit label, plus initials, e.g. `B [AD]`.
+  2. Fill `- **Check (human):**` for the 20 agreed items in `annotation/spot_check.md` (hash-selected) with `OK` or a corrected label.
+  3. Run `python scripts/build_gold.py`. It writes `annotation/gold_final.jsonl` only when every item is decided. The builder was tested with simulated decisions on copies: 198 written, source counts correct; the real files were restored with decisions blank.
+- **Report wording:** silver labels from two LLM annotators of different families under a shared rubric, kappa 0.904 (regulation) and 0.845 (section), with human adjudication of disagreements and a 20-item human spot check.
+
+### 2026-10-15: Overlap found with branch `chunking` (Ishani + Ujjwal, Pair B), not yet merged
+- Branch `chunking` was cut from `classifier` at `09914e7`, before `regulation-corpus` existed, so the two branches built **regulation parsing and chunking twice**.
+  - Theirs: `chunking/xml_parser.py`, `parse_regulations.py`, `chunk_regulations.py`; 2,629 chunks committed as `chunking/data/processed/chunks.jsonl`; 24 tests.
+  - Ours: `src/cfpb/regs/parse.py` and `scripts/build_reg_corpus.py`, giving `data/processed/reg_chunks.parquet`.
+- **Compared on 2026-10-15:**
+  - **Source:** both use eCFR Title 12 as of 2026-10-13. Theirs is the bulk XML (AMDDATE Oct. 1, 2026); ours is the eCFR API.
+  - **Coverage:** the same **136 regulation sections**; theirs has regulation text only (`content_type` = regulation).
+  - **Annotation compatibility:** **all 93 Claude and all 100 ChatGPT regulation evidence quotes appear verbatim in their chunks** for the cited section, so the gold labels are fully compatible with their corpus. The only difference is paragraph format: theirs is relative (`(b)(1)`), ours is full (`1005.11(b)(1)`).
+  - **Theirs has design features *expected* to help retrieval (untested; no retrieval run on either corpus yet):**
+    - paragraph paths checked against eCFR renderer ids, with 0 mismatches after Ujjwal's `(i)` fix
+    - chunk size tuned to the chosen embedding model, `all-mpnet-base-v2` (384 tokens, `--max-chars 1400`)
+    - parent-paragraph intros carried into each chunk, plus `embed_text`
+    - paragraph anchors in `source_url`
+    - a fixed, committed corpus file
+  - **Ours adds what theirs lacks:** the **FCRA statute** (249 chunks; 36 gold items are FCRA), **Supplement I official interpretations** (2,418 chunks; their open question 2), appendices (112), and the annotation tooling that reads the corpus (`reg_lookup.py`, `check_llm_labels.py`, `make_chatgpt_package.py`).
+  - Ours also answers some of their open questions: Reg V sections verified (1022.40-.43), and section-level scoring plus abstention specified in `docs/INTERFACES.md`.
+- **Recommendation (needs Pair B and the team):**
+  - Choose the retrieval corpus by **measuring**, not by design argument: run the same retriever over both chunk sets on the 129 in-scope gold items, and compare section-level precision@k and recall@k (this is the planned chunking ablation; Pair B to own it). Until then, their `chunks.jsonl` is the default, because Pair B owns it and it is tuned to the chosen model.
+  - Add the FCRA statute to it in their schema (and optionally Supplement I as a separate `content_type` for an ablation).
+  - Point our annotation tools at it.
+  - Retire `src/cfpb/regs/parse.py` for retrieval use.
+  - Merge `regulation-corpus` and `chunking` with one reconciled `CLAUDE_PROGRESS.md`.
+- **Conflicts to expect when merging:** `CLAUDE_PROGRESS.md` (both appended), `.gitignore`, `requirements.txt`, `README.md`. Also, `chunking/data/raw/ECFR-title12.xml` (39 MB) is committed on their branch, against working rule 5; their own log flags this.
+- **Correction (same day):** the comparison above first said "theirs is stronger for retrieval". That was a design-based expectation, not a measurement. Their token counts and their 0-mismatch paragraph check come from their log and were not re-verified here; only the section coverage and the quote compatibility were checked directly.
+
+### 2026-10-16: Gold set finalised (`annotation/gold_final.jsonl`)
+- **Human adjudication by Aditya (initials AD), who is not one of the LLM annotators:**
+  - 26 disagreements: took A in 12, B in 13, and an own label in 1. That one, 20834286, became NONE: both LLMs chose a Reg Z section, but the facts show bad payment-date advice, not a crediting failure.
+  - 20-item hash-selected spot check of agreed items: **20/20 OK**, 0 corrected.
+- **Final gold:** 198 items. **127 in scope** (E 29, F 30, Z 27, FCRA 36, V 5) and **71 NONE**. By source: 152 agreed, 20 agreed and spot-checked, 26 adjudicated. Every section exists and matches its regulation; every paragraph sits under its section; NONE items have no section; all 198 annotation items are covered.
+- **Annotator accuracy against the final gold:**
+  - Claude: regulation 0.965, section 0.929.
+  - ChatGPT: regulation 0.949, section 0.934.
+  - On the 26 disputed items: Claude 46.2%, ChatGPT 50.0% (section).
+  - *Caveat:* these are inflated as overall measures, because 172 gold labels are the annotators' agreed labels. The informative numbers are the inter-annotator kappa, the 20/20 spot check, and the near-even split on disputed items.
+- **Adjudicator's call to note:** 21757875 (a Direct Express government benefit card) was settled as B, `1005.18(e)(1)`, the prepaid late-reporting rule. Claude had flagged that the benefit-card rule 1005.15 might fit better. The gold keeps the human decision.
+- `docs/INTERFACES.md` Sec. 3 now names `annotation/gold_final.jsonl` as the official gold set (JSONL, since `*.csv` is git-ignored).
+- **Report wording:** 198 complaints labelled by two LLM annotators from different families (Claude Opus 5.5, ChatGPT) under a shared written rubric with verbatim-quote validation. Cohen's kappa 0.904 (regulation) and 0.845 (section); disagreements adjudicated by a team member; 20/20 human spot check. Gold: 127 in-scope complaint-to-section pairs plus 71 out-of-scope (NONE).
+
+### 2026-10-16: Classifier interface frozen; issue-reporting rule decided
+- **Interface frozen** (all pairs agreed): `docs/INTERFACES.md` Sec. 1, giving per complaint `pred_product`, `pred_product_prob`, `pred_issue`, `pred_issue_prob`.
+- **Reporting rule (team decision):**
+  - The headline is **product macro-F1 0.808** (test).
+  - The issue classifier is reported as macro-F1 over all 84 issues present in test (**0.325**), plus macro-F1 over the **39 issues with at least 100 test examples (0.538, covering 91.7% of complaints)**, plus accuracy **0.581**, plus the **product-consistent rate 0.857** (the predicted issue is valid for the complaint's product).
+  - The at-least-100 cutoff is fixed now, before writing, and the all-issue number is always shown next to it.
+  - Frequent-issue macro-F1 is computed on the full test set, averaging only over the frequent labels. Do **not** drop the rows of rare issues, since that hides false positives (it gave an inflated 0.555).
+  - No retraining with merged rare issues.
+- All numbers are saved in `results/classifier_test_metrics.json`. The `results/` folder is tracked, for small numbers the report cites.
+
+### 2026-10-19: `regulation-corpus` merged into `chunking` (Aditya + Claude)
+- At Aditya's request, branch `regulation-corpus` was merged into Pair B's `chunking` branch, so Pair B (owner of chunking and retrieval) has everything in one place: the FCRA corpus code, our second regulation corpus, the annotation tooling, both LLM label files, and the final gold set.
+- The only merge conflict was this file. Both sides were kept: the status table now has one classifier row (v2 results) and one corpus row describing both corpora, and the log keeps Pair B's 10-14/10-15 entries followed by ours.
+- Added **Sec. 6.5**: both corpora compared; sources; our chunking design and statistics; the explicit note that our chunks are **not tuned to any embedding model**; design decisions (FCRA, interpretations, section-level scoring, abstention); open items; and the **BM25 baseline task for Pair B on a new branch `retrieval-bm25`** (Sec. 6.5.6).
+- No Pair B files were modified.

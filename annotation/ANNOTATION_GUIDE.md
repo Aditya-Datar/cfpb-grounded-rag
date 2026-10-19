@@ -2,7 +2,24 @@
 
 Draft, 2026-10-07. The **rubric decisions marked TBD belong to the two rubric drafters** (CLAUDE.md Sec. 5). Everything else is procedure.
 
-**Ground rule (CLAUDE.md Sec. 5): human labels are ground truth.** LLMs (Claude, and optionally Jev) only *flag* items for a human to re-check. An LLM answer never overwrites a human label, and an item is never labeled by an LLM alone.
+> **Update 2026-10-15: the TA allowed LLM annotation.** The course TA told the team that annotation may be done with LLMs (Claude Code, ChatGPT, and so on), and that LLM bias is acceptable given the team's lack of legal expertise. This supersedes the ground rule below, which stays for history. Labels produced this way are **silver labels** and must be reported as such. Protocol:
+>
+> 1. **Annotator A:** Claude Code with the project skill `.claude/skills/regulation-annotator/`. It reads the eCFR text through `scripts/reg_lookup.py`, runs an elements test, and quotes verbatim. Output goes to `annotation/llm_labels_<model>.jsonl`, checked by `scripts/check_llm_labels.py` (quote verbatim, section exists).
+> 2. **Annotator B:** a **different model family** (for example ChatGPT), labelling blind with the same rubric and access to the same regulation text. Inter-annotator agreement becomes Cohen's kappa between A and B, at regulation and section level.
+> 3. **Adjudication:** every A/B disagreement goes to a human team member, who uses Prompt 2 below with the full section text and makes the final call.
+> 4. **Human spot-check:** a team member re-checks a random 20 of the agreed items, which estimates the precision of the silver labels.
+> 5. **Circularity:** if the target generator or LLM judge is the same family as an annotator, say so in the report.
+>
+> A 3-item pilot by Annotator A is in `annotation/llm_labels_claude-opus-5-5.jsonl` (`"batch": "pilot"`).
+
+> **Update 2026-10-15 (later): scope, item set, and abstention.**
+> - **The FCRA statute (15 U.S.C. 1681-1681x) is now in the corpus.** Labels can be `E`, `F`, `V`, `Z`, `FCRA`, or `NONE`. 36 items that were NONE "because FCRA" were relabelled (`annotation/label_revisions.md`).
+> - **There are 198 items:** the 120-item stratified sample plus a 78-item **in-scope top-up** (`scripts/make_topup_sample.py`, ids in `annotation/annotation_topup_ids.txt`). The top-up was drawn from issue types likely governed by Regs E, F, and Z, because the sample had too few in-scope E/F/Z items.
+> - **Annotator A's labels for all 198** give: in scope 129 (E 29, F 32, Z 29, FCRA 36, V 3) and NONE 69.
+> - **NONE is scored as abstention** (`docs/INTERFACES.md` Sec. 7).
+> - The **current rubric** is the conventions section of `.claude/skills/regulation-annotator/SKILL.md`. It is copied automatically into the ChatGPT package (`annotation/chatgpt_package/`). Section 2's open questions below are answered there, pending team ratification.
+
+**Ground rule (CLAUDE.md Sec. 5, before 2026-10-15): human labels are ground truth.** LLMs (Claude, and optionally Jev) only *flag* items for a human to re-check. An LLM answer never overwrites a human label, and an item is never labeled by an LLM alone.
 
 ---
 
