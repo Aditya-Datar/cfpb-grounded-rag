@@ -39,6 +39,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
 | 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
+| Backend: single-complaint pipeline for the demo | Anirudh | `backend` | **Skeleton done (2026-10-18):** `cfpb.pipeline` runs classify, retrieve, draft, verify on one complaint; real classifier when weights are present, stubs for stages 2 to 4 (Sec. 7) |
 | Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
@@ -91,6 +92,10 @@ src/cfpb/classify/predict.py        ComplaintClassifier: load a trained best/ mo
 scripts/evaluate_classifier.py      re-score a finished run from saved predictions (or --repredict)
 tests/test_split.py                 hash-split stability tests
 tests/test_metrics.py               macro-F1 convention tests
+src/cfpb/pipeline/                  single-complaint pipeline for the Streamlit demo: schema.py (result
+                                     types), stages.py (stage protocols, classifier adapter, stubs), core.py
+scripts/analyze_complaint.py        run the pipeline on one complaint, print JSON
+tests/test_pipeline.py              pipeline tests (stubs, abstention, stage swapping)
 ```
 
 New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, a runnable script in `scripts/`, and tests in `tests/`. Scripts add `src/` to `sys.path`, so no package install is needed.
@@ -483,3 +488,20 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Adjudicator's call to note:** 21757875 (a Direct Express government benefit card) was settled as B, `1005.18(e)(1)`, the prepaid late-reporting rule. Claude had flagged that the benefit-card rule 1005.15 might fit better. The gold keeps the human decision.
 - `docs/INTERFACES.md` Sec. 3 now names `annotation/gold_final.jsonl` as the official gold set (JSONL, since `*.csv` is git-ignored).
 - **Report wording:** 198 complaints labelled by two LLM annotators from different families (Claude Opus 5.5, ChatGPT) under a shared written rubric with verbatim-quote validation. Cohen's kappa 0.904 (regulation) and 0.845 (section); disagreements adjudicated by a team member; 20/20 human spot check. Gold: 127 in-scope complaint-to-section pairs plus 71 out-of-scope (NONE).
+
+### 2026-10-18: Backend skeleton, single-complaint pipeline (branch `backend`, Anirudh + Claude)
+- **Decision (Anirudh, assigned the backend):** no separate API server. The Streamlit demo imports the pipeline directly and caches it with `@st.cache_resource`. A thin FastAPI wrapper over the same `analyze()` can be added later if the UI and models must run on different machines.
+- **Branch:** `backend`, cut from `regulation-corpus` at `ead53c7`, so it has the classifier, `docs/INTERFACES.md` and the gold set. Not merged with `chunking`.
+- **What:** `src/cfpb/pipeline/`. `load_pipeline().analyze(narrative)` cleans the text with `clean_narrative`, then runs classify, retrieve, draft and verify, and returns a `PipelineResult` (dataclasses; `to_dict()` gives JSON-safe output). Field names follow `docs/INTERFACES.md` Secs. 1, 2, 4, 5 and 7.
+  - **Stage contract** (`stages.py`), for Pairs B and C to implement: `classify(text) -> Classification`, `retrieve(text, k) -> Retrieval` (ranked chunks with text and `source_url`, plus `abstain_score` and `abstained`), `generate(text, context) -> Draft` (sentences aligned with cited chunk ids), `verify(draft, context) -> Verification`. Pass the real object to `Pipeline(...)`; nothing else changes.
+  - **Abstention:** if the retriever abstains, the pipeline returns a fixed referral draft (wording from INTERFACES.md Sec. 7) and calls neither the generator nor the verifier, so NONE costs no LLM call.
+  - **Classifier:** `DistilBertClassifier` wraps `ComplaintClassifier` for product (and issue, if present). `load_pipeline()` uses `outputs/classifier/{product,issue}/best` when present, else a stub with a warning; `require_models=True` raises instead.
+  - **Stubs:** retriever, generator and verifier are placeholders marked `[stub]`, and verification labels are `unchecked`, never `supported`. `PipelineResult.stubbed_stages` lists them so the demo can label placeholder output.
+  - `scripts/analyze_complaint.py --text "..."` prints the result as JSON; `--abstain` exercises the NONE path.
+- **Tests:** `tests/test_pipeline.py`, 11 tests. Full suite: 53 passed, 2 skipped (torch not installed), Python 3.14.7, macOS, fresh `.venv` from `requirements.txt`.
+- **Not verified:** the real `DistilBertClassifier` path. This machine has no torch and no model weights, so only the stub classifier ran. Check with the `best/` folders from Drive before the demo relies on it.
+- **Next:**
+  1. Wire in the real classifier and time it on CPU (about 3 narratives/sec was measured on Aditya's laptop).
+  2. Swap in Pair B's retriever once the corpus is chosen (`chunking` vs `regulation-corpus`, Sec. 7 2026-10-15). The `RetrievedChunk` fields map to either corpus.
+  3. With Pair C: the LLM generator with response caching (`cache_key`, INTERFACES.md Sec. 4) and the NLI verifier.
+
