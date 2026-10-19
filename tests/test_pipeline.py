@@ -62,6 +62,7 @@ def test_abstention_drafts_referral_without_generation_or_verification():
     assert all(c == [] for c in r.draft.cited_chunk_ids)
     assert r.verification.checks == []
     assert "generate" not in r.timings_ms
+    assert r.stubbed_stages == ["classify", "retrieve"]  # the referral itself is not a stub
 
 
 @pytest.mark.parametrize("text", ["", "   ", None])
@@ -107,3 +108,18 @@ def test_missing_model_falls_back_to_stub_or_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         load_classifier(missing, None, require=True)
     assert "classify" in load_pipeline(missing, None).stubbed_stages
+
+
+def test_batch_tables_follow_interfaces(tmp_path):
+    from cfpb.pipeline.batch import to_frames
+    results = {"1": _stub_pipeline(k=2).analyze(NARRATIVE),
+               "2": _stub_pipeline(abstain=True).analyze(NARRATIVE)}
+    f = to_frames(results, "retrieved")
+    assert list(f["classification"].complaint_id) == ["1", "2"]
+    ranked = f["ranked"]
+    assert list(ranked[ranked.complaint_id == "1"]["rank"]) == [1, 2]
+    assert ranked[ranked.complaint_id == "2"].abstained.tolist() == [True]  # one row, no chunk
+    assert f["responses"].is_referral.tolist() == [False, True]
+    assert set(f["sentences"].complaint_id) == {"1"}  # referrals are not verified
+    for name, df in f.items():  # nested list columns must survive Parquet
+        df.to_parquet(tmp_path / f"{name}.parquet", index=False)

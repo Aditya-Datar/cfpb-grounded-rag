@@ -39,7 +39,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
 | 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Backend: single-complaint pipeline for the demo | Anirudh | `backend` | **Skeleton done (2026-10-18):** `cfpb.pipeline` runs classify, retrieve, draft, verify on one complaint; real classifier when weights are present, stubs for stages 2 to 4 (Sec. 7) |
+| Backend: single-complaint pipeline for the demo | Anirudh | `backend` | **Runs end to end (2026-10-19):** `cfpb.pipeline` with the real classifier, a corpus loader for both chunk sets, an oracle retriever (gold section), a batch runner writing INTERFACES.md tables, and a minimal Streamlit page (`demo/app.py`). Real retriever, generator and verifier still stubs (Sec. 7) |
 | Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
@@ -96,6 +96,13 @@ src/cfpb/pipeline/                  single-complaint pipeline for the Streamlit 
                                      types), stages.py (stage protocols, classifier adapter, stubs), core.py
 scripts/analyze_complaint.py        run the pipeline on one complaint, print JSON
 tests/test_pipeline.py              pipeline tests (stubs, abstention, stage swapping)
+src/cfpb/pipeline/corpus.py         Corpus (loads reg_chunks.parquet or chunking's chunks.jsonl), OracleRetriever
+src/cfpb/pipeline/batch.py          PipelineResults -> classification/ranked/responses/sentences tables
+scripts/run_pipeline_batch.py       pipeline over the gold-set complaints -> outputs/pipeline_runs/<run>/
+tests/test_pipeline_corpus.py       corpus loader and oracle tests (+ real-data checks, skipped if absent)
+demo/app.py                         minimal Streamlit page: streamlit run demo/app.py
+requirements-demo.txt               classifier stack plus streamlit
+.claude/launch.json                 runs the demo in the Claude Code desktop preview
 ```
 
 New stages should follow the same pattern: library code in `src/cfpb/<stage>/`, a runnable script in `scripts/`, and tests in `tests/`. Scripts add `src/` to `sys.path`, so no package install is needed.
@@ -504,4 +511,22 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   1. Wire in the real classifier and time it on CPU (about 3 narratives/sec was measured on Aditya's laptop).
   2. Swap in Pair B's retriever once the corpus is chosen (`chunking` vs `regulation-corpus`, Sec. 7 2026-10-15). The `RetrievedChunk` fields map to either corpus.
   3. With Pair C: the LLM generator with response caching (`cache_key`, INTERFACES.md Sec. 4) and the NLI verifier.
+
+### 2026-10-19: Real classifier, corpus loader, oracle retriever, batch runner, demo page (branch `backend`, Anirudh + Claude)
+- **Local files** (git-ignored), from Drive: `outputs/classifier/{product,issue}/best/` (safetensors, about 268 MB each) and `run_info.json`, plus `data/processed/annotation_sample.csv`. Both `run_info.json` files report 111,527 train rows, the v2 baseline, and their label lists match the models' `config.json`. They predate the 2026-10-15 rescoring (no `"rescored"` key, issue test macro-F1 shows 0.310); this does not affect predictions.
+- **Real classifier verified** through `load_pipeline(require_models=True)` on macOS (CPU, torch 2.14.1, transformers 5.20.2, Python 3.14.7). Loading both models takes about 4 s. Classification on the 120 sample complaints: median 43 ms, p90 78 ms, max 511 ms per complaint. Predicted product matches the consumer-chosen product on 110 of 120 and issue on 79 of 120. **This is a sanity check, not a metric:** the sample excludes the classifier test set but may overlap train.
+- **Corpus:** rebuilt `data/processed/reg_chunks.parquet` with `scripts/build_reg_corpus.py --date 2026-10-13`. It gives 4,319 chunks, as logged on 2026-10-15, and `annotation/regulation_sections.md` came out byte-identical. `Corpus.load` also reads the `chunking` branch's `chunks.jsonl` (2,629 chunks); a copy is in `data/processed/chunks_chunking.jsonl`, extracted with `git show`. Paragraphs are normalised to full form (`(c)(2)` becomes `1005.11(c)(2)`).
+- **Oracle retriever** (`OracleRetriever(...).for_complaint(id)`, passed per call via `Pipeline.analyze(..., retriever=...)`): returns the gold section's regulation and statute chunks; interpretations are left out by default (an ablation). Chunks containing or contained in the gold paragraph come first (score 1.0), then the rest of the section (0.5), in document order. NONE abstains.
+  - On `reg_chunks.parquet`, all 127 in-scope gold items get a gold-paragraph chunk at rank 1, and all 71 NONE items abstain. The gold section has a median of 8 rule chunks per in-scope item (max 35).
+  - On the chunking set, 91 of 127 items work, again all with a paragraph match at rank 1. The other 36 are FCRA, which it does not contain.
+  - The **oracle passage size** (whole section vs the gold paragraph only) is still the open question from the 2026-10-14 chunking entry. Here it is the top k chunks (default 5).
+- **Batch runner** (`scripts/run_pipeline_batch.py --retriever oracle|stub`) writes `classification`, `ranked`, `responses` and `sentences` Parquet tables (INTERFACES.md Secs. 1, 2, 4, 5) plus `run_info.json`. An oracle run on the 120 sample items took 6.6 s with the real classifier: 43 abstentions, exactly the NONE items. Each rank-1 section equals the gold section, as expected for the oracle. The 78 top-up items are skipped until `data/processed/annotation_topup.csv` is present.
+- **Demo page** (`demo/app.py`): sidebar with the retriever (default or oracle), k, and a gold-set complaint picker; panels for classification, retrieved passages with citations and source links, the draft with per-sentence colouring, and the sentence-check table. Stubbed stages carry a "Placeholder" badge. Checked in the desktop browser preview on 23571192 (oracle 1005.11(d) at rank 1, gold 1005.11(d)(1)) and on a NONE mortgage complaint (referral shown).
+  - Two fixes from that check: a referral no longer counts `generate`/`verify` as stubbed, since neither runs; and classification moved from `st.metric` to text, because metric boxes cut off long issue names.
+- **Secrets:** `.env` and `.streamlit/secrets.toml` added to `.gitignore`, ready for the LLM key.
+- **Tests:** 72 passed (macOS, `.venv` with `requirements-demo.txt`), including the two real-data checks: the oracle over all 198 gold items, and the real classifier.
+- **Next:**
+  1. Add `annotation_topup.csv` (ask Aditya) so the batch runner and demo cover all 198 items.
+  2. Plug in the real retriever once built.
+  3. Settle the oracle passage size with the retrieval and generation owners.
 

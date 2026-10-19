@@ -56,18 +56,26 @@ class Pipeline:
         self.generator, self.verifier = generator, verifier
         self.k = k
 
-    @property
-    def stubbed_stages(self) -> list[str]:
-        stages = {"classify": self.classifier, "retrieve": self.retriever,
-                  "generate": self.generator, "verify": self.verifier}
+    def _stubbed(self, retriever, abstained: bool = False) -> list[str]:
+        stages = {"classify": self.classifier, "retrieve": retriever}
+        if not abstained:  # a referral never calls the generator or verifier
+            stages |= {"generate": self.generator, "verify": self.verifier}
         return [name for name, s in stages.items() if getattr(s, "is_stub", False)]
 
-    def analyze(self, narrative: str, k: int | None = None) -> PipelineResult:
-        """Run all four stages on one raw complaint narrative. Raises
+    @property
+    def stubbed_stages(self) -> list[str]:
+        return self._stubbed(self.retriever)
+
+    def analyze(self, narrative: str, k: int | None = None,
+                retriever: Retriever | None = None) -> PipelineResult:
+        """Run all four stages on one raw complaint narrative. `retriever`
+        overrides the pipeline's for this call only, e.g. an oracle bound to a
+        gold complaint (corpus.OracleRetriever.for_complaint). Raises
         ValueError if nothing is left after cleaning."""
         clean = clean_narrative(narrative)
         if not clean:
             raise ValueError("Complaint text is empty.")
+        retriever = retriever or self.retriever
         timings: dict[str, float] = {}
 
         def timed(name, fn, *args):
@@ -77,7 +85,7 @@ class Pipeline:
             return out
 
         classification = timed("classify", self.classifier.classify, clean)
-        retrieval = timed("retrieve", self.retriever.retrieve, clean, k or self.k)
+        retrieval = timed("retrieve", retriever.retrieve, clean, k or self.k)
         if retrieval.abstained:
             draft = referral_draft()
             verification = Verification([], verifier="skipped (referral)", threshold=None)
@@ -85,7 +93,7 @@ class Pipeline:
             draft = timed("generate", self.generator.generate, clean, retrieval.chunks)
             verification = timed("verify", self.verifier.verify, draft, retrieval.chunks)
         return PipelineResult(narrative, clean, classification, retrieval, draft,
-                              verification, self.stubbed_stages, timings)
+                              verification, self._stubbed(retriever, retrieval.abstained), timings)
 
 
 def load_classifier(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_MODEL,

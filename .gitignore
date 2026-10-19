@@ -21,3 +21,7 @@ models/
 
 # Generated ChatGPT annotation package (rebuild: scripts/make_chatgpt_package.py)
 /annotation/chatgpt_package/generated/
+
+# Secrets (LLM API keys): use .env or .streamlit/secrets.toml locally, never commit
+.env
+.streamlit/secrets.toml

@@ -18,3 +18,15 @@ python -m venv .venv
 **Classifier (stage 1):** run [notebooks/train_classifier_colab.ipynb](notebooks/train_classifier_colab.ipynb) on a Colab GPU, or locally `python scripts/train_classifier.py --label product` after `pip install -r requirements-classifier.txt`.
 
 Data files are git-ignored. Narratives come from the CFPB FOIA Reading Room archive, because the live API no longer publishes them (see [CLAUDE_PROGRESS.md](CLAUDE_PROGRESS.md) Sec. 3).
+
+**Backend pipeline and demo:** `pip install -r requirements-demo.txt`, then
+
+```bash
+python scripts/build_reg_corpus.py --date 2026-10-13          # regulation corpus (once)
+python scripts/analyze_complaint.py --text "My bank denied my unauthorized-transfer claim ..."
+python scripts/run_pipeline_batch.py --retriever oracle       # gold-set complaints -> outputs/pipeline_runs/
+streamlit run demo/app.py
+```
+
+The pipeline (`src/cfpb/pipeline/`) uses the trained classifier when `outputs/classifier/{product,issue}/best/` and `run_info.json` are present (from Drive `Dataset/outputs/classifier/`). Stages not built yet run as labelled stubs. Put any LLM API key in `.env` or `.streamlit/secrets.toml`; both are git-ignored.
+

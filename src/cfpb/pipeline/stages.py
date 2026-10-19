@@ -61,7 +61,8 @@ class DistilBertClassifier:
 
     def _one(self, clf, text: str) -> LabelPrediction:
         row = clf.predict([text], clean=False, top_k=self.top_k).iloc[0]
-        return LabelPrediction(row["label"], row["prob"], [tuple(p) for p in row["top_k"]])
+        return LabelPrediction(row["label"], float(row["prob"]),
+                               [(label, float(p)) for label, p in row["top_k"]])
 
     def classify(self, narrative_clean: str) -> Classification:
         product = self._one(self.product, narrative_clean)
