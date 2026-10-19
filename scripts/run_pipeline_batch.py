@@ -32,7 +32,7 @@ from cfpb.annotation import load_items  # noqa: E402
 from cfpb.config import OUTPUT_DIR, ROOT  # noqa: E402
 from cfpb.pipeline import load_pipeline  # noqa: E402
 from cfpb.pipeline.batch import to_frames  # noqa: E402
-from cfpb.pipeline.corpus import DEFAULT_CORPUS, DEFAULT_GOLD, OracleRetriever, load_corpus, load_gold  # noqa: E402
+from cfpb.pipeline.corpus import DEFAULT_GOLD, OracleRetriever, default_corpus_path, load_corpus, load_gold  # noqa: E402
 from cfpb.pipeline.retrievers import PrecomputedRetriever  # noqa: E402
 
 
@@ -50,8 +50,9 @@ def git_commit() -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--retriever", choices=["stub", "oracle", "precomputed"], required=True)
-    ap.add_argument("--corpus", nargs="+", default=[str(DEFAULT_CORPUS)],
-                    help='chunk files for oracle/precomputed: "path" or "path::kind1+kind2"')
+    ap.add_argument("--corpus", nargs="+", default=None,
+                    help='chunk files for oracle/precomputed: "path" or "path::kind1+kind2"; default '
+                         "Pair B's chunking/data/processed/chunks.jsonl, else reg_chunks.parquet")
     ap.add_argument("--ranked", type=Path, help="ranked.parquet for --retriever precomputed")
     ap.add_argument("--min-top-score", type=float, default=None,
                     help="precomputed: abstain when the top score is below this")
@@ -73,6 +74,7 @@ def main() -> None:
         print(f"  {missing} gold items have no text locally (add data/processed/annotation_topup.csv)")
 
     pipe = load_pipeline(require_models=args.require_models, k=args.k)
+    args.corpus = args.corpus or [str(default_corpus_path())]
     bound = None  # complaint_id -> retriever for that complaint
     if args.retriever == "oracle":
         bound = OracleRetriever(load_corpus(args.corpus), gold).for_complaint

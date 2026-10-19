@@ -563,3 +563,20 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Tests:** 81 passed (9 new in `tests/test_pipeline_retrievers.py`, including a round trip of the batch runner's own `ranked.parquet`).
 - **For Pair B:** with `outputs/retrieval/bm25/ranked.parquet` saved locally, the demo picks it up with no code change. For live use, pass `FunctionRetriever(bm25.retrieve, load_corpus([...]), "bm25", min_top_score=...)` to `Pipeline`.
 
+### 2026-10-19: Backend default corpus is now Pair B's `chunks.jsonl` (branch `backend`, Anirudh + Claude)
+- **Why:** Ujjwal's `5b90404` on `chunking` added 325 FCRA chunks to Pair B's corpus (2,954 in total), and `docs/INTERFACES.md` Sec. 2 on that branch now makes `chunking/data/processed/chunks.jsonl` the retrieval default.
+- **Change:** `cfpb.pipeline.corpus.default_corpus_path()` returns the first file that exists in `CORPUS_PREFERENCE`:
+  1. `chunking/data/processed/chunks.jsonl` (Pair B, the default)
+  2. `data/processed/reg_chunks.parquet` (the fallback)
+
+  `Corpus.load()` with no path, the oracle in the demo, and the batch runner (when `--corpus` is not given) all use it, resolved at run time rather than at import. The constant `DEFAULT_CORPUS` is gone.
+- **Not merged:** `chunking` is still not merged into `backend`, because it would bring the 39 MB `ECFR-title12.xml` into this branch's history (Sec. 6.5.5 says to remove it first). So on `backend` today the fallback runs. Once `chunking` is merged here or into `main`, the default switches with no code change.
+- **Checked with Pair B's file from `origin/chunking` (`5b90404`)**, placed temporarily at its tracked path and then removed:
+  - The backend loads all 2,954 chunks (E 395, F 119, V 409, Z 1,706, FCRA 325) with no format changes.
+  - The oracle puts a gold-paragraph chunk at rank 1 for **all 127 in-scope items, including the 36 FCRA ones**, and the 71 NONE items abstain. The real-data test passed against it.
+  - A batch oracle run on the 120 sample items gave 43 abstentions, the same as on the fallback.
+  - In the demo, an FCRA identity-theft complaint shows `15 U.S.C. 1681c-2(a)` (Pair B chunk `15-fcra-1681c-2-a`) at rank 1.
+  - Without the file, the same commands fall back to `reg_chunks.parquet`.
+- **For Ujjwal:** the committed `chunks.jsonl` at `5b90404` hashes to SHA-1 `13a8266064f95900313be4fa582e83386b1771b4` (from `git show`, LF endings, 2,954 lines). The log entry above gives `9928d5f3e676de365761b474e30a43d4691c25a6`. Counts and content checks match the entry, so the logged hash was probably taken from a different build or computed another way. Worth re-logging.
+- **Tests:** 82 passed, including a new test of the preference order (default, fallback, error naming the default).
+

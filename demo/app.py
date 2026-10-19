@@ -5,8 +5,8 @@
 Shows each stage's output for one complaint. Stages that are not built yet
 run as stubs and are labelled on the page. With the oracle retriever, pick a
 gold-set complaint to see its gold regulation section (real eCFR / U.S. Code
-text); this needs data/processed/reg_chunks.parquet
-(scripts/build_reg_corpus.py --date 2026-10-13) and annotation_sample.csv.
+text); this needs a corpus (Pair B's chunking/data/processed/chunks.jsonl,
+else data/processed/reg_chunks.parquet) and annotation_sample.csv.
 "Precomputed rankings" replays a ranked.parquet found under
 outputs/retrieval/*/ or outputs/pipeline_runs/*/ (e.g. Pair B's BM25 run).
 """
@@ -21,7 +21,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from cfpb.pipeline import load_pipeline  # noqa: E402
 from cfpb.config import OUTPUT_DIR, PROCESSED_DIR, ROOT  # noqa: E402
-from cfpb.pipeline.corpus import DEFAULT_CORPUS, Corpus, OracleRetriever, load_gold  # noqa: E402
+from cfpb.pipeline.corpus import (PAIR_B_CORPUS, REG_CORPUS, Corpus, OracleRetriever,  # noqa: E402
+                                  default_corpus_path, load_gold)
 from cfpb.pipeline.retrievers import PrecomputedRetriever  # noqa: E402
 from cfpb.pipeline.schema import SUPPORTED, UNSUPPORTED  # noqa: E402
 from cfpb.pipeline.stages import citation  # noqa: E402
@@ -33,8 +34,7 @@ LABEL_STYLE = {SUPPORTED: ("rgba(46,160,67,0.18)", "supported"),
 UNCHECKED_STYLE = ("rgba(128,128,128,0.15)", "not checked")
 # Every chunk file that may be present locally; precomputed rankings may use
 # ids from any of them (Pair B's chunks.jsonl, reg_chunks.parquet).
-CHUNK_FILES = [DEFAULT_CORPUS, PROCESSED_DIR / "chunks_chunking.jsonl",
-               ROOT / "chunking" / "data" / "processed" / "chunks.jsonl"]
+CHUNK_FILES = [PAIR_B_CORPUS, REG_CORPUS, PROCESSED_DIR / "chunks_chunking.jsonl"]
 METRICS_FILE = ROOT / "results" / "classifier_test_metrics.json"
 MODES = ["Default", "Oracle (gold section)", "Precomputed rankings"]
 
@@ -46,7 +46,7 @@ def get_pipeline():
 
 @st.cache_resource(show_spinner="Loading regulation corpus...")
 def get_oracle():
-    return OracleRetriever(Corpus.load(DEFAULT_CORPUS), load_gold())
+    return OracleRetriever(Corpus.load(), load_gold())  # Pair B's corpus, else reg_chunks.parquet
 
 
 @st.cache_resource(show_spinner="Loading chunk files...")
@@ -113,14 +113,14 @@ pipe = get_pipeline()
 
 with st.sidebar:
     st.header("Settings")
-    oracle_ok, rankings = DEFAULT_CORPUS.exists(), ranked_files()
+    oracle_ok, rankings = default_corpus_path().exists(), ranked_files()
     available = [m for m in MODES if m == "Default" or (m == MODES[1] and oracle_ok)
                  or (m == MODES[2] and rankings)]
     mode = st.radio("Retriever", available,
                     help="Oracle returns the hand-labelled section for a gold-set complaint. "
                          "Precomputed replays a saved ranking for a gold-set complaint.")
     if not oracle_ok:
-        st.caption("Oracle needs data/processed/reg_chunks.parquet.")
+        st.caption("Oracle needs chunking/data/processed/chunks.jsonl or data/processed/reg_chunks.parquet.")
     precomputed = None
     if mode == MODES[2]:
         precomputed = get_precomputed(st.selectbox("Rankings file", rankings))
