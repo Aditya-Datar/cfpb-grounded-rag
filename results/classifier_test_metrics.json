@@ -1,0 +1,39 @@
+{
+  "source": "v2 Colab runs (A100), test split per data_fingerprint.json; computed 2026-10-16",
+  "reporting_rule": "Headline product macro-F1; issue reported as all-issue macro-F1 + macro-F1 over issues with >=100 test examples (cutoff fixed before writing) + accuracy + product-consistent rate",
+  "product": {
+    "n": 13905,
+    "n_excluded_unseen_label": 0,
+    "n_labels_scored": 11,
+    "accuracy": 0.8429,
+    "macro_f1": 0.8077,
+    "macro_f1_all_train_labels": 0.8077,
+    "weighted_f1": 0.8415
+  },
+  "issue": {
+    "accuracy": 0.5809,
+    "product_consistent_rate": 0.8571,
+    "macro_f1_by_min_support": {
+      "min_test_support_1": {
+        "n_issues": 84,
+        "share_of_complaints": 1.0,
+        "macro_f1": 0.3248
+      },
+      "min_test_support_30": {
+        "n_issues": 52,
+        "share_of_complaints": 0.9765,
+        "macro_f1": 0.4793
+      },
+      "min_test_support_100": {
+        "n_issues": 39,
+        "share_of_complaints": 0.9171,
+        "macro_f1": 0.5376
+      },
+      "min_test_support_300": {
+        "n_issues": 13,
+        "share_of_complaints": 0.5805,
+        "macro_f1": 0.5831
+      }
+    }
+  }
+}

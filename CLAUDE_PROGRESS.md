@@ -483,3 +483,14 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Adjudicator's call to note:** 21757875 (a Direct Express government benefit card) was settled as B, `1005.18(e)(1)`, the prepaid late-reporting rule. Claude had flagged that the benefit-card rule 1005.15 might fit better. The gold keeps the human decision.
 - `docs/INTERFACES.md` Sec. 3 now names `annotation/gold_final.jsonl` as the official gold set (JSONL, since `*.csv` is git-ignored).
 - **Report wording:** 198 complaints labelled by two LLM annotators from different families (Claude Opus 5.5, ChatGPT) under a shared written rubric with verbatim-quote validation. Cohen's kappa 0.904 (regulation) and 0.845 (section); disagreements adjudicated by a team member; 20/20 human spot check. Gold: 127 in-scope complaint-to-section pairs plus 71 out-of-scope (NONE).
+
+### 2026-10-16: Classifier interface frozen; issue-reporting rule decided
+- **Interface frozen** (all pairs agreed): `docs/INTERFACES.md` Sec. 1, giving per complaint `pred_product`, `pred_product_prob`, `pred_issue`, `pred_issue_prob`.
+- **Reporting rule (team decision):**
+  - The headline is **product macro-F1 0.808** (test).
+  - The issue classifier is reported as macro-F1 over all 84 issues present in test (**0.325**), plus macro-F1 over the **39 issues with at least 100 test examples (0.538, covering 91.7% of complaints)**, plus accuracy **0.581**, plus the **product-consistent rate 0.857** (the predicted issue is valid for the complaint's product).
+  - The at-least-100 cutoff is fixed now, before writing, and the all-issue number is always shown next to it.
+  - Frequent-issue macro-F1 is computed on the full test set, averaging only over the frequent labels. Do **not** drop the rows of rare issues, since that hides false positives (it gave an inflated 0.555).
+  - No retraining with merged rare issues.
+- All numbers are saved in `results/classifier_test_metrics.json`. The `results/` folder is tracked, for small numbers the report cites.
+
