@@ -1,6 +1,6 @@
 # CLAUDE_PROGRESS.md: Build Log and Handoff Context
 
-Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-14 (branch `chunking`, commit after `a96a752`).
+Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-19 (branch `chunking`).
 
 ---
 
@@ -37,7 +37,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
-| 2. Regulation corpus and retrieval | B | `chunking` | **Pair B corpus (retrieval default):** 2,629 regulation-text chunks (`chunking/data/processed/chunks.jsonl`, `--max-chars 1400`, embedding model `all-mpnet-base-v2`, 384 tokens, `embed_text` field). **Merged in from `regulation-corpus` (2026-10-19):** a second corpus (`data/processed/reg_chunks.parquet`, 4,319 chunks) that adds the **FCRA statute** (249 chunks), Supplement I interpretations and appendices, plus the gold set and annotation tooling; see Sec. 6.5. **Retriever not started; BM25 baseline is the next task (Sec. 6.5.6, new branch `retrieval-bm25`).** |
+| 2. Regulation corpus and retrieval | B | `chunking` | **Chunking complete. Retrieval default:** 2,954 chunks in tracked `chunking/data/processed/chunks.jsonl`: 2,629 regulation-text chunks plus 325 model-tuned FCRA chunks (`--max-chars 1400`, `all-mpnet-base-v2`, 384 tokens, `embed_text`). The alternative `data/processed/reg_chunks.parquet` corpus has 4,319 chunks including interpretations and appendices for ablations. **Retriever not started; BM25 baseline is next (Sec. 6.5.6, new branch `retrieval-bm25`).** |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
 
@@ -200,7 +200,7 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 3. **Log the results** in Sec. 7: GPU, minutes per epoch, val and test macro-F1, and the weakest classes. Compare settings (for example `--class-weights` or `--head-tokens 510`) on **validation only**.
 4. **Interface** (proposed, to be frozen with the team): `predictions_<split>.parquet` with `complaint_id`, `true_<label>`, `pred_<label>`, `pred_<label>_prob`. Merging the product and issue runs on `complaint_id` gives the downstream table.
 
-**Pair B: retrieval.** **Next: BM25 baseline on a new branch `retrieval-bm25`, as specified in Sec. 6.5.6.** Then dense (`all-mpnet-base-v2` + FAISS) and hybrid, following `docs/INTERFACES.md` Sec. 2 and Sec. 7 (abstention). Decide which corpus to index (6.5.5) and add the FCRA to it.
+**Pair B: retrieval.** **Next: BM25 baseline on a new branch `retrieval-bm25`, as specified in Sec. 6.5.6.** Then dense (`all-mpnet-base-v2` + FAISS) and hybrid, following `docs/INTERFACES.md` Sec. 2 and Sec. 7 (abstention). Use the fixed 2,954-chunk corpus by default and evaluate the alternative corpus as an ablation.
 
 **Everyone.** Draft the annotation rubric (two people), including the "no in-scope section" label, then annotate `annotation_sample.csv` with overlap for inter-annotator agreement.
 
@@ -216,15 +216,15 @@ Branch `chunking` (Pair B, Ishani + Ujjwal) now also contains all of branch `reg
 |---|---|---|
 | Code | `chunking/xml_parser.py`, `parse_regulations.py`, `chunk_regulations.py` | `src/cfpb/regs/ecfr.py`, `parse.py`, `fcra.py`; `scripts/build_reg_corpus.py` |
 | Output | `chunking/data/processed/chunks.jsonl` (tracked) | `data/processed/reg_chunks.parquet` (git-ignored; regenerate with `python scripts/build_reg_corpus.py`) |
-| Source | bulk eCFR Title 12 XML (AMDDATE Oct. 1, 2026; snapshot 2026-10-13) | eCFR API point-in-time **2026-10-13**; FCRA from U.S. Code 2024 edition |
-| Content | regulation text of Parts 1005, 1006, 1022, 1026 | regulation text **+ FCRA statute + Supplement I official interpretations + appendices** |
-| Chunks | 2,629 | **4,319** (regulation 1,540; interpretation 2,418; appendix 112; statute 249) |
-| Sections | 136 regulation sections | the same 136, plus 31 FCRA sections (167 in total) |
+| Source | bulk eCFR Title 12 XML (AMDDATE Oct. 1, 2026; snapshot 2026-10-13) + FCRA from U.S. Code 2024 edition | eCFR API point-in-time **2026-10-13**; FCRA from U.S. Code 2024 edition |
+| Content | regulation text of Parts 1005, 1006, 1022, 1026 **+ FCRA statute** | regulation text **+ FCRA statute + Supplement I official interpretations + appendices** |
+| Chunks | **2,954** (regulation 2,629; statute 325) | **4,319** (regulation 1,540; interpretation 2,418; appendix 112; statute 249) |
+| Sections | 136 regulation sections + 31 FCRA sections (167 total) | the same 167 sections |
 | Sized for | `all-mpnet-base-v2` (384 tokens), `--max-chars 1400`, parent intros, `embed_text` | **not tuned to any embedding model**: word-based limit of 350 words (see 6.5.3) |
-| chunk_id | `12-1005-1005.11-c-2` | `R:1005.11(c)(2)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`, `S:1681i(a)(1)`, with `#k` for word-window pieces |
-| Tests | `tests/test_chunk_regulations.py` (24) | `tests/test_regs_parse.py` (4, including FCRA) |
+| chunk_id | `12-1005-1005.11-c-2`, `15-fcra-1681i-a-piece-1` | `R:1005.11(c)(2)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`, `S:1681i(a)(1)`, with `#k` for word-window pieces |
+| Tests | `tests/test_chunk_regulations.py` (27) | `tests/test_regs_parse.py` (4, including FCRA) |
 
-**Gold compatibility (checked 2026-10-15):** the gold set is labelled by **section** (`gold_section`, e.g. `1005.11` or `1681i`), so it can be scored against either corpus. All 93 Claude and all 100 ChatGPT regulation evidence quotes occur verbatim in Pair B's chunks for the cited section. **But 36 of the 127 in-scope gold items are FCRA sections, which Pair B's corpus does not contain yet** (6.5.6).
+**Gold compatibility (checked 2026-10-19):** the gold set is labelled by **section** (`gold_section`, e.g. `1005.11` or `1681i`), so it can be scored against either corpus. All FCRA gold sections are present in Pair B's corpus, and all 70 FCRA evidence quotes from the two LLM label files occur verbatim in the cited section's chunks.
 
 ### 6.5.2 Sources and download facts (all verified when run)
 - **eCFR API** (`src/cfpb/regs/ecfr.py`):
@@ -278,7 +278,6 @@ Branch `chunking` (Pair B, Ishani + Ujjwal) now also contains all of branch `reg
 - **Decided:** gold set (`annotation/gold_final.jsonl`); section-level scoring; abstention; FCRA in scope.
 - **Open, for Pair B:**
   - **Which corpus to index.** Default: Pair B's, because they own it and it is model-tuned. The claim that it "retrieves better" is **untested**, so decide by measurement (6.5.6).
-  - How to add the FCRA to Pair B's format.
   - Whether to index interpretations.
   - Remove the 39 MB `chunking/data/raw/ECFR-title12.xml` from git before merging to `main` (working rule 5).
 
@@ -289,10 +288,7 @@ git fetch origin
 git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the gold set and FCRA code
 ```
 
-1. **Corpus:** Pair B's `chunking/data/processed/chunks.jsonl` (index `text`). **Add the FCRA:**
-   - **Preferred:** port the FCRA into Pair B's chunk format.
-   - **Quick first pass:** append the 249 `kind == "statute"` rows from `data/processed/reg_chunks.parquet` (run `python scripts/build_reg_corpus.py` first), mapping `chunk_id`, `section`, `paragraph`, `heading`, `text`, `source_url`.
-   - Report results **with and without FCRA**: without it, 36 FCRA gold items have no correct chunk.
+1. **Corpus:** Pair B's `chunking/data/processed/chunks.jsonl`; index `embed_text` and return `text` for generation/citation. It contains the FCRA. Report results **with and without FCRA** using the chunker's `--no-fcra` option; without it, 36 FCRA gold items have no correct chunk.
 2. **Queries and gold:**
    - Query text = `narrative_clean` of the annotation items (`from cfpb.annotation import load_items`; 198 items: 120 sample + 78 top-up).
    - Gold = `annotation/gold_final.jsonl` (`gold_regulation`, `gold_section`).
@@ -678,3 +674,13 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
 - The only merge conflict was this file. Both sides were kept: the status table now has one classifier row (v2 results) and one corpus row describing both corpora, and the log keeps Pair B's 10-14/10-15 entries followed by ours.
 - Added **Sec. 6.5**: both corpora compared; sources; our chunking design and statistics; the explicit note that our chunks are **not tuned to any embedding model**; design decisions (FCRA, interpretations, section-level scoring, abstention); open items; and the **BM25 baseline task for Pair B on a new branch `retrieval-bm25`** (Sec. 6.5.6).
 - No Pair B files were modified.
+
+### 2026-10-19: Chunking completed with FCRA
+- Ported the FCRA into `chunking/chunk_regulations.py` and Pair B's fixed JSONL schema. The default build now downloads/parses the GovInfo U.S. Code 2024 HTML when needed; `--no-fcra` reproduces the four-regulation ablation.
+- FCRA chunks keep legal subsection/paragraph structure, repeat the section heading, and pack to both `--max-chars 1400` and the `all-mpnet-base-v2` 384-token limit. Oversized statutory blocks split first at sentence boundaries and then, only when necessary, at word boundaries. All 249 source statute chunks are covered without text loss; the fixed representation has 325 chunks across 31 sections, max 1,400 chars and 354 tokens.
+- Regenerated `chunking/data/processed/chunks.jsonl`: **2,954 unique chunks** (E 395, Z 1,706, V 409, F 119, FCRA 325), SHA-1 `9928d5f3e676de365761b474e30a43d4691c25a6`. Overall, 66 full `text` values exceed 384 tokens because of existing regulation parent context, while only the same 9 existing regulation `embed_text` values exceed it; **0 FCRA `embed_text` values exceed 384**.
+- Gold compatibility: all 5 distinct FCRA gold sections are present, and all 70 FCRA evidence quotes across the two LLM label files occur verbatim in their cited section's fixed chunks.
+- Gold data remains deliberately separate from corpus construction: `chunk_regulations.py` does **not** read or tune against `annotation/gold_final.jsonl`. Retrieval evaluation will join a ranked chunk to the official 198-item gold set by `chunk.section == gold_section`; the 71 `NONE` items intentionally have no matching chunk. Of the 127 in-scope pairs, 36 are FCRA cases.
+- Paths are script-relative: `DEFAULT_SECTIONS_PATH` and `DEFAULT_OUT_PATH` resolve under `chunking/data/processed/`, while `DEFAULT_FCRA_PATH` resolves under repository-level `data/raw/fcra/`. The chunker can therefore be run from either the repository root or `chunking/` without explicit path arguments.
+- Tests: `tests/test_chunk_regulations.py` now has 28 tests, including FCRA schema, boundary packing, fixed-corpus integrity, token limits, evidence-quote coverage, and script-relative path defaults. Together with the 4 parser tests, **32/32 pass under pytest** (`Python 3.13.0`, `tokenizers 0.23.3`, `pytest 9.1.1`). The real-corpus source-coverage check above also passed.
+- Updated `docs/INTERFACES.md` to make the 2,954-chunk tracked JSONL the retrieval default and retain `reg_chunks.parquet` for interpretation/appendix and chunking ablations. Chunking is complete; BM25 is next and remains a separate retrieval task.

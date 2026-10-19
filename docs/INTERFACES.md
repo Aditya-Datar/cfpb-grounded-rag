@@ -47,18 +47,24 @@ Combined per complaint (merge the product and issue runs on `complaint_id`):
 
 ## 2. Regulation chunks (implemented corpus, Pair B)
 
-`data/processed/reg_chunks.parquet` (`scripts/build_reg_corpus.py`; eCFR as of 2026-10-13 plus the FCRA statute, U.S. Code 2024 edition; 4,319 chunks).
+The retrieval default is the fixed, tracked
+`chunking/data/processed/chunks.jsonl` (`chunking/chunk_regulations.py`):
+2,954 chunks comprising 2,629 regulation chunks from eCFR Title 12 and 325
+FCRA statute chunks from the U.S. Code 2024 edition. Pass `--no-fcra` when
+building the four-regulation ablation. The separate
+`data/processed/reg_chunks.parquet` corpus remains available for the planned
+interpretation/appendix and chunking ablations.
 
 | Column | Type | Example |
 |---|---|---|
-| `chunk_id` | str, unique | `R:1026.13(b)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`, `S:1681i(a)(1)`; `#k` suffix = word-window piece |
+| `chunk_id` | str, unique | `12-1026-1026.13-b`, `15-fcra-1681i-a-piece-1` |
 | `regulation` | str | `E`, `F`, `V`, `Z`, `FCRA` |
-| `part` | str | `1026` |
-| `kind` | str | `regulation` (rule text), `interpretation` (Supplement I official commentary), `appendix`, `statute` (FCRA) |
-| `section` | str | `1026.13` (appendices: `1026 Appendix G`) |
-| `paragraph` | str | most specific reference, `1026.13(b)(1)` |
-| `heading` | str | `§ 1026.13 Billing error resolution.` |
-| `text`, `n_words` | str, int | |
+| `part` | str | `1026`, or `FCRA` |
+| `content_type` | str | `regulation` or `statute` |
+| `section` | str | `1026.13` or `1681i` |
+| `paragraph` | str | relative reference, e.g. `(b)(1)` |
+| `heading` | str | `Billing error resolution.` |
+| `text`, `embed_text`, `n_chars` | str, str, int | embed `embed_text`; show full `text` |
 | `source_url` | str | eCFR point-in-time link (the citation shown in the demo) |
 
 ### Retriever output (proposal)

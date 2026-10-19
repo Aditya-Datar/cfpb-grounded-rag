@@ -1,6 +1,6 @@
 """Split parsed regulation sections into retrieval chunks.
 
-Reads:  data/processed/sections.jsonl
+Reads:  data/processed/sections.jsonl and the FCRA source HTML
 Writes: data/processed/chunks.jsonl
 
 A section whose chunk text fits in MAX_CHARS stays one chunk. A longer
@@ -13,6 +13,10 @@ heading and the intro text of each parent paragraph, so a chunk for
 `text` is over the embedding model's token limit: then each parent intro is
 shortened to its heading, so the model still sees the chunk's own words.
 Needs the `tokenizers` package and downloads the model's tokenizer once.
+
+The default corpus also contains the Fair Credit Reporting Act (FCRA), which
+is in scope but is not part of eCFR Title 12. Pass --no-fcra to reproduce the
+four-regulation-only corpus for an ablation.
 """
 
 import argparse
@@ -20,15 +24,26 @@ import functools
 import json
 import re
 import statistics
+import sys
 from pathlib import Path
 
 from parse_regulations import COMPOUND_RE, PARTS, RUN_RE, RUNIN_RE, SINGLE_RE, candidates, leading_markers
+
+CHUNKING_DIR = Path(__file__).resolve().parent
+REPO_ROOT = CHUNKING_DIR.parent
+SRC = REPO_ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
 # Chunk size limit. 1400 keeps chunks within all-mpnet-base-v2's 384 tokens, except
 # for chunks that cannot be split further (see CLAUDE_PROGRESS.md, 2026-10-14).
 MAX_CHARS = 1400
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 EMBED_MAX_TOKENS = 384  # max_seq_length in the model's sentence_bert_config.json
+FCRA_FILENAME = "USCODE-2024-title15-chap41-subchapIII.htm"
+DEFAULT_SECTIONS_PATH = CHUNKING_DIR / "data" / "processed" / "sections.jsonl"
+DEFAULT_OUT_PATH = CHUNKING_DIR / "data" / "processed" / "chunks.jsonl"
+DEFAULT_FCRA_PATH = REPO_ROOT / "data" / "raw" / "fcra" / FCRA_FILENAME
 # A heading ends at the first dash, or at a period followed by a space ("1026.20" does not count).
 HEADING_END_RE = re.compile(r"[—–]|\.(?=\s|$)")
 
@@ -195,6 +210,107 @@ def to_output(record, node, context, body, text, embed_text):
     }
 
 
+def _fcra_fits(heading, body, max_chars, count_tokens):
+    text = "\n".join([heading, body])
+    return len(text) <= max_chars and count_tokens(text) <= EMBED_MAX_TOKENS
+
+
+def _split_fcra_block(heading, block, max_chars, count_tokens):
+    """Split an oversized statutory block at sentences, then word boundaries."""
+    if _fcra_fits(heading, block, max_chars, count_tokens):
+        return [block]
+    sentences = re.split(r"(?<=[.;:])\s+(?=(?:\([A-Za-z0-9]+\)\s*)?[A-Z])", block)
+    units = sentences if len(sentences) > 1 else block.split()
+    joiner = " "
+    pieces, current = [], []
+    for unit in units:
+        candidate = joiner.join(current + [unit])
+        if current and not _fcra_fits(heading, candidate, max_chars, count_tokens):
+            pieces.append(joiner.join(current))
+            current = []
+        # A single sentence can still be too large. Fall back to words without
+        # dropping or truncating any statute text.
+        if not current and not _fcra_fits(heading, unit, max_chars, count_tokens) and " " in unit:
+            pieces.extend(_split_fcra_block(heading, unit, max_chars, count_tokens))
+        else:
+            current.append(unit)
+    if current:
+        pieces.append(joiner.join(current))
+    return pieces or [block]
+
+
+def _pack_fcra_text(heading, body, max_chars, count_tokens):
+    """Pack FCRA HTML blocks within the character and embedding limits.
+
+    The FCRA parser emits one line per structural HTML block. Packing those
+    lines preserves subsection/paragraph boundaries. Oversized statutory-body
+    blocks split at sentence boundaries, with a word-boundary fallback.
+    """
+    lines = [line.strip() for line in body.splitlines() if line.strip()]
+    lines = [piece for line in lines for piece in _split_fcra_block(
+        heading, line, max_chars, count_tokens
+    )]
+    pieces, current = [], []
+    for line in lines:
+        candidate_body = "\n".join(current + [line])
+        if current and not _fcra_fits(heading, candidate_body, max_chars, count_tokens):
+            pieces.append("\n".join([heading] + current))
+            current = []
+        current.append(line)
+    if current:
+        pieces.append("\n".join([heading] + current))
+    return pieces or [heading]
+
+
+def fcra_to_output(chunk, max_chars=MAX_CHARS, count_tokens=None):
+    """Convert one ``cfpb.regs.fcra`` chunk to the fixed JSONL schema."""
+    # Keep this argument parallel with chunk_record and force tokenizer setup
+    # during a real corpus build, even though FCRA chunks have no repeated
+    # parent context that can be shortened for embed_text.
+    count_tokens = count_tokens or load_token_counter()
+    texts = _pack_fcra_text(chunk.heading, chunk.text, max_chars, count_tokens)
+    relative_paragraph = chunk.paragraph.removeprefix(chunk.section)
+    raw_suffix = relative_paragraph or "all"
+    suffix = re.sub(r"[^A-Za-z0-9]+", "-", raw_suffix).strip("-") or "all"
+    if "#" in chunk.chunk_id:
+        suffix += "-window-" + chunk.chunk_id.rsplit("#", 1)[1]
+    outputs = []
+    for i, text in enumerate(texts, 1):
+        piece_suffix = suffix if len(texts) == 1 else f"{suffix}-piece-{i}"
+        outputs.append({
+            "chunk_id": f"15-fcra-{chunk.section}-{piece_suffix}",
+            "part": "FCRA",
+            "section": chunk.section,
+            "paragraph": relative_paragraph,
+            "heading": re.sub(r"^§\s*\S+\.?\s*", "", chunk.heading),
+            "text": text,
+            "source_url": chunk.source_url,
+            "embed_text": text,
+            "content_type": "statute",
+            "regulation": "FCRA",
+            "path_certain": True,
+            "n_chars": len(text),
+            "record_id": f"15:FCRA:STATUTE:{chunk.section}",
+        })
+    return outputs
+
+
+def load_fcra_chunks(path=DEFAULT_FCRA_PATH, max_chars=MAX_CHARS, count_tokens=None, fetch_missing=True):
+    """Parse FCRA HTML and return chunks in the fixed JSONL corpus schema."""
+    from cfpb.regs.fcra import fetch, parse_fcra
+
+    path = Path(path)
+    if not path.exists():
+        if not fetch_missing:
+            raise FileNotFoundError(path)
+        path = fetch(path.parent)
+    source_chunks, _ = parse_fcra(path)
+    outputs = []
+    for chunk in source_chunks:
+        outputs.extend(fcra_to_output(chunk, max_chars, count_tokens))
+    return outputs
+
+
 def check_coverage(record, root, chunks):
     """Every piece of text is a chunk body exactly once, or context for split parents."""
     in_body, in_context = [], set()
@@ -216,11 +332,19 @@ def check_coverage(record, root, chunks):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--sections", type=Path, default=Path("data/processed/sections.jsonl"))
-    parser.add_argument("--out", type=Path, default=Path("data/processed/chunks.jsonl"))
+    parser.add_argument("--sections", type=Path, default=DEFAULT_SECTIONS_PATH)
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT_PATH)
     parser.add_argument("--parts", nargs="+", default=list(PARTS))
     parser.add_argument(
         "--max-chars", type=int, default=MAX_CHARS, help=f"chunk size limit in characters (default {MAX_CHARS})"
+    )
+    parser.add_argument(
+        "--fcra-html", type=Path, default=DEFAULT_FCRA_PATH,
+        help="FCRA source HTML; downloaded from GovInfo if missing",
+    )
+    parser.add_argument(
+        "--no-fcra", action="store_true",
+        help="exclude the FCRA statute (four-regulation ablation)",
     )
     parser.add_argument("--show", metavar="SECTION", help="print every chunk of one section, e.g. 1005.11")
     args = parser.parse_args(argv)
@@ -236,6 +360,9 @@ def main(argv=None):
                 and not record["reserved"]
             ):
                 chunks += chunk_record(record, args.max_chars, count_tokens)
+
+    if not args.no_fcra:
+        chunks += load_fcra_chunks(args.fcra_html, args.max_chars, count_tokens)
 
     ids = [c["chunk_id"] for c in chunks]
     duplicates = sorted({i for i in ids if ids.count(i) > 1})
@@ -260,6 +387,14 @@ def main(argv=None):
             f"({whole} kept whole)  chars min {min(sizes)} median {statistics.median(sizes):.0f} "
             f"max {max(sizes)}  over {args.max_chars}: {sum(s > args.max_chars for s in sizes)}  "
             f"uncertain paths: {sum(not c['path_certain'] for c in mine)}"
+        )
+    fcra = [c for c in chunks if c["regulation"] == "FCRA"]
+    if fcra:
+        sizes = [c["n_chars"] for c in fcra]
+        print(
+            f"FCRA: {len(fcra)} chunks from {len({c['section'] for c in fcra})} sections  "
+            f"chars min {min(sizes)} median {statistics.median(sizes):.0f} max {max(sizes)}  "
+            f"over {args.max_chars}: {sum(s > args.max_chars for s in sizes)}"
         )
     over_text = sum(count_tokens(c["text"]) > EMBED_MAX_TOKENS for c in chunks)
     over_embed = sum(count_tokens(c["embed_text"]) > EMBED_MAX_TOKENS for c in chunks)

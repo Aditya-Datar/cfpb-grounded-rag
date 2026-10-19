@@ -5,10 +5,15 @@ import sys
 from pathlib import Path
 
 CHUNKING = Path(__file__).resolve().parents[1] / "chunking"
+ROOT = CHUNKING.parent
 sys.path.insert(0, str(CHUNKING))
 
 import chunk_regulations  # noqa: E402
-from chunk_regulations import EMBED_MAX_TOKENS, chunk_record, heading_only, load_token_counter, split_at_markers  # noqa: E402
+from chunk_regulations import (  # noqa: E402
+    DEFAULT_FCRA_PATH, DEFAULT_OUT_PATH, DEFAULT_SECTIONS_PATH, EMBED_MAX_TOKENS,
+    chunk_record, heading_only, load_fcra_chunks, load_token_counter,
+    split_at_markers,
+)
 from parse_regulations import SINGLE_RE, leading_markers  # noqa: E402
 
 URL = "https://www.ecfr.gov/current/title-12/part-1005/section-1005.99"
@@ -301,3 +306,82 @@ def test_embed_text_never_more_tokens_than_text():
             assert count(c["embed_text"]) <= count(c["text"]), c["chunk_id"]
             if count(c["text"]) <= EMBED_MAX_TOKENS:
                 assert c["embed_text"] == c["text"], c["chunk_id"]
+
+
+def test_fcra_is_ported_to_fixed_corpus_schema(tmp_path):
+    html = """<html><body>
+<!-- documentid:15_1681i usckey:x -->
+<h3 class="section-head">&sect;1681i. Procedure in case of disputed accuracy</h3>
+<!-- field-start:statute -->
+<h4 class="subsection-head">(a) Reinvestigations of disputed information</h4>
+<p class="statutory-body">The agency shall conduct a reasonable reinvestigation.</p>
+<!-- field-end:statute -->
+</body></html>"""
+    path = tmp_path / "fcra.htm"
+    path.write_text(html, encoding="utf-8")
+    chunks = load_fcra_chunks(path, count_tokens=_words, fetch_missing=False)
+    assert len(chunks) == 1
+    c = chunks[0]
+    assert list(c)[:8] == [
+        "chunk_id", "part", "section", "paragraph", "heading", "text", "source_url", "embed_text",
+    ]
+    assert c["chunk_id"] == "15-fcra-1681i-a"
+    assert c["part"] == "FCRA" and c["regulation"] == "FCRA"
+    assert c["section"] == "1681i" and c["paragraph"] == "(a)"
+    assert c["content_type"] == "statute" and c["path_certain"] is True
+    assert c["text"].startswith("§1681i. Procedure in case of disputed accuracy")
+    assert c["embed_text"] == c["text"]
+
+
+def test_long_fcra_chunk_packs_at_html_block_boundaries(tmp_path):
+    html = """<html><body>
+<!-- documentid:15_1681i usckey:x -->
+<h3 class="section-head">&sect;1681i. Procedure in case of disputed accuracy</h3>
+<!-- field-start:statute -->
+<h4 class="subsection-head">(a) Reinvestigations</h4>
+<p class="statutory-body">First statutory block has enough words to be useful.</p>
+<p class="statutory-body">Second statutory block must be kept intact.</p>
+<!-- field-end:statute -->
+</body></html>"""
+    path = tmp_path / "fcra.htm"
+    path.write_text(html, encoding="utf-8")
+    chunks = load_fcra_chunks(path, max_chars=105, count_tokens=_words, fetch_missing=False)
+    assert [c["chunk_id"] for c in chunks] == [
+        "15-fcra-1681i-a-piece-1", "15-fcra-1681i-a-piece-2", "15-fcra-1681i-a-piece-3",
+    ]
+    assert all(c["text"].startswith("§1681i.") for c in chunks)
+    joined = "\n".join(c["text"] for c in chunks)
+    assert "First statutory block has enough words to be useful." in joined
+    assert "Second statutory block must be kept intact." in joined
+
+
+def test_fixed_corpus_includes_complete_model_safe_fcra():
+    path = CHUNKING / "data/processed/chunks.jsonl"
+    with path.open(encoding="utf-8") as f:
+        chunks = [json.loads(line) for line in f]
+    assert len(chunks) == 2954
+    assert len({c["chunk_id"] for c in chunks}) == len(chunks)
+
+    fcra = [c for c in chunks if c["regulation"] == "FCRA"]
+    assert len(fcra) == 325
+    assert len({c["section"] for c in fcra}) == 31
+    count = load_token_counter()
+    assert max(c["n_chars"] for c in fcra) <= 1400
+    assert max(count(c["embed_text"]) for c in fcra) <= EMBED_MAX_TOKENS
+
+    # Both annotators' FCRA evidence remains verbatim in the fixed corpus.
+    by_section = {}
+    for c in fcra:
+        by_section.setdefault(c["section"], []).append(c["text"])
+    for filename in ("llm_labels_claude-opus-5-5.jsonl", "llm_labels_chatgpt.jsonl"):
+        with (ROOT / "annotation" / filename).open(encoding="utf-8") as f:
+            labels = [json.loads(line) for line in f]
+        for label in labels:
+            if label["gold_regulation"] == "FCRA":
+                assert label["evidence_quote"] in "\n".join(by_section[label["gold_section"]])
+
+
+def test_default_input_and_output_paths_are_script_relative():
+    assert DEFAULT_SECTIONS_PATH == CHUNKING / "data/processed/sections.jsonl"
+    assert DEFAULT_OUT_PATH == CHUNKING / "data/processed/chunks.jsonl"
+    assert DEFAULT_FCRA_PATH == ROOT / "data/raw/fcra/USCODE-2024-title15-chap41-subchapIII.htm"
