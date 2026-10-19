@@ -25,7 +25,7 @@ Status: (0) and (1) are implemented; (2) is implemented as a corpus (regulations
 
 The evaluation set for stages 2 to 4 is the **annotation items** (`cfpb.annotation.load_items()`): `annotation_sample.csv` (120, stratified) plus `annotation_topup.csv` (78, in-scope top-up), 198 items in total. Of these, 129 have an in-scope gold section and 69 are NONE (see Sec. 7).
 
-## 1. Classifier output (implemented, Pair A)
+## 1. Classifier output (implemented, Pair A; **FROZEN 2026-10-16**, agreed by all pairs)
 
 `outputs/classifier/<label>/predictions_{val,test}.parquet`, or at run time:
 
