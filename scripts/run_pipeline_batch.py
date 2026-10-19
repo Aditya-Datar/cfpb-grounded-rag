@@ -3,6 +3,12 @@ stage tables of docs/INTERFACES.md.
 
     python scripts/run_pipeline_batch.py --retriever oracle
     python scripts/run_pipeline_batch.py --retriever stub --limit 10
+    python scripts/run_pipeline_batch.py --retriever precomputed \
+        --ranked outputs/retrieval/bm25/ranked.parquet \
+        --corpus chunking/data/processed/chunks.jsonl data/processed/reg_chunks.parquet::statute
+
+--corpus takes one or more "path" or "path::kind1+kind2" specs and must
+contain every chunk_id the rankings use (the corpus the retriever indexed).
 
 Complaint text comes from data/processed/annotation_sample.csv (120 items)
 and, if present, annotation_topup.csv (78 more); gold-set ids without text
@@ -26,7 +32,8 @@ from cfpb.annotation import load_items  # noqa: E402
 from cfpb.config import OUTPUT_DIR, ROOT  # noqa: E402
 from cfpb.pipeline import load_pipeline  # noqa: E402
 from cfpb.pipeline.batch import to_frames  # noqa: E402
-from cfpb.pipeline.corpus import DEFAULT_CORPUS, DEFAULT_GOLD, Corpus, OracleRetriever, load_gold  # noqa: E402
+from cfpb.pipeline.corpus import DEFAULT_CORPUS, DEFAULT_GOLD, OracleRetriever, load_corpus, load_gold  # noqa: E402
+from cfpb.pipeline.retrievers import PrecomputedRetriever  # noqa: E402
 
 
 def git_commit() -> str:
@@ -42,8 +49,12 @@ def git_commit() -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--retriever", choices=["stub", "oracle"], required=True)
-    ap.add_argument("--corpus", type=Path, default=DEFAULT_CORPUS, help="for --retriever oracle")
+    ap.add_argument("--retriever", choices=["stub", "oracle", "precomputed"], required=True)
+    ap.add_argument("--corpus", nargs="+", default=[str(DEFAULT_CORPUS)],
+                    help='chunk files for oracle/precomputed: "path" or "path::kind1+kind2"')
+    ap.add_argument("--ranked", type=Path, help="ranked.parquet for --retriever precomputed")
+    ap.add_argument("--min-top-score", type=float, default=None,
+                    help="precomputed: abstain when the top score is below this")
     ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--limit", type=int, default=None, help="first N items only (smoke runs)")
     ap.add_argument("--run-name", default=None)
@@ -62,12 +73,22 @@ def main() -> None:
         print(f"  {missing} gold items have no text locally (add data/processed/annotation_topup.csv)")
 
     pipe = load_pipeline(require_models=args.require_models, k=args.k)
-    oracle = OracleRetriever(Corpus.load(args.corpus), gold) if args.retriever == "oracle" else None
-    condition = "oracle" if oracle else "retrieved"
+    bound = None  # complaint_id -> retriever for that complaint
+    if args.retriever == "oracle":
+        bound = OracleRetriever(load_corpus(args.corpus), gold).for_complaint
+    elif args.retriever == "precomputed":
+        if not args.ranked:
+            ap.error("--retriever precomputed needs --ranked")
+        pre = PrecomputedRetriever(args.ranked, load_corpus(args.corpus), args.min_top_score)
+        unranked = [cid for cid in ids if cid not in set(pre.complaint_ids)]
+        if unranked:
+            print(f"  {len(unranked)} items have no ranking in {args.ranked}; skipped")
+            ids = [cid for cid in ids if cid not in set(unranked)]
+        bound = pre.for_complaint
+    condition = "oracle" if args.retriever == "oracle" else "retrieved"
 
     t0 = time.perf_counter()
-    results = {cid: pipe.analyze(texts[cid], retriever=oracle.for_complaint(cid) if oracle else None)
-               for cid in ids}
+    results = {cid: pipe.analyze(texts[cid], retriever=bound(cid) if bound else None) for cid in ids}
     elapsed = time.perf_counter() - t0
 
     run_name = args.run_name or f"{args.retriever}-{datetime.now():%Y%m%d-%H%M%S}"

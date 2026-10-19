@@ -43,6 +43,13 @@ class Chunk:
                               self.paragraph, self.heading, self.text, self.source_url)
 
 
+PART_TO_REGULATION = {"1005": "E", "1006": "F", "1022": "V", "1026": "Z", "1681": "FCRA"}
+
+
+def _regulation_of(section: str) -> str:
+    return PART_TO_REGULATION.get(section[:4], "")
+
+
 def _full_paragraph(section: str, paragraph: str) -> str:
     if not paragraph or paragraph.startswith(section):
         return paragraph
@@ -60,7 +67,10 @@ class Corpus:
             self._by_section.setdefault(c.section, []).append(c)
 
     @classmethod
-    def load(cls, path=DEFAULT_CORPUS) -> "Corpus":
+    def load(cls, path=DEFAULT_CORPUS, kinds=None) -> "Corpus":
+        """Read one chunk file; `kinds` keeps only those kinds (e.g. ("statute",)).
+        Rows without `regulation` or `kind` (e.g. FCRA rows appended to
+        chunks.jsonl with only the INTERFACES fields) get them from the section."""
         path = Path(path)
         if not path.exists():
             raise FileNotFoundError(
@@ -68,12 +78,34 @@ class Corpus:
                 "or pass the chunking branch's chunks.jsonl.")
         df = (pd.read_parquet(path) if path.suffix == ".parquet"
               else pd.read_json(path, lines=True, dtype=False))
-        df = df.fillna("")
-        kind = df["kind"] if "kind" in df else df["content_type"]
-        chunks = [Chunk(str(r.chunk_id), r.regulation, r.section,
-                        _full_paragraph(r.section, r.paragraph), k, r.heading, r.text, r.source_url)
-                  for r, k in zip(df.itertuples(index=False), kind)]
-        return cls(chunks, name=path.name)
+        df = df.astype(object).where(df.notna(), "")
+        kind_col = "kind" if "kind" in df else "content_type" if "content_type" in df else None
+        chunks = []
+        for r in df.to_dict("records"):
+            section = str(r["section"])
+            regulation = r.get("regulation") or _regulation_of(section)
+            kind = (r[kind_col] if kind_col else "") or ("statute" if regulation == "FCRA" else "regulation")
+            if kinds is not None and kind not in kinds:
+                continue
+            chunks.append(Chunk(str(r["chunk_id"]), regulation, section,
+                                _full_paragraph(section, str(r["paragraph"])), kind,
+                                r["heading"], r["text"], r["source_url"]))
+        name = path.name if kinds is None else f"{path.name}[{'+'.join(kinds)}]"
+        return cls(chunks, name=name)
+
+    @classmethod
+    def merge(cls, *corpora: "Corpus", keep_first: bool = False) -> "Corpus":
+        """One corpus from several, e.g. Pair B's chunks.jsonl plus the FCRA
+        statute rows of reg_chunks.parquet. Duplicate chunk_ids raise, unless
+        `keep_first` (for a lookup-only corpus spanning several files)."""
+        chunks, seen = [], set()
+        for corpus in corpora:
+            for c in corpus.chunks:
+                if keep_first and c.chunk_id in seen:
+                    continue
+                seen.add(c.chunk_id)
+                chunks.append(c)
+        return cls(chunks, name="+".join(corpus.name for corpus in corpora))
 
     def __len__(self) -> int:
         return len(self.chunks)
@@ -87,6 +119,17 @@ class Corpus:
     @property
     def kinds(self) -> list[str]:
         return sorted({c.kind for c in self.chunks})
+
+
+def load_corpus(specs, keep_first: bool = False) -> Corpus:
+    """Corpus from one or more specs "path" or "path::kind1+kind2", e.g.
+    ["chunking/data/processed/chunks.jsonl", "data/processed/reg_chunks.parquet::statute"]."""
+    specs = [specs] if isinstance(specs, (str, Path)) else list(specs)
+    corpora = []
+    for spec in specs:
+        path, _, kinds = str(spec).partition("::")
+        corpora.append(Corpus.load(path, kinds=tuple(kinds.split("+")) if kinds else None))
+    return corpora[0] if len(corpora) == 1 else Corpus.merge(*corpora, keep_first=keep_first)
 
 
 def load_gold(path=DEFAULT_GOLD) -> dict[str, dict]:

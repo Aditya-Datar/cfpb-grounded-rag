@@ -7,8 +7,11 @@ run as stubs and are labelled on the page. With the oracle retriever, pick a
 gold-set complaint to see its gold regulation section (real eCFR / U.S. Code
 text); this needs data/processed/reg_chunks.parquet
 (scripts/build_reg_corpus.py --date 2026-10-13) and annotation_sample.csv.
+"Precomputed rankings" replays a ranked.parquet found under
+outputs/retrieval/*/ or outputs/pipeline_runs/*/ (e.g. Pair B's BM25 run).
 """
 import html
+import json
 import sys
 from pathlib import Path
 
@@ -17,7 +20,9 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from cfpb.pipeline import load_pipeline  # noqa: E402
+from cfpb.config import OUTPUT_DIR, PROCESSED_DIR, ROOT  # noqa: E402
 from cfpb.pipeline.corpus import DEFAULT_CORPUS, Corpus, OracleRetriever, load_gold  # noqa: E402
+from cfpb.pipeline.retrievers import PrecomputedRetriever  # noqa: E402
 from cfpb.pipeline.schema import SUPPORTED, UNSUPPORTED  # noqa: E402
 from cfpb.pipeline.stages import citation  # noqa: E402
 
@@ -26,6 +31,12 @@ st.set_page_config(page_title="CFPB Complaint Triage", layout="wide")
 LABEL_STYLE = {SUPPORTED: ("rgba(46,160,67,0.18)", "supported"),
                UNSUPPORTED: ("rgba(218,54,51,0.20)", "flagged")}
 UNCHECKED_STYLE = ("rgba(128,128,128,0.15)", "not checked")
+# Every chunk file that may be present locally; precomputed rankings may use
+# ids from any of them (Pair B's chunks.jsonl, reg_chunks.parquet).
+CHUNK_FILES = [DEFAULT_CORPUS, PROCESSED_DIR / "chunks_chunking.jsonl",
+               ROOT / "chunking" / "data" / "processed" / "chunks.jsonl"]
+METRICS_FILE = ROOT / "results" / "classifier_test_metrics.json"
+MODES = ["Default", "Oracle (gold section)", "Precomputed rankings"]
 
 
 @st.cache_resource(show_spinner="Loading models...")
@@ -36,6 +47,39 @@ def get_pipeline():
 @st.cache_resource(show_spinner="Loading regulation corpus...")
 def get_oracle():
     return OracleRetriever(Corpus.load(DEFAULT_CORPUS), load_gold())
+
+
+@st.cache_resource(show_spinner="Loading chunk files...")
+def get_lookup_corpus() -> Corpus:
+    return Corpus.merge(*[Corpus.load(p) for p in CHUNK_FILES if p.exists()], keep_first=True)
+
+
+@st.cache_resource(show_spinner="Loading rankings...")
+def get_precomputed(path: str) -> PrecomputedRetriever:
+    return PrecomputedRetriever(path, get_lookup_corpus())
+
+
+def ranked_files() -> list[str]:
+    found = [*OUTPUT_DIR.glob("retrieval/*/ranked.parquet"), *OUTPUT_DIR.glob("pipeline_runs/*/ranked.parquet")]
+    return [str(p.relative_to(ROOT)) for p in sorted(found)]
+
+
+@st.cache_data
+def classifier_test_metrics() -> str | None:
+    """One line from results/classifier_test_metrics.json, following the team's
+    reporting rule: the all-issue macro-F1 is always shown next to the
+    frequent-issue (>=100 test examples) number."""
+    if not METRICS_FILE.exists():
+        return None
+    m = json.loads(METRICS_FILE.read_text(encoding="utf-8"))
+    p, i = m["product"], m["issue"]
+    by = i["macro_f1_by_min_support"]
+    return (f"Classifier test set (n = {p['n']:,}): product macro-F1 {p['macro_f1']:.3f}, "
+            f"accuracy {p['accuracy']:.3f}. Issue macro-F1 {by['min_test_support_1']['macro_f1']:.3f} "
+            f"over all {by['min_test_support_1']['n_issues']} issues, "
+            f"{by['min_test_support_100']['macro_f1']:.3f} over the "
+            f"{by['min_test_support_100']['n_issues']} issues with at least 100 test examples; "
+            f"accuracy {i['accuracy']:.3f}; issue valid for the product {i['product_consistent_rate']:.1%}.")
 
 
 @st.cache_data
@@ -69,30 +113,42 @@ pipe = get_pipeline()
 
 with st.sidebar:
     st.header("Settings")
-    oracle_ok = DEFAULT_CORPUS.exists()
-    mode = st.radio("Retriever", ["Default", "Oracle (gold section)"],
-                    help="Oracle returns the hand-labelled section for a gold-set complaint.",
-                    disabled=not oracle_ok)
+    oracle_ok, rankings = DEFAULT_CORPUS.exists(), ranked_files()
+    available = [m for m in MODES if m == "Default" or (m == MODES[1] and oracle_ok)
+                 or (m == MODES[2] and rankings)]
+    mode = st.radio("Retriever", available,
+                    help="Oracle returns the hand-labelled section for a gold-set complaint. "
+                         "Precomputed replays a saved ranking for a gold-set complaint.")
     if not oracle_ok:
         st.caption("Oracle needs data/processed/reg_chunks.parquet.")
+    precomputed = None
+    if mode == MODES[2]:
+        precomputed = get_precomputed(st.selectbox("Rankings file", rankings))
     k = st.slider("Chunks to retrieve (k)", 1, 10, 5)
     examples = gold_examples()
+    if precomputed:
+        ranked_ids = set(precomputed.complaint_ids)
+        examples = {cid: v for cid, v in examples.items() if cid in ranked_ids}
     complaint_id = None
     if examples:
         complaint_id = st.selectbox("Gold-set complaint", [None, *examples],
                                     format_func=lambda c: "Type your own" if c is None else examples[c][0])
-    elif mode.startswith("Oracle"):
-        st.warning("No gold-set complaint text found (data/processed/annotation_sample.csv).")
+    elif mode != "Default":
+        st.warning("No gold-set complaint text found for this mode (data/processed/annotation_sample.csv).")
 
 default_text = examples[complaint_id][1] if complaint_id else ""
 text = st.text_area("Complaint narrative", value=default_text, height=200,
                     key=f"text-{complaint_id}")
-use_oracle = mode.startswith("Oracle")
-if use_oracle and not complaint_id:
-    st.info("Pick a gold-set complaint in the sidebar to use the oracle retriever.")
+needs_id = mode != "Default"
+if needs_id and not complaint_id:
+    st.info(f"Pick a gold-set complaint in the sidebar to use the {mode.lower()} retriever.")
 
-if st.button("Analyze", type="primary", disabled=not text.strip() or (use_oracle and not complaint_id)):
-    retriever = get_oracle().for_complaint(complaint_id) if use_oracle else None
+if st.button("Analyze", type="primary", disabled=not text.strip() or (needs_id and not complaint_id)):
+    retriever = None
+    if mode == MODES[1]:
+        retriever = get_oracle().for_complaint(complaint_id)
+    elif mode == MODES[2]:
+        retriever = precomputed.for_complaint(complaint_id)
     result = pipe.analyze(text, k=k, retriever=retriever)
     stubbed = result.stubbed_stages
 
@@ -104,6 +160,8 @@ if st.button("Analyze", type="primary", disabled=not text.strip() or (use_oracle
         rows.append(f"**Issue:** {c.issue.label} (confidence {c.issue.prob:.2f})")
     rows.append(f"**Candidate regulation (from product):** {c.candidate_regulation or 'none'}")
     st.markdown("  \n".join(rows))
+    if "classify" not in stubbed and (metrics := classifier_test_metrics()):
+        st.caption(metrics)
 
     st.subheader("2. Governing regulation")
     stub_note("retrieve", stubbed)
@@ -112,6 +170,8 @@ if st.button("Analyze", type="primary", disabled=not text.strip() or (use_oracle
     if r.abstained:
         st.warning("No in-scope section found: the complaint is outside Regulations E, F, V, Z "
                    "and the FCRA, so it is referred to compliance.")
+        if r.chunks:
+            st.caption("The ranked chunks below scored under the abstention threshold; shown for reference.")
     for ch in r.chunks:
         with st.expander(f"#{ch.rank} {citation(ch)} · score {ch.score:.2f}", expanded=ch.rank == 1):
             st.markdown(f"**{ch.heading}**")

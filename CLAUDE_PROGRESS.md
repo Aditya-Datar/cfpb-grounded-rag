@@ -39,7 +39,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
 | 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
-| Backend: single-complaint pipeline for the demo | Anirudh | `backend` | **Runs end to end (2026-10-19):** `cfpb.pipeline` with the real classifier, a corpus loader for both chunk sets, an oracle retriever (gold section), a batch runner writing INTERFACES.md tables, and a minimal Streamlit page (`demo/app.py`). Real retriever, generator and verifier still stubs (Sec. 7) |
+| Backend: single-complaint pipeline for the demo | Anirudh | `backend` | **Runs end to end (2026-10-19):** `cfpb.pipeline` with the real classifier, a corpus loader for both chunk sets, an oracle retriever (gold section), a batch runner writing INTERFACES.md tables, a minimal Streamlit page (`demo/app.py`), and **adapters so the BM25 retriever plugs in as soon as it lands** (live function or `ranked.parquet`). Real retriever, generator and verifier still stubs (Sec. 7) |
 | Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
 
 **Pair A overall:** the data side is complete and the classifier code is ready. Remaining: the GPU training runs, test-set numbers, and freezing the output interface with the team.
@@ -98,6 +98,8 @@ scripts/analyze_complaint.py        run the pipeline on one complaint, print JSO
 tests/test_pipeline.py              pipeline tests (stubs, abstention, stage swapping)
 src/cfpb/pipeline/corpus.py         Corpus (loads reg_chunks.parquet or chunking's chunks.jsonl), OracleRetriever
 src/cfpb/pipeline/batch.py          PipelineResults -> classification/ranked/responses/sentences tables
+src/cfpb/pipeline/retrievers.py     FunctionRetriever (live retrieve(query, k)), PrecomputedRetriever (ranked.parquet)
+tests/test_pipeline_retrievers.py   adapter, corpus merge and round-trip tests
 scripts/run_pipeline_batch.py       pipeline over the gold-set complaints -> outputs/pipeline_runs/<run>/
 tests/test_pipeline_corpus.py       corpus loader and oracle tests (+ real-data checks, skipped if absent)
 demo/app.py                         minimal Streamlit page: streamlit run demo/app.py
@@ -539,4 +541,25 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
   1. Add `annotation_topup.csv` (ask Aditya) so the batch runner and demo cover all 198 items.
   2. Plug in the real retriever once built.
   3. Settle the oracle passage size with the retrieval and generation owners.
+
+### 2026-10-19: Retriever adapters, latest regulation-corpus merged, test metrics in the demo (branch `backend`, Anirudh + Claude)
+- **Merged `origin/regulation-corpus` (`36ac64f`) into `backend`:** brings the frozen classifier interface and `results/classifier_test_metrics.json`. The only conflict was this file, where both sides appended entries; both are kept, in date order. The batch runner's `classification.parquet` already uses the frozen names (`pred_product`, `pred_product_prob`, `pred_issue`, `pred_issue_prob`), plus three extra columns.
+- **Why adapters:** BM25 is assigned to Pair B on a new branch `retrieval-bm25` (Sec. 6.5.6, on `chunking`). It will deliver the INTERFACES.md Sec. 2 forms: a function `retrieve(query, k) -> [{chunk_id, score}]` and `outputs/retrieval/<run>/ranked.parquet`. The pipeline also needs chunk text and citations, so `src/cfpb/pipeline/retrievers.py` looks the ids up in the corpus the retriever indexed:
+  - `FunctionRetriever(fn, corpus, name, min_top_score=None)`: live retrieval in the demo or pipeline.
+  - `PrecomputedRetriever(ranked_path, corpus, min_top_score=None).for_complaint(id)`: replays a ranked file, bound per complaint like the oracle. It honours an `abstained` column when present.
+  - **Abstention:** with `min_top_score`, a complaint abstains when its top score is below the threshold (Sec. 6.5.6 uses the top BM25 score as the abstain signal). `abstain_score` is the negated top score. Abstaining results keep their ranked chunks for evaluation; the pipeline still drafts a referral.
+  - An unknown `chunk_id` raises an error that names the corpus, so a corpus mismatch is caught at once.
+- **Corpus:**
+  - `Corpus.load(path, kinds=...)` filters by kind.
+  - `Corpus.merge(...)` combines files.
+  - `load_corpus(["chunks.jsonl", "reg_chunks.parquet::statute"])` builds Pair B's planned corpus (their chunks plus the FCRA statute rows): **2,878 chunks** (2,629 + 249).
+  - Rows appended with only the INTERFACES fields (no `regulation` or `kind`, as in the Sec. 6.5.6 quick pass) get both inferred from the section number.
+  - The real corpora load with unchanged counts (4,319 and 2,629).
+- **Batch runner:** `--retriever precomputed --ranked <file> --corpus <specs...> [--min-top-score t]`. Checked by replaying `oracle-sample-smoke/ranked.parquet` (20 items), and by an oracle run on Pair B's planned corpus (`--corpus data/processed/chunks_chunking.jsonl data/processed/reg_chunks.parquet::statute`, all 120 sample items, 6.3 s).
+- **Demo:**
+  - New retriever mode **"Precomputed rankings"**. It lists every `outputs/retrieval/*/ranked.parquet` and `outputs/pipeline_runs/*/ranked.parquet`, offers only complaints that file ranks, and resolves chunk ids across every chunk file present locally.
+  - When the classifier is real, the classification panel shows the **test metrics from `results/classifier_test_metrics.json`**. Per the team's reporting rule, the all-issue macro-F1 (0.325) always appears next to the at-least-100-examples number (0.538).
+  - Checked in the browser preview on 23571192 with the Pair B corpus run: Pair B's chunk `1005.11(d)(1)` comes first, exactly the gold paragraph.
+- **Tests:** 81 passed (9 new in `tests/test_pipeline_retrievers.py`, including a round trip of the batch runner's own `ranked.parquet`).
+- **For Pair B:** with `outputs/retrieval/bm25/ranked.parquet` saved locally, the demo picks it up with no code change. For live use, pass `FunctionRetriever(bm25.retrieve, load_corpus([...]), "bm25", min_top_score=...)` to `Pipeline`.
 

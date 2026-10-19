@@ -25,6 +25,8 @@ Data files are git-ignored. Narratives come from the CFPB FOIA Reading Room arch
 python scripts/build_reg_corpus.py --date 2026-10-13          # regulation corpus (once)
 python scripts/analyze_complaint.py --text "My bank denied my unauthorized-transfer claim ..."
 python scripts/run_pipeline_batch.py --retriever oracle       # gold-set complaints -> outputs/pipeline_runs/
+python scripts/run_pipeline_batch.py --retriever precomputed --ranked outputs/retrieval/bm25/ranked.parquet \
+    --corpus chunking/data/processed/chunks.jsonl data/processed/reg_chunks.parquet::statute
 streamlit run demo/app.py
 ```
 
