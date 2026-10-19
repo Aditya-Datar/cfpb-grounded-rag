@@ -684,3 +684,18 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
 - Paths are script-relative: `DEFAULT_SECTIONS_PATH` and `DEFAULT_OUT_PATH` resolve under `chunking/data/processed/`, while `DEFAULT_FCRA_PATH` resolves under repository-level `data/raw/fcra/`. The chunker can therefore be run from either the repository root or `chunking/` without explicit path arguments.
 - Tests: `tests/test_chunk_regulations.py` now has 28 tests, including FCRA schema, boundary packing, fixed-corpus integrity, token limits, evidence-quote coverage, and script-relative path defaults. Together with the 4 parser tests, **32/32 pass under pytest** (`Python 3.13.0`, `tokenizers 0.23.3`, `pytest 9.1.1`). The real-corpus source-coverage check above also passed.
 - Updated `docs/INTERFACES.md` to make the 2,954-chunk tracked JSONL the retrieval default and retain `reg_chunks.parquet` for interpretation/appendix and chunking ablations. Chunking is complete; BM25 is next and remains a separate retrieval task.
+
+### 2026-10-19: BM25 baseline on branch `retrieval-bm25`
+- **Code:** `src/cfpb/retrieval/bm25.py` (`BM25Retriever`: `retrieve(query, k)` per INTERFACES Sec. 2, plus section-deduplicated ranking), `src/cfpb/retrieval/metrics.py`, `scripts/run_bm25.py`, `tests/test_bm25.py` (5 tests, pass). `rank-bm25` is now enabled in `requirements.txt`.
+- **Setup:** `rank_bm25.BM25Okapi` (k1 1.5, b 0.75) over `embed_text`; queries are `narrative_clean`; tokens are lowercase `[a-z0-9]+`. Two variants: no stopword removal (main, `results/retrieval_bm25.json`) and sklearn English stopwords removed (`results/retrieval_bm25_stopwords.json`). Section-level hits, sections deduplicated keeping first occurrence, on the 127 in-scope items. Ranked lists (top 10 chunks per complaint) go to `outputs/retrieval/bm25/` and `bm25_no_fcra/` (git-ignored).
+- **Results, main variant (127 in-scope items):**
+
+  | Corpus | hit@1 | hit@5 | hit@10 | MRR |
+  |---|---:|---:|---:|---:|
+  | with FCRA (2,954 chunks) | 0.079 | 0.315 | 0.457 | 0.196 |
+  | without FCRA (2,629 chunks) | 0.055 | 0.220 | 0.339 | 0.144 |
+
+  recall@k equals hit@k (one gold section per item); precision@k = hit@k / k. With stopwords removed, with FCRA: 0.071 / 0.362 / 0.496, MRR 0.219. Per-regulation numbers are in the JSON files (with FCRA, hit@10: E 0.28, F 0.53, Z 0.33, FCRA 0.61, V 0.60; V has only 5 items).
+- **Observations:** (1) On the 91 non-FCRA items, hit@10 is 0.473 without the FCRA chunks, against 0.396 with them in the index (E drops from 0.45 to 0.28). The FCRA chunks therefore displace correct regulation sections under BM25. (2) Stopword removal helps hit@5/10 modestly; it is a single run on 127 items, so differences of a few points are not established.
+- **Abstention (top BM25 score as signal, all 198):** AUROC is **0.43** (0.49 with stopwords), at or below chance. Long narratives score high whether or not a section governs them, so the raw top score is not a usable abstain signal. The threshold was tuned on a fixed SHA-1 half and reported on the other (91 items, 26 NONE): P/R/F1 0.28 / 0.96 / 0.43, which is close to abstaining on nearly everything. A normalised score (for example top score divided by query length) is a cheap thing to try for the dense and hybrid retrievers.
+- **Not done:** the optional chunking ablation on `reg_chunks.parquet` (Sec. 6.5.6 item 7).

@@ -12,6 +12,6 @@ tokenizers>=0.23          # embed_text token counts (all-mpnet-base-v2); 0.23.3 
 # transformers            # DistilBERT classifier, DeBERTa NLI verifier
 # sentence-transformers   # dense retrieval
 # faiss-cpu
-# rank-bm25
+rank-bm25
 # lxml                    # eCFR XML parsing
 # streamlit
