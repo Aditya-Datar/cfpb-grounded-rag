@@ -114,13 +114,37 @@ def load_classifier(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_M
         return StubClassifier()
 
 
+def load_retriever(require: bool = False) -> Retriever:
+    """Pair B's BM25 baseline (cfpb.retrieval.bm25, branch retrieval-bm25) over
+    their chunks.jsonl if both are present, else the stub (with a warning).
+
+    No abstention threshold: the top BM25 score does not separate NONE
+    complaints (AUROC 0.43, CLAUDE_PROGRESS.md 2026-10-19 BM25 entry), so this
+    retriever never abstains. `require=True` raises instead of falling back."""
+    from cfpb.pipeline.corpus import PAIR_B_CORPUS, Corpus
+    from cfpb.pipeline.retrievers import FunctionRetriever
+    try:
+        from cfpb.retrieval.bm25 import BM25Retriever, load_chunks  # branch retrieval-bm25
+        if not PAIR_B_CORPUS.exists():
+            raise FileNotFoundError(f"No Pair B corpus at {PAIR_B_CORPUS}")
+        bm25 = BM25Retriever(load_chunks(PAIR_B_CORPUS))
+        return FunctionRetriever(bm25.retrieve, Corpus.load(PAIR_B_CORPUS), name="bm25")
+    except (FileNotFoundError, ImportError) as e:
+        if require:
+            raise
+        log.warning("Retriever falls back to the stub: %s", e)
+        return StubRetriever()
+
+
 def load_pipeline(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_MODEL,
-                  require_models: bool = False, k: int = 5) -> Pipeline:
+                  require_models: bool = False, k: int = 5,
+                  require_retriever: bool = False) -> Pipeline:
     """Default pipeline: real stages where they exist, stubs elsewhere.
-    Swap in a real stage as it lands (e.g. retriever=BM25Retriever(...))."""
+    `require_models` / `require_retriever` raise instead of falling back to
+    the stub classifier / retriever."""
     return Pipeline(
         classifier=load_classifier(product_dir, issue_dir, require=require_models),
-        retriever=StubRetriever(),
+        retriever=load_retriever(require=require_retriever),
         generator=StubGenerator(),
         verifier=StubVerifier(),
         k=k,

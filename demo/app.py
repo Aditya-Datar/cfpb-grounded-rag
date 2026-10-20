@@ -9,6 +9,9 @@ text); this needs a corpus (Pair B's chunking/data/processed/chunks.jsonl,
 else data/processed/reg_chunks.parquet) and annotation_sample.csv.
 "Precomputed rankings" replays a ranked.parquet found under
 outputs/retrieval/*/ or outputs/pipeline_runs/*/ (e.g. Pair B's BM25 run).
+"Default" uses Pair B's BM25 when cfpb.retrieval.bm25 and their chunks.jsonl
+are present (branch retrieval-bm25), else a stub. For a gold-set complaint,
+"Compare with oracle" shows that retriever and the gold section side by side.
 """
 import html
 import json
@@ -106,6 +109,65 @@ def stub_note(stage: str, stubbed: list[str]) -> None:
         st.caption(":orange-badge[Placeholder] This stage is not built yet; output is a stub.")
 
 
+def gold_rank(retrieval, gold_section: str | None) -> int | None:
+    """Rank of the first chunk from the gold section, or None."""
+    return next((c.rank for c in retrieval.chunks if gold_section and c.section == gold_section), None)
+
+
+def render_retrieval(result, gold: dict | None) -> None:
+    r = result.retrieval
+    stub_note("retrieve", result.stubbed_stages)
+    st.caption(f"Retriever: {r.retriever} · corpus: {r.corpus}")
+    gold_section = gold["gold_section"] if gold else None
+    if gold:
+        if gold["gold_regulation"] == "NONE":
+            st.caption("Gold label: NONE (no governing section). "
+                       + ("The retriever abstained." if r.abstained else "The retriever did not abstain."))
+        elif (rank := gold_rank(r, gold_section)):
+            st.success(f"Gold section {gold_section} found at rank {rank}.")
+        else:
+            st.error(f"Gold section {gold_section} not in the top {len(r.chunks)}.")
+    if r.abstained:
+        st.warning("No in-scope section found: the complaint is outside Regulations E, F, V, Z "
+                   "and the FCRA, so it is referred to compliance.")
+        if r.chunks:
+            st.caption("The ranked chunks below scored under the abstention threshold; shown for reference.")
+    for ch in r.chunks:
+        mark = " · ✓ gold section" if gold_section and ch.section == gold_section else ""
+        with st.expander(f"#{ch.rank} {citation(ch)} · score {ch.score:.2f}{mark}", expanded=ch.rank == 1):
+            st.markdown(f"**{ch.heading}**")
+            st.text(ch.text)
+            st.markdown(f"[Source]({ch.source_url})")
+
+
+def render_draft(result) -> None:
+    stub_note("generate", result.stubbed_stages)
+    checks = {s.sentence_idx: s for s in result.verification.checks}
+    spans = []
+    for i, sent in enumerate(result.draft.sentences):
+        check = checks.get(i)
+        color, tag = LABEL_STYLE.get(check.label, UNCHECKED_STYLE) if check else UNCHECKED_STYLE
+        spans.append(f'<span title="{tag}" style="background:{color};padding:2px 4px;'
+                     f'border-radius:4px;line-height:1.9">{html.escape(sent)}</span>')
+    st.markdown(" ".join(spans), unsafe_allow_html=True)
+
+
+def render_checks(result, table: bool = True) -> None:
+    stub_note("verify", result.stubbed_stages)
+    v = result.verification
+    if not v.checks:
+        st.caption("Not run for referrals.")
+        return
+    cols = st.columns(3)
+    cols[0].metric("Sentences", len(v.checks))
+    cols[1].metric("Supported", v.n_supported)
+    cols[2].metric("Flagged", v.n_flagged)
+    if table:
+        st.dataframe([{"#": s.sentence_idx + 1, "sentence": s.sentence, "label": s.label,
+                       "entailment": s.entail_prob, "checked against": ", ".join(s.premise_chunk_ids)}
+                      for s in v.checks], hide_index=True)
+
+
 st.title("CFPB complaint triage")
 st.caption("Drafts for a compliance officer to review. Not legal advice; every draft needs human review.")
 
@@ -135,6 +197,11 @@ with st.sidebar:
                                     format_func=lambda c: "Type your own" if c is None else examples[c][0])
     elif mode != "Default":
         st.warning("No gold-set complaint text found for this mode (data/processed/annotation_sample.csv).")
+    compare = False
+    if complaint_id and mode != MODES[1] and oracle_ok:
+        compare = st.toggle("Compare with oracle (gold section)",
+                            help="Runs the complaint twice, with this retriever and with the gold "
+                                 "section, side by side: the attribution experiment for one complaint.")
 
 default_text = examples[complaint_id][1] if complaint_id else ""
 text = st.text_area("Complaint narrative", value=default_text, height=200,
@@ -150,60 +217,50 @@ if st.button("Analyze", type="primary", disabled=not text.strip() or (needs_id a
     elif mode == MODES[2]:
         retriever = precomputed.for_complaint(complaint_id)
     result = pipe.analyze(text, k=k, retriever=retriever)
-    stubbed = result.stubbed_stages
+    oracle_result = (pipe.analyze(text, k=k, retriever=get_oracle().for_complaint(complaint_id))
+                     if compare else None)
+    gold = load_gold()[complaint_id] if complaint_id else None
 
     st.subheader("1. Classification")
-    stub_note("classify", stubbed)
+    stub_note("classify", result.stubbed_stages)
     c = result.classification
     rows = [f"**Product:** {c.product.label} (confidence {c.product.prob:.2f})"]
     if c.issue:
         rows.append(f"**Issue:** {c.issue.label} (confidence {c.issue.prob:.2f})")
     rows.append(f"**Candidate regulation (from product):** {c.candidate_regulation or 'none'}")
     st.markdown("  \n".join(rows))
-    if "classify" not in stubbed and (metrics := classifier_test_metrics()):
+    if "classify" not in result.stubbed_stages and (metrics := classifier_test_metrics()):
         st.caption(metrics)
 
-    st.subheader("2. Governing regulation")
-    stub_note("retrieve", stubbed)
-    r = result.retrieval
-    st.caption(f"Retriever: {r.retriever} · corpus: {r.corpus}")
-    if r.abstained:
-        st.warning("No in-scope section found: the complaint is outside Regulations E, F, V, Z "
-                   "and the FCRA, so it is referred to compliance.")
-        if r.chunks:
-            st.caption("The ranked chunks below scored under the abstention threshold; shown for reference.")
-    for ch in r.chunks:
-        with st.expander(f"#{ch.rank} {citation(ch)} · score {ch.score:.2f}", expanded=ch.rank == 1):
-            st.markdown(f"**{ch.heading}**")
-            st.text(ch.text)
-            st.markdown(f"[Source]({ch.source_url})")
-
-    st.subheader("3. Draft response" if not result.draft.is_referral else "3. Referral")
-    stub_note("generate", stubbed)
-    checks = {s.sentence_idx: s for s in result.verification.checks}
-    spans = []
-    for i, sent in enumerate(result.draft.sentences):
-        check = checks.get(i)
-        color, tag = LABEL_STYLE.get(check.label, UNCHECKED_STYLE) if check else UNCHECKED_STYLE
-        spans.append(f'<span title="{tag}" style="background:{color};padding:2px 4px;'
-                     f'border-radius:4px;line-height:1.9">{html.escape(sent)}</span>')
-    st.markdown(" ".join(spans), unsafe_allow_html=True)
-
-    st.subheader("4. Sentence check")
-    stub_note("verify", stubbed)
-    v = result.verification
-    if not v.checks:
-        st.caption("Not run for referrals.")
+    if oracle_result:
+        st.caption("Same complaint, two passages: what the retriever found (left) and the hand-labelled "
+                   "gold section (right). With real drafting and checking, the difference between the "
+                   "two drafts is the error caused by retrieval; what remains on the right is generation "
+                   "error (the attribution experiment).")
+        panes = [(f"Retrieved ({result.retrieval.retriever})", result), ("Oracle (gold section)", oracle_result)]
+        st.subheader("2. Governing regulation")
+        for col, (title, res) in zip(st.columns(2), panes):
+            with col:
+                st.markdown(f"**{title}**")
+                render_retrieval(res, gold)
+        st.subheader("3. Draft response")
+        for col, (title, res) in zip(st.columns(2), panes):
+            with col:
+                st.markdown(f"**{title}**" + (" · referral" if res.draft.is_referral else ""))
+                render_draft(res)
+        st.subheader("4. Sentence check")
+        for col, (title, res) in zip(st.columns(2), panes):
+            with col:
+                st.markdown(f"**{title}**")
+                render_checks(res, table=False)
     else:
-        cols = st.columns(3)
-        cols[0].metric("Sentences", len(v.checks))
-        cols[1].metric("Supported", v.n_supported)
-        cols[2].metric("Flagged for review", v.n_flagged)
-        st.dataframe([{"#": s.sentence_idx + 1, "sentence": s.sentence, "label": s.label,
-                       "entailment": s.entail_prob, "checked against": ", ".join(s.premise_chunk_ids)}
-                      for s in v.checks], hide_index=True)
+        st.subheader("2. Governing regulation")
+        render_retrieval(result, gold)
+        st.subheader("3. Draft response" if not result.draft.is_referral else "3. Referral")
+        render_draft(result)
+        st.subheader("4. Sentence check")
+        render_checks(result)
 
-    if complaint_id:
-        g = load_gold()[complaint_id]
-        st.caption(f"Gold label: {g['gold_regulation']} {g['gold_paragraph'] or g['gold_section'] or ''}")
+    if gold:
+        st.caption(f"Gold label: {gold['gold_regulation']} {gold['gold_paragraph'] or gold['gold_section'] or ''}")
     st.caption("Stage timings (ms): " + ", ".join(f"{k} {v:.0f}" for k, v in result.timings_ms.items()))

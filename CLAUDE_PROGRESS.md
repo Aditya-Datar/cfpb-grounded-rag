@@ -580,3 +580,27 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **For Ujjwal:** the committed `chunks.jsonl` at `5b90404` hashes to SHA-1 `13a8266064f95900313be4fa582e83386b1771b4` (from `git show`, LF endings, 2,954 lines). The log entry above gives `9928d5f3e676de365761b474e30a43d4691c25a6`. Counts and content checks match the entry, so the logged hash was probably taken from a different build or computed another way. Worth re-logging.
 - **Tests:** 82 passed, including a new test of the preference order (default, fallback, error naming the default).
 
+### 2026-10-19: BM25 as the default retriever when present; BM25-vs-oracle view in the demo (branch `backend`, Anirudh + Claude)
+- **New on other branches:**
+  - `retrieval-bm25` (`759989b`, Ujjwal): `cfpb.retrieval.bm25.BM25Retriever` over Pair B's 2,954-chunk `chunks.jsonl`, with results in `results/retrieval_bm25*.json`.
+  - `documents` (`d630786`, Aditya): `PROJECT_DOCUMENTATION.md` for the midterm. It reports **NVIDIA Nemotron** as the target LLM and a **40-complaint attribution pilot** with real drafts and the DeBERTa checker. That generation and checker code is **not on any pushed branch** (searched every remote branch on 2026-10-19), so the backend cannot use it yet.
+- **`load_retriever()` / `load_pipeline()`:**
+  - The default retriever is Pair B's BM25, wrapped in `FunctionRetriever` over `chunking/data/processed/chunks.jsonl`, whenever `cfpb.retrieval.bm25` and that file are both importable or present. Otherwise it falls back to the stub with a warning.
+  - **No abstention threshold.** The top BM25 score does not separate NONE complaints (AUROC 0.43, BM25 entry above), so the default retriever never abstains.
+  - New flag `require_retriever` (separate from `require_models`, which is still classifier-only) raises instead of falling back.
+  - Nothing from `retrieval-bm25` is copied into `backend`; BM25 switches on when that branch is merged.
+- **Batch runner:**
+  - New `--retriever default`: BM25 if present, else the stub.
+  - `--retriever stub` now always forces the stub.
+- **Demo:**
+  - "Default" mode uses BM25 when present.
+  - With a gold-set complaint selected and any non-oracle retriever, a **"Compare with oracle (gold section)"** toggle runs the complaint twice and shows passages, drafts and checks side by side. Each side says where the gold section ranked, or that it was missed, and gold-section chunks are marked.
+  - Rendering was split into `render_retrieval`, `render_draft` and `render_checks`, so the single view and the comparison share code.
+- **Checked with the `retrieval-bm25` files placed temporarily at their merged paths, then removed:**
+  - `analyze_complaint.py` used BM25: a validation-notice complaint returned 12 CFR 1006.34 chunks.
+  - `run_pipeline_batch.py --retriever default` ran all 120 sample items with no abstentions (outputs/pipeline_runs/bm25-live-sample, 9.5 s).
+  - In the browser, complaint 23571192 with Compare on: BM25 put `15 U.S.C. 1681c-1(i)(5)` at rank 1 and the gold section 1005.11 at rank 3; the oracle put 1005.11(d)(1) at rank 1. This is the FCRA-displacement effect in the BM25 entry, visible for a single complaint.
+  - Without the files, the same commands fall back to the stub with a warning.
+- **Tests:** 84 passed, including 2 new tests of BM25 detection against a stand-in module with the same API.
+- **Next for the backend:** wrap the Nemotron generator and the DeBERTa checker as pipeline stages once that code is pushed. The `generate()` and `verify()` contracts in `stages.py` are what they need to match.
+
