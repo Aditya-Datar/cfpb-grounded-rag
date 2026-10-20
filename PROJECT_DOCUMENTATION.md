@@ -66,7 +66,7 @@ flowchart TD
     end
     G --> EXP
     H --> EXP
-    V["Checker validation<br/>50 labelled pairs"]:::todo -.-> H
+    V["Checker validation: 50 pairs<br/>AUROC 0.84, cutoff needs tuning"]:::partial -.-> H
     E -. "BM25 score cannot separate<br/>NONE yet (AUROC 0.43)" .-> E
 
     classDef done fill:#d4edda,stroke:#2e7d32,color:#1b1b1b
@@ -82,7 +82,7 @@ flowchart TD
 - **LLM:** NVIDIA Nemotron was chosen.
 - **Not yet built:** dense and hybrid retrieval. Only the BM25 baseline exists.
 - **Not yet working:** detecting when no section applies; the BM25 score cannot do it.
-- **Not finished:** checker validation. The gap is measured on a 40-complaint pilot, not the full held-out set.
+- **Not finished:** the checker's cutoff needs tuning (or an LLM judge), and the gap is measured on a 40-complaint pilot, not the full held-out set.
 
 **Core contribution, the attribution experiment.** Each complaint is drafted twice: once from the passage our retriever found, and once from the correct ("oracle") passage chosen by annotators. The faithfulness gap between the two runs is the error caused by **retrieval**; the unfaithfulness that remains with the correct passage is caused by **generation**. Earlier evaluations of legal AI tools (Magesh et al.) score the whole system at once and cannot say which stage failed. The answer tells a practitioner where to invest: better retrieval (chunking, hybrid search) or safer generation (constrained decoding, verification gating).
 
@@ -217,28 +217,54 @@ Rates are averaged per complaint (40 complaints). 95% confidence intervals come 
 | V (5) | 80% / 90% | 20% / 90% |
 | Z (8) | 77% / 42% | 0% / 42% |
 
-**Findings.**
-1. **Retrieval is the dominant source of error.** With the correct passage, 83.8% of sentences are supported and correct. With BM25's passages, only 19.0% are. A 65-point gap, with a confidence interval well clear of zero.
-2. **Faithfulness alone hides retrieval errors.** Measured only as "supported by the given passage", BM25 drafts look almost as good as correct-passage drafts (77.7% vs 83.8%; the gap is not significant). The model faithfully restates whatever section it was handed, even the wrong one. A RAGAS-style faithfulness score would miss most of the failures a compliance officer cares about. This is exactly the tension between RAGAS and Magesh et al. noted in our related work.
-3. **Generation error is about 16%.** Even with the correct passage, about 16% of sentences are not supported.
-4. **Reg Z is the exception.** Correct-passage drafts score only 42% supported. On inspection, many Reg Z sentences apply the rule to the complaint's facts (for example, "these charges constitute a billing error under 1026.13(a)(1)"). The passage alone cannot confirm the complaint's facts, so the checker flags them. Whether such sentences should count as supported is a labelling question for the checker validation set (Sec. 4.4).
+**Cross-check with human labels.** The 50 checker-validation pairs (Sec. 4.4) are a random sample of these same pilot sentences, now with human-adjudicated labels. They give an estimate that does not depend on the checker:
 
-**Caveats.** This is a pilot: 40 complaints, one retriever (BM25, the weak baseline), and a checker not yet validated against labels. Read the size of the gaps as indicative. The full experiment in weeks 10 to 14 uses more complaints, dense and hybrid retrieval, and the validated checker.
+| Human labels, 25 sentences per condition | Retrieved (BM25) | Correct passage |
+|---|---:|---:|
+| Supported | 36% (9/25) | 68% (17/25) |
+| Supported and correct | 16% (4/25) | 68% (17/25) |
+
+**Findings.**
+1. **Retrieval is the dominant source of error.** With the correct passage, most sentences are supported and correct; with BM25's passages, few are. The gap is 65 points by the checker (CI +52 to +77) and 52 points by the human labels. Both measurements agree on the direction and the rough size.
+2. **Faithfulness alone understates retrieval errors.** By human labels, "supported by the given passage" shows a 32-point gap, while "supported and correct" shows 52. The model often restates the wrong section it was handed faithfully, which counts as faithful but is legally wrong. This is the tension between RAGAS-style faithfulness and the legal definition of Magesh et al. noted in our related work. (At its default cutoff the checker made the two conditions look nearly equal, 77.7% vs 83.8%; the human labels show that was partly the checker being too lenient, see Sec. 4.4.)
+3. **Generation error is substantial even with the correct passage:** about 16% of sentences unsupported by the checker, 32% by the human labels.
+4. **Reg Z is the exception.** Correct-passage drafts score only 42% supported by the checker. Many Reg Z sentences apply the rule to the complaint's facts (for example, "these charges constitute a billing error under 1026.13(a)(1)"), which the passage alone cannot confirm.
+
+**Caveats.** This is a pilot: 40 complaints, one retriever (BM25, the weak baseline), and a checker whose default cutoff is too lenient (Sec. 4.4). The human-label estimate rests on 25 sentences per condition. Read the size of the gaps as indicative; the direction is consistent across both measurements.
 
 ### 4.4 Checker validation
 
-**Status: in progress.** 50 (passage, sentence) pairs are being sampled from the pilot drafts: 25 from each condition, chosen at random rather than by checker score. Two annotators from different LLM families label each pair blind as supported or unsupported, a team member resolves disagreements, and the checker's agreement with the final labels is reported (balanced accuracy, AUROC, kappa).
+**Setup.**
+- 50 (passage, sentence) pairs sampled at random from the pilot drafts, 25 per condition. Sampling did not use the checker's scores.
+- Two annotators from different LLM families (Claude and ChatGPT) labelled each pair blind, under a written rubric.
+- A team member resolved the 12 disagreements. Final labels: 26 supported, 24 unsupported.
 
-**Pre-check on hand-written examples** (a Reg E passage on error-resolution deadlines):
+| Annotator agreement | Value |
+|---|---:|
+| Agreement | 76.0% |
+| Cohen's kappa | 0.54 (moderate) |
+| Disagreements | 12, all "supported" (Claude) vs "unsupported" (ChatGPT); resolved 4 / 8 |
 
-| Sentence | Checker |
-|---|---|
-| Correct paraphrase of the 10-business-day rule | entailment 0.99 |
-| Invented "refund within 24 hours" | entailment 0.001 (flagged) |
-| Wrong "60 business days" | contradiction 0.997 (flagged) |
-| Courtesy sentence ("Thank you for contacting us") | entailment 0.01 (flagged) |
+The disagreements were all about how strict to be when a sentence leaves out a qualifier of the rule (for example "the consent day counts as day 1", or "only for open-end, not home-secured plans").
 
-**Fallback (the proposal's risk plan):** if agreement is poor, replace the checker with an LLM-based judge benchmarked on the same 50 pairs.
+**Checker (DeBERTa-v3 NLI) against the final labels:**
+
+| Measure | Value |
+|---|---:|
+| AUROC (ranking supported above unsupported) | **0.84** |
+| At the default cutoff 0.5: balanced accuracy / kappa | 0.63 / 0.26 |
+| At the default cutoff 0.5: share of unsupported sentences caught | **25%** |
+| With a strict cutoff chosen by 5-fold cross-validation: balanced accuracy / kappa | **0.78 / 0.55** |
+| With that strict cutoff: share of unsupported sentences caught | 75% |
+
+**Findings.**
+- The checker **ranks** sentences well (AUROC 0.84), but at the default cutoff it is far too lenient: it misses three quarters of unsupported sentences.
+- Its scores are squeezed close to 1: the median supported sentence scores 0.998, the median unsupported one 0.95. A useful cutoff sits near 0.99, where small changes matter a lot.
+- With a cross-validated strict cutoff, agreement with the human labels (kappa 0.55) is about the same as the agreement between the two annotators (0.54). So the checker is roughly as reliable as a second annotator, but only once the cutoff is tuned.
+- The checker struggles most with omitted qualifiers and with sentences that apply a rule to the complaint's facts. These are also exactly the cases where the two annotators disagreed.
+
+**Decision (the proposal's risk plan).** The checker works for ranking and flagging, not for absolute "% supported" numbers at its default setting. Next: (1) use a tuned cutoff on a larger labelled set, and (2) benchmark an LLM-based judge on the same 50 pairs, keeping whichever agrees better with the human labels.
+
 
 ---
 
@@ -283,7 +309,7 @@ Rates are averaged per complaint (40 complaints). 95% confidence intervals come 
 | **M1:** regulation corpus chunked | ✅ Done |
 | **M1:** classifier fine-tuned and evaluated | ✅ Done (Sec. 4.1) |
 | **M1:** ~120 annotated pairs with agreement | ✅ Done: 198 complaints, kappa 0.904 / 0.845 (Sec. 3) |
-| **M1:** checker validated against labelled pairs | ⏳ In progress: checker built and spot-checked; 50 labelled pairs being prepared (Sec. 4.4) |
+| **M1:** checker validated against labelled pairs | ✅ Done: 50 labelled pairs, AUROC 0.84; default cutoff too lenient, tuned cutoff kappa 0.55 (Sec. 4.4) |
 | **M2:** retrieval precision@k | ✅ BM25 (Sec. 4.2); dense and hybrid next |
 | **M2:** full pipeline running end to end | ✅ All four stages with real models |
 | **M2:** retrieved-vs-correct faithfulness gap | ✅ Pilot on 40 complaints: +64.9 pts for supported-and-correct sentences (Sec. 4.3) |
