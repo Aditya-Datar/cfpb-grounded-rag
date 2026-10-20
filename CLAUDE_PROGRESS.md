@@ -801,3 +801,15 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
 - **Next:**
   1. Checker validation set: `python scripts/checker_benchmark.py sample --runs pilot-bm25 pilot-oracle`, then label (Claude + ChatGPT with `annotation/chatgpt_package/CHECKER_PROMPT.md`), compare, adjudicate, score.
   2. **After the midterm, move the checker to the GPU** (team decision 2026-10-19). The `.venv` has the CPU-only PyTorch build (`2.14.1+cpu`), so the GTX 1650 is unused and the checker takes about 1.5 min per complaint. Install the CUDA build, then rerun only the verifier on the cached drafts (no new API calls) and confirm the numbers match before scaling to 300 to 500 complaints.
+
+### 2026-10-19: Checker validation set sampled; annotator A labels done
+- `python scripts/checker_benchmark.py sample --runs pilot-bm25 pilot-oracle` wrote `annotation/checker_set.jsonl` (50 pairs, 25 per condition, SHA-1 order, with the checker's score kept out of the annotator view) and the blind `annotation/checker_set.md`.
+- **Annotator A (Claude Opus 5.5)** labelled from `checker_set.md` only, without seeing checker scores or conditions: `annotation/checker_labels_claude-opus-5-5.jsonl`, **34 supported, 16 unsupported**, one rationale each.
+- **Conventions used** (now also in `annotation/chatgpt_package/CHECKER_PROMPT.md`, so annotator B labels under the same rubric):
+  - omitted cross-reference exceptions are tolerated, but a dropped substantive condition is unsupported (e.g. K34 drops "within the validation period", K31 drops the identity-theft-report requirement);
+  - naming some necessary conditions is still supported;
+  - "the company" may stand for the regulated party;
+  - claims about the complaint's own facts are unsupported (K05, K13, K16, K27, K36, K47);
+  - "the passages do not address the complaint" is unsupported (K40, K41).
+- **Known issue found while labelling:** when Nemotron puts sentences on separate lines without final punctuation, `split_sentences` keeps them as one "sentence" (K06, K08, K16, K37 have 4 to 5 claims each). It affects a few responses. **Not fixed before the midterm** because a fix changes the sentence counts and needs the verifier rerun (CPU hours). Fix it (split on newlines too) together with the GPU switch, then rerun the verifier on the cached drafts.
+- **Next (Aditya):** label with ChatGPT (`annotation/chatgpt_package/CHECKER_PROMPT.md` + upload `annotation/checker_set.md`), save as `annotation/checker_labels_chatgpt.jsonl`, then `python scripts/checker_benchmark.py compare --a claude-opus-5-5 --b chatgpt`, adjudicate `annotation/checker_disagreements.md` into `annotation/checker_gold.jsonl` (`{"pair_id", "gold_label"}` per line), then `python scripts/checker_benchmark.py score`.
