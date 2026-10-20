@@ -813,3 +813,25 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
   - "the passages do not address the complaint" is unsupported (K40, K41).
 - **Known issue found while labelling:** when Nemotron puts sentences on separate lines without final punctuation, `split_sentences` keeps them as one "sentence" (K06, K08, K16, K37 have 4 to 5 claims each). It affects a few responses. **Not fixed before the midterm** because a fix changes the sentence counts and needs the verifier rerun (CPU hours). Fix it (split on newlines too) together with the GPU switch, then rerun the verifier on the cached drafts.
 - **Next (Aditya):** label with ChatGPT (`annotation/chatgpt_package/CHECKER_PROMPT.md` + upload `annotation/checker_set.md`), save as `annotation/checker_labels_chatgpt.jsonl`, then `python scripts/checker_benchmark.py compare --a claude-opus-5-5 --b chatgpt`, adjudicate `annotation/checker_disagreements.md` into `annotation/checker_gold.jsonl` (`{"pair_id", "gold_label"}` per line), then `python scripts/checker_benchmark.py score`.
+
+### 2026-10-20: Checker validated against 50 human-adjudicated pairs (M1 complete)
+- **Annotators:** Claude A (34 supported) vs ChatGPT B (22 supported): agreement 76.0%, **kappa 0.540**. All 12 disagreements were A = supported, B = unsupported, about how strict to be when a sentence omits a qualifier. **Aditya adjudicated** (`annotation/checker_disagreements.md`, initials AD): 4 to A (K03, K04, K21, K25), 8 to B. `build-gold` wrote `annotation/checker_gold.jsonl`: 26 supported, 24 unsupported (38 agreed, 12 adjudicated).
+- **Checker vs gold** (`results/checker_benchmark.json`, `python scripts/checker_benchmark.py score`):
+
+  | Measure | Value |
+  |---|---:|
+  | AUROC | 0.843 |
+  | Cutoff 0.5: balanced accuracy / kappa / unsupported caught | 0.625 / 0.257 / 25% |
+  | 5-fold CV tuned cutoff (50 repeats): balanced accuracy / kappa / unsupported caught | 0.776 / 0.553 / 74.5% |
+  | Best in-sample cutoff 0.9966 (optimistic) | 0.817 / 0.638 |
+
+  Scores are squeezed near 1: supported median 0.998, unsupported median 0.951 (90th percentile 0.998).
+- **Reading:** good ranking; the default 0.5 cutoff is far too lenient. With a tuned cutoff, the checker agrees with the gold about as well as the two annotators agree with each other.
+- **Effect on the pilot:** `supported` depends heavily on the cutoff. The supported-and-gold gap is +64.9 pts at 0.5, +60.1 at 0.9, +37.0 at 0.99 and +14.5 at 0.9966, so the direction is stable and the size is not.
+  - Independent human-label estimate from the 50 pairs (`by_condition` in the JSON), 25 sentences per condition: supported 36% retrieved vs 68% oracle; supported-and-gold 16% (4/25) vs 68% (17/25).
+  - **Correction to the 2026-10-19 finding:** "faithfulness alone hides retrieval errors" was partly an artefact of the lenient cutoff. The accurate claim is that faithfulness **understates** retrieval error: human gap 32 pts (supported) vs 52 pts (supported-and-gold).
+- **Next (after the midterm):**
+  - Benchmark an LLM judge on the same 50 pairs (proposal risk plan) against a DeBERTa cutoff tuned on a larger labelled set.
+  - Do not use Nemotron as the judge (it is the generator).
+  - Do this together with the GPU switch and the newline sentence-split fix.
+- **`documents` branch updated** with Sec. 4.3 (human cross-check, revised findings), Sec. 4.4 (checker results), the M1 row and the current-flow diagram.

@@ -8,7 +8,7 @@ Agreement 76.0%, Cohen's kappa 0.540, 12 to adjudicate.
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** supported [AD]
 
 ```text
 [12-1022-1022.43-e]
@@ -26,7 +26,7 @@ Agreement 76.0%, Cohen's kappa 0.540, 12 to adjudicate.
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** supported [AD]
 
 ```text
 [12-1006-1006.14-a]
@@ -57,7 +57,7 @@ The institution must provide the required pre‑acquisition disclosures before t
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [12-1005-1005.18-a]
@@ -86,7 +86,7 @@ The institution must provide the required pre‑acquisition disclosures before t
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [12-1005-1005.6-b-3]
@@ -101,7 +101,7 @@ The institution must provide the required pre‑acquisition disclosures before t
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [15-fcra-1681c-2-c]
@@ -124,7 +124,7 @@ For purposes of this subsection, if a consumer reporting agency rescinds a block
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** supported [AD]
 
 ```text
 [12-1022-1022.43-a]
@@ -142,7 +142,7 @@ For purposes of this subsection, if a consumer reporting agency rescinds a block
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** supported [AD]
 
 ```text
 [12-1006-1006.14-b-3]
@@ -160,7 +160,7 @@ For purposes of this subsection, if a consumer reporting agency rescinds a block
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [12-1006-1006.34-c-2]
@@ -187,7 +187,7 @@ The consumer reporting agency must then promptly delete or modify the inaccurate
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [15-fcra-1681s-2-b-piece-1]
@@ -232,7 +232,7 @@ If any information is deleted from a consumer's file pursuant to subparagraph (A
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [15-fcra-1681c-2-d-piece-1]
@@ -256,7 +256,7 @@ The sole obligation of the consumer reporting agency under this section, with re
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [12-1026-1026.52-a]
@@ -275,7 +275,7 @@ The sole obligation of the consumer reporting agency under this section, with re
 
 - claude-opus-5-5: supported
 - chatgpt: unsupported
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AD]
 
 ```text
 [12-1026-1026.7-b-5]

@@ -140,15 +140,43 @@ def score() -> None:
                 "flagged_unsupported_recall": float((~pred & ~y).sum() / max((~y).sum(), 1))}
 
     best = max((at(t) for t in np.unique(np.r_[s, t_run])), key=lambda m: m["balanced_accuracy"])
+
+    # Honest estimate of a tuned cutoff: 5-fold CV (cutoff picked on 4 folds, applied to the 5th), 50 repeats.
+    def pick(xs, ys):
+        return max(np.unique(xs), key=lambda t: balanced_accuracy_score(ys, xs >= t))
+    rng, reps = np.random.default_rng(0), []
+    for _ in range(50):
+        folds, pred = rng.permutation(len(y)) % 5, np.zeros(len(y), bool)
+        for f in range(5):
+            tr, te = folds != f, folds == f
+            pred[te] = s[te] >= pick(s[tr], y[tr])
+        reps.append([balanced_accuracy_score(y, pred), cohen_kappa_score(y, pred), (~pred & ~y).sum() / (~y).sum()])
+    reps = np.array(reps)
+
     out = {"n": len(df), "n_supported_gold": int(y.sum()), "verifier": info["verifier"],
            "auroc": float(roc_auc_score(y, s)) if 0 < y.sum() < len(y) else None,
            "at_run_threshold": at(t_run),
            "best_threshold_in_sample": {**best, "note": "tuned on the same 50 pairs; optimistic"},
+           "tuned_threshold_5fold_cv": {"balanced_accuracy": float(reps[:, 0].mean()),
+                                        "kappa_vs_gold": float(reps[:, 1].mean()),
+                                        "flagged_unsupported_recall": float(reps[:, 2].mean()),
+                                        "balanced_accuracy_p5_p95": [float(np.percentile(reps[:, 0], 5)),
+                                                                     float(np.percentile(reps[:, 0], 95))],
+                                        "note": "cutoff chosen on 4 folds, scored on the 5th; 50 repeats"},
+           "score_quantiles": {"supported_p10_p50": [float(np.quantile(s[y], q)) for q in (.1, .5)],
+                               "unsupported_p50_p90": [float(np.quantile(s[~y], q)) for q in (.5, .9)]},
            "by_condition": {}}
+    # Human-label view of the pilot: is the premise from the complaint's gold section?
+    corpus = load_corpus(CORPUS)
+    gold_sec = pd.read_json(ROOT / "annotation" / "gold_final.jsonl", lines=True, dtype=str).set_index(
+        "complaint_id")["gold_section"]
+    in_gold = np.array([gold_sec[str(c)] in {corpus.get(i).section for i in p}
+                        for c, p in zip(df["complaint_id"], df["premise_chunk_ids"])])
     for c in sorted(df["condition"].unique()):
-        m = df["condition"] == c
+        m = (df["condition"] == c).to_numpy()
         yy, pp = y[m], s[m] >= t_run
         out["by_condition"][c] = {"n": int(m.sum()), "gold_supported": int(yy.sum()),
+                                  "gold_supported_and_gold_section": int((yy & in_gold[m]).sum()),
                                   "accuracy": float((pp == yy).mean())}
     path = ROOT / "results" / "checker_benchmark.json"
     path.write_text(json.dumps(out, indent=2), encoding="utf-8")
