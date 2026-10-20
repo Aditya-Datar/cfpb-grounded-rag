@@ -59,6 +59,9 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="first N items only (smoke runs)")
     ap.add_argument("--run-name", default=None)
     ap.add_argument("--require-models", action="store_true")
+    ap.add_argument("--generator", choices=["stub", "nemotron"], default="stub")
+    ap.add_argument("--verifier", choices=["stub", "nli"], default="stub")
+    ap.add_argument("--ids", type=Path, default=None, help="text file of complaint ids to run (one per line)")
     args = ap.parse_args()
 
     gold = load_gold(DEFAULT_GOLD)
@@ -66,13 +69,23 @@ def main() -> None:
     texts = dict(zip(items["complaint_id"], items["narrative_clean"]))
     ids = [cid for cid in gold if cid in texts]
     missing = len(gold) - len(ids)
+    if args.ids:
+        wanted = [line.strip() for line in args.ids.read_text(encoding="utf-8").splitlines() if line.strip()]
+        ids = [cid for cid in wanted if cid in texts]
     if args.limit:
         ids = ids[:args.limit]
     print(f"gold items: {len(gold)}, with text: {len(gold) - missing}, running: {len(ids)}")
     if missing:
         print(f"  {missing} gold items have no text locally (add data/processed/annotation_topup.csv)")
 
-    pipe = load_pipeline(require_models=args.require_models, k=args.k)
+    generator = verifier = None
+    if args.generator == "nemotron":
+        from cfpb.generate.nemotron import PROMPT_VERSION, NemotronGenerator
+        generator = NemotronGenerator()
+    if args.verifier == "nli":
+        from cfpb.verify.nli import NLIVerifier
+        verifier = NLIVerifier()
+    pipe = load_pipeline(require_models=args.require_models, k=args.k, generator=generator, verifier=verifier)
     bound = None  # complaint_id -> retriever for that complaint
     if args.retriever == "oracle":
         bound = OracleRetriever(load_corpus(args.corpus), gold).for_complaint
@@ -108,6 +121,9 @@ def main() -> None:
         "retriever": first.retrieval.retriever if first else None,
         "corpus": first.retrieval.corpus if first else None,
         "stubbed_stages": first.stubbed_stages if first else [],
+        "generator": {"model": generator.model, "prompt_version": PROMPT_VERSION,
+                      "temperature": generator.temperature} if generator else "stub",
+        "verifier": {"model": verifier.model_name, "threshold": verifier.threshold} if verifier else "stub",
         "n_gold": len(gold), "n_gold_without_text": missing, "n_run": len(results),
         "n_abstained": int(sum(r.retrieval.abstained for r in results.values())),
         "seconds": round(elapsed, 1),

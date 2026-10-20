@@ -1,6 +1,6 @@
 # CLAUDE_PROGRESS.md: Build Log and Handoff Context
 
-Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-06 (commit after `bbe73e5`).
+Companion to `CLAUDE.md`. `CLAUDE.md` holds the project's fixed decisions (scope, methods, related work, deliverables, rules for graded work). **This file is the living engineering log**: what code exists, what has been run, what we found in the data, and what comes next. Last updated 2026-10-19 (branch `chunking`).
 
 ---
 
@@ -37,7 +37,7 @@ Data files are git-ignored, so every member regenerates them locally. Check your
 |---|---|---|---|
 | 0. Data: download, profile, clean, split | A | `data-processing` (pushed, PR not opened) | **Done (v1).** See Sec. 3 |
 | 1. Classifier: DistilBERT, macro-F1 | A | `classifier` (pushed) | **v2 baseline done (2026-10-15).** Product: test macro-F1 **0.808**, accuracy 0.843. Issue: test macro-F1 **0.325** (labels present in test; 0.310 if all 88 train labels are counted), accuracy 0.581. Trained models load locally via `cfpb.classify.predict.ComplaintClassifier` |
-| 2. Regulation corpus and retrieval | B | `regulation-corpus` | **Corpus built:** 4,319 chunks (Regs E/F/V/Z from eCFR 2026-10-13, plus the FCRA statute, U.S. Code 2024); retriever (BM25, dense, hybrid, with abstention) not started |
+| 2. Regulation corpus and retrieval | B | `chunking` | **Chunking complete. Retrieval default:** 2,954 chunks in tracked `chunking/data/processed/chunks.jsonl`: 2,629 regulation-text chunks plus 325 model-tuned FCRA chunks (`--max-chars 1400`, `all-mpnet-base-v2`, 384 tokens, `embed_text`). The alternative `data/processed/reg_chunks.parquet` corpus has 4,319 chunks including interpretations and appendices for ablations. **Retriever not started; BM25 baseline is next (Sec. 6.5.6, new branch `retrieval-bm25`).** |
 | 3. Generation and 4. NLI verification | C | not created | Not started |
 | Backend: single-complaint pipeline for the demo | Anirudh | `backend` | **Runs end to end (2026-10-19):** `cfpb.pipeline` with the real classifier, a corpus loader for both chunk sets, an oracle retriever (gold section), a batch runner writing INTERFACES.md tables, a minimal Streamlit page (`demo/app.py`), and **adapters so the BM25 retriever plugs in as soon as it lands** (live function or `ranked.parquet`). Real retriever, generator and verifier still stubs (Sec. 7) |
 | Annotation (gold pairs) | all | `regulation-corpus` | **Done (2026-10-16): `annotation/gold_final.jsonl`**, 198 items: 127 in scope (E 29, F 30, Z 27, FCRA 36, V 5) + 71 NONE. Two LLM annotators (regulation kappa 0.904, section kappa 0.845), 26 disagreements human-adjudicated, 20/20 human spot check OK |
@@ -214,9 +214,113 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 3. **Log the results** in Sec. 7: GPU, minutes per epoch, val and test macro-F1, and the weakest classes. Compare settings (for example `--class-weights` or `--head-tokens 510`) on **validation only**.
 4. **Interface** (proposed, to be frozen with the team): `predictions_<split>.parquet` with `complaint_id`, `true_<label>`, `pred_<label>`, `pred_<label>_prob`. Merging the product and issue runs on `complaint_id` gives the downstream table.
 
-**Pair B: retrieval (corpus done).** Build BM25, dense (Sentence-BERT + FAISS) and hybrid retrievers over `reg_chunks.parquet`, following `docs/INTERFACES.md` Sec. 2. Decide whether interpretation chunks are indexed (ablation).
+**Pair B: retrieval.** **Next: BM25 baseline on a new branch `retrieval-bm25`, as specified in Sec. 6.5.6.** Then dense (`all-mpnet-base-v2` + FAISS) and hybrid, following `docs/INTERFACES.md` Sec. 2 and Sec. 7 (abstention). Use the fixed 2,954-chunk corpus by default and evaluate the alternative corpus as an ablation.
 
 **Everyone.** Draft the annotation rubric (two people), including the "no in-scope section" label, then annotate `annotation_sample.csv` with overlap for inter-annotator agreement.
+
+---
+
+## 6.5 Regulation corpora: our implementation, FCRA, design decisions, and the BM25 task (added 2026-10-19 when `regulation-corpus` was merged into `chunking`)
+
+Branch `chunking` (Pair B, Ishani + Ujjwal) now also contains all of branch `regulation-corpus` (Aditya + Claude). That includes a **second, independently built regulation corpus**, the **FCRA statute**, the annotation work, and the **gold set**. This section records everything about the `regulation-corpus` side so Pair B can decide what to keep. Pair B owns chunking and retrieval from here.
+
+### 6.5.1 Two corpora now in this branch
+
+| | Pair B corpus (retrieval default) | `regulation-corpus` corpus |
+|---|---|---|
+| Code | `chunking/xml_parser.py`, `parse_regulations.py`, `chunk_regulations.py` | `src/cfpb/regs/ecfr.py`, `parse.py`, `fcra.py`; `scripts/build_reg_corpus.py` |
+| Output | `chunking/data/processed/chunks.jsonl` (tracked) | `data/processed/reg_chunks.parquet` (git-ignored; regenerate with `python scripts/build_reg_corpus.py`) |
+| Source | bulk eCFR Title 12 XML (AMDDATE Oct. 1, 2026; snapshot 2026-10-13) + FCRA from U.S. Code 2024 edition | eCFR API point-in-time **2026-10-13**; FCRA from U.S. Code 2024 edition |
+| Content | regulation text of Parts 1005, 1006, 1022, 1026 **+ FCRA statute** | regulation text **+ FCRA statute + Supplement I official interpretations + appendices** |
+| Chunks | **2,954** (regulation 2,629; statute 325) | **4,319** (regulation 1,540; interpretation 2,418; appendix 112; statute 249) |
+| Sections | 136 regulation sections + 31 FCRA sections (167 total) | the same 167 sections |
+| Sized for | `all-mpnet-base-v2` (384 tokens), `--max-chars 1400`, parent intros, `embed_text` | **not tuned to any embedding model**: word-based limit of 350 words (see 6.5.3) |
+| chunk_id | `12-1005-1005.11-c-2`, `15-fcra-1681i-a-piece-1` | `R:1005.11(c)(2)`, `I:1026.13(b)(1)~1`, `A:1026 Appendix G~3`, `S:1681i(a)(1)`, with `#k` for word-window pieces |
+| Tests | `tests/test_chunk_regulations.py` (27) | `tests/test_regs_parse.py` (4, including FCRA) |
+
+**Gold compatibility (checked 2026-10-19):** the gold set is labelled by **section** (`gold_section`, e.g. `1005.11` or `1681i`), so it can be scored against either corpus. All FCRA gold sections are present in Pair B's corpus, and all 70 FCRA evidence quotes from the two LLM label files occur verbatim in the cited section's chunks.
+
+### 6.5.2 Sources and download facts (all verified when run)
+- **eCFR API** (`src/cfpb/regs/ecfr.py`):
+  - Full text: `https://www.ecfr.gov/api/versioner/v1/full/2026-10-13/title-12.xml?part=<n>`. **It returns HTTP 406 unless the request sends `Accept-Encoding: gzip`.**
+  - Table of contents: `.../structure/<date>/title-12.json?part=<n>`.
+  - Title 12 was up to date as of 2026-10-13. XML sizes: 1005 0.86 MB, 1006 0.23 MB, 1022 0.27 MB, 1026 3.95 MB. Saved to `data/raw/ecfr/`.
+- **FCRA** (`src/cfpb/regs/fcra.py`):
+  - GovInfo `https://www.govinfo.gov/content/pkg/USCODE-2024-title15/html/USCODE-2024-title15-chap41-subchapIII.htm` (513 KB, U.S. Code 2024 edition, current through 2025-01-06), covering 15 U.S.C. 1681-1681x.
+  - Saved to `data/raw/fcra/`. Per-section citation links use `https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title15-section<n>`.
+
+### 6.5.3 Our chunking design (`src/cfpb/regs/parse.py`, `fcra.py`)
+
+**Principle:** chunk by legal structure, not fixed token windows (CLAUDE.md Sec. 4). Each chunk is labelled with its `section` and its most specific `paragraph`.
+- **`regulation` (rule text):**
+  - One chunk per **top-level paragraph** `(a)`, `(b)`, ...
+  - Text before `(a)` becomes the section's own chunk.
+  - A top-level paragraph over **350 words** is split at its numbered subparagraphs `(1)`, `(2)`, ... (ids such as `R:1006.34(b)(1)`).
+  - Only a piece still over **700 words** falls back to 350-word windows (`#1`, `#2`, ...).
+  - **Roman vs letter `(i)`:** a marker is roman if the previous marker is the preceding numeral, or the next is the following numeral (`(i)` followed by `(ii)`). This keeps `1006.18(b)(i)`-`(vii)` inside `(b)` while still recognising a real top-level `(i)` (e.g. `1026.13(i)`). Unit-tested.
+- **`interpretation` (Supplement I, official commentary):**
+  - Grouped under commentary headings (`Section 1026.13—...`, `13(b) ...`, `Paragraph 6(a)(1)`) and mapped to the section or paragraph they interpret (97.8% map to a rule section; the rest is appendix commentary).
+  - Groups over 350 words are split between numbered comments (`1.`, `2.`, ...).
+- **`appendix`:** consecutive blocks packed up to 350 words.
+- **`statute` (FCRA):**
+  - Only the law text, between `field-start:statute` and `field-end:statute`; editorial and amendment notes are dropped.
+  - One chunk per subsection `(a)`, `(b)`, ...; long subsections split at paragraph headings `(1)`, `(2)`, ...; a heading-only first piece is merged into the next.
+- **Fields** (dataclass `Chunk`): `chunk_id`, `regulation` (E/F/V/Z/FCRA), `part`, `kind`, `section`, `paragraph`, `heading`, `text`, `n_words`, `source_url`.
+- **Size statistics (words per chunk):**
+
+  | kind | count | median | 90th percentile | max |
+  |---|---:|---:|---:|---:|
+  | regulation | 1,540 | 94 | 334 | 670 |
+  | interpretation | 2,418 | 212 | 377 | 694 |
+  | appendix | 112 | 322 | 348 | 475 |
+  | statute | 249 | 113 | 350 | 573 |
+
+  401 chunks are word-window pieces (interpretation 281, regulation 99, statute 21).
+- **Coverage:** 99.3% to 100% of source words land in chunks (the dropped text is heading-only blocks); FCRA is 100%.
+- **"Chunking model" (what the sizes are tuned to):** **none.** Our limit is in words (350), chosen before an embedding model was picked. Token lengths under `all-mpnet-base-v2` were **not measured**, so a share of our chunks probably exceeds its 384-token limit and would be truncated. Measure with Pair B's tokenizer before indexing our corpus with that model. Pair B's corpus *is* tuned to it.
+
+### 6.5.4 Design decisions behind this corpus (and status)
+1. **FCRA statute added (team decision 2026-10-15).** The first 120 annotations gave 64% NONE, 36 of them governed by the FCRA itself: CRA reinvestigation (1681i), identity-theft blocks (1681c-2), permissible purpose (1681b), and furnisher duties (1681s-2). Reg V does not implement these. **Scope is now Regs E/F/V/Z + FCRA**; CLAUDE.md still says four regulations (update pending a team decision; tell the TA).
+2. **Interpretations and appendices are kept as separate `kind`s**, so retrieval can include or exclude them as an ablation. Pair B's open question "Supplement I has no owner" is covered here.
+3. **Gold and scoring are section-level.** A retrieved chunk is a hit if `chunk.section == gold_section`; paragraph hits are secondary (`docs/INTERFACES.md` Sec. 2).
+4. **NONE is a first-class abstention outcome** (`docs/INTERFACES.md` Sec. 7). 71 of 198 gold items are NONE. Retrieval is scored on the 127 in-scope items; abstention P/R/F1 is scored on all 198.
+5. **Pinned to one date** (eCFR 2026-10-13) for reproducibility; gold quotes were validated against this text.
+6. **Reg V sections verified:** 1022.40 Scope, 1022.41 Definitions, 1022.42 accuracy and integrity policies, 1022.43 Direct disputes. Reg V has no Supplement I.
+7. **The annotation tools read this corpus:** `scripts/reg_lookup.py`, `scripts/check_llm_labels.py` (verbatim-quote check), and `scripts/make_chatgpt_package.py`. If it is retired, repoint them at the chosen corpus first.
+
+### 6.5.5 What is decided vs open
+- **Decided:** gold set (`annotation/gold_final.jsonl`); section-level scoring; abstention; FCRA in scope.
+- **Open, for Pair B:**
+  - **Which corpus to index.** Default: Pair B's, because they own it and it is model-tuned. The claim that it "retrieves better" is **untested**, so decide by measurement (6.5.6).
+  - Whether to index interpretations.
+  - Remove the 39 MB `chunking/data/raw/ECFR-title12.xml` from git before merging to `main` (working rule 5).
+
+### 6.5.6 TODO for Pair B: BM25 baseline (do this on a NEW branch)
+
+```bash
+git fetch origin
+git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the gold set and FCRA code
+```
+
+1. **Corpus:** Pair B's `chunking/data/processed/chunks.jsonl`; index `embed_text` and return `text` for generation/citation. It contains the FCRA. Report results **with and without FCRA** using the chunker's `--no-fcra` option; without it, 36 FCRA gold items have no correct chunk.
+2. **Queries and gold:**
+   - Query text = `narrative_clean` of the annotation items (`from cfpb.annotation import load_items`; 198 items: 120 sample + 78 top-up).
+   - Gold = `annotation/gold_final.jsonl` (`gold_regulation`, `gold_section`).
+3. **Retriever:** `rank_bm25.BM25Okapi` (add `rank-bm25` to requirements). Lowercase, alphanumeric tokens; stopword removal optional (log the choice).
+4. **Metrics on the 127 in-scope items (section level):**
+   - Deduplicate ranked chunks by section, keeping the first occurrence.
+   - Report hit@k and recall@k for k = 1, 5, 10 (one gold section per item), and MRR.
+   - Break down by regulation (E 29, F 30, Z 27, FCRA 36, V 5).
+5. **Abstention on all 198:** use the top BM25 score as the abstain signal. Report AUROC (in scope vs NONE) and P/R/F1 at a threshold. If you tune the threshold, tune it on a fixed half of the items and report on the other half; 198 items is small.
+6. **Outputs:**
+   - Ranked lists: `outputs/retrieval/bm25/ranked.parquet`, in the format of `docs/INTERFACES.md` Sec. 2 (`complaint_id`, `retriever`, `corpus`, `rank`, `chunk_id`, `score`).
+   - Numbers: `results/retrieval_bm25.json` (tracked).
+   - Add a dated entry to Sec. 7.
+7. **Chunking ablation (optional, cheap with BM25):** run the same BM25 on `reg_chunks.parquet` (regulation + statute, then also + interpretation) and compare section-level hit@k. This replaces the untested "which corpus is better" argument with a measurement.
+8. **Rules:**
+   - Do not edit `annotation/gold_final.jsonl`.
+   - Keep the gold items out of any training.
+   - Commits and pushes on `retrieval-bm25`; open a PR into `chunking` (or `main`, once merged) when done.
 
 ---
 
@@ -316,6 +420,77 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - Simulated the Colab flow from a ZIP of `origin/classifier` with the v2 data files: `check_splits.py` printed all 4 OK, 43 tests passed, and the smoke training run exited 0.
 - Still on the branch: notebook cell 11 (`a4707ea`, results packaging); the revert was not requested.
 - Next: re-upload the v2 data and a fresh ZIP to Drive, clear the old `Dataset/outputs/classifier/`, and retrain product and issue.
+
+### 2026-10-14: Regulation chunker v1, verified on Part 1005 (Ishani + Claude)
+- **Context:** branch `chunking` already had the eCFR parser (`2ff6104`, `a96a752`): `chunking/xml_parser.py` cuts the four parts out of `ECFR-title12.xml`, and `chunking/parse_regulations.py` writes `chunking/data/processed/sections.jsonl` (one record per section/appendix, with ordered paragraph blocks and inferred paths such as `(a)(1)(ii)`). Both scripts use paths relative to `chunking/`, so run them from there.
+- **Added `chunking/chunk_regulations.py`.** Reads `sections.jsonl`, writes `chunking/data/processed/chunks.jsonl` (not committed; regenerate with `cd chunking && python chunk_regulations.py --parts 1005`). Regulation text only for now (`content_type == "regulation"`, reserved sections skipped).
+  - A section stays one chunk if its chunk text fits in `MAX_CHARS = 2000` (a constant at the top of the file; provisional until the embedding model is chosen). Longer sections split at paragraph boundaries, one level deeper only where a paragraph is still too long. A paragraph with no sub-paragraphs is never cut, so it can exceed the limit.
+  - Every chunk's text starts with the section heading plus the intro text of each parent paragraph. Fused XML blocks such as `(c) Time limits…—(1) Ten-day period…` are split so `(c)(2)` also carries the `(c)` intro.
+  - Fields: the Sec. 6 proposed interface first (`chunk_id`, `part`, `section`, `paragraph`, `heading`, `text`, `source_url`), then `content_type`, `regulation`, `path_certain`, `n_chars`, `record_id`. `chunk_id` looks like `12-1005-1005.11-c-2`, or `12-1005-1005.11-all` for a whole section.
+  - `source_url` adds a paragraph anchor such as `#p-1005.11(c)(2)`. **Verified 2026-10-14:** the eCFR renderer API (`/api/renderer/v1/content/enhanced/current/title-12?part=1005`) serves 1,082 paragraph ids for Part 1005, all in this form. (The public ecfr.gov page returned a bot-check page to curl.) Chunks with `path_certain: false` get the plain section URL.
+  - Each run checks that every piece of text is a chunk body exactly once (or parent-intro context), that splitting changes no characters, and that `chunk_id`s are unique.
+- **Part 1005 result:** 313 chunks from 27 sections (7 kept whole); chunk text 116 to 3,164 chars, median 825; 20 over 2,000; 67 flagged `path_certain: false`. 1005.11 gives 8 chunks ((a), (b), (c)(1) to (c)(4), (d), (e)), all checked by hand.
+- **Dry run on all four parts** (output not kept; numbers are not trustworthy until the parser fix below): 1026: 1,255 chunks / 58 sections / 712 flagged / 376 over 2,000; 1022: 338 / 36 / 115 / 58; 1006: 97 / 15 / 40 / 8. All coverage checks passed. About 2,000 chunks in total, consistent with CLAUDE.md Sec. 4 "a few thousand".
+- **Tests:** `tests/test_chunk_regulations.py`, 8 tests on small synthetic records, all passing. pytest is not installed on this machine, so they were run with a plain Python loop; **not yet run under pytest**.
+- **Parser bug (in `parse_regulations.py`, not fixed here; owner to discuss).** Every numbered paragraph path in Part 1005 was compared against eCFR's paragraph ids: **171 of 738 (23%) do not exist on eCFR, in 9 of 27 sections** (including 1005.3, .12, .18, .19, .32, .36). The parser flags only 87 of them as uncertain; **84 are wrong but marked `path_certain: true`**.
+  - Cause: the `(i)` letter-vs-roman ambiguity. `PathTracker._push` tries "next sibling at an existing level" before "first child at the next level", so after `(h)(1)` the marker `(i)` becomes the letter `(i)` instead of `(h)(1)(i)` (example: 1005.20). One misread shifts every later path in the section.
+  - Effect on chunks: text is complete, but boundaries and `paragraph` labels can be wrong, and paragraphs that receive the same wrong path are merged into one chunk. This also explains most chunks over 2,000 chars.
+  - Chunk-level flagging catches almost all of it, because a chunk is flagged if any of its text (including parent intros) is uncertain. Of 240 unflagged Part 1005 chunks, only one has an anchor missing on eCFR: `12-1005-1005.20-i` (really `(h)(1)(i)`).
+  - A fix can be checked the same way: compare parser paths against the eCFR renderer ids.
+- **Open questions:**
+  1. **Embedding model** is not chosen (CLAUDE.md Sec. 3 says only "Sentence-BERT"). Its max input length decides `MAX_CHARS`.
+  2. **Supplement I (official interpretations) and appendices** have no owner. Supplement I is large (about 2.7M chars for Part 1026 alone in `sections.jsonl`, versus about 1.3M chars of regulation text across all four parts) and often answers complaints directly. `annotation/ANNOTATION_GUIDE.md` Sec. 2 item 5 suggests labels point to the regulation section, not the commentary. Also, `parse_regulations.py` labels "Appendix C" of Parts 1005 and 1026 as `interpretation`, though it is an ordinary appendix.
+  3. **Reg V section numbers** in Sec. 5 are still unverified against eCFR (Pair B task in Sec. 6).
+  4. **Retrieval scoring:** gold labels are section-level, but one section can give several chunks, so precision@k should count one hit per section. The size of the "oracle" passage (whole section or one chunk) is undefined; a mismatch would mix chunk length into the retrieved-vs-oracle gap.
+  5. **Repo hygiene:** `.gitignore` ignores only top-level `/data/`, so `chunking/data/` (including the 39 MB `ECFR-title12.xml`) is committed, against working rule 5. `chunking/` also departs from the Sec. 2 layout (`src/cfpb/<stage>/` + `scripts/`).
+
+### 2026-10-14: Chunk size is now a command-line option (Ishani + Claude)
+- `chunking/chunk_regulations.py` takes `--max-chars` (default `MAX_CHARS = 2000`, so default output is unchanged). The value is passed through `chunk_record(record, max_chars)` rather than read from a global, and the run summary prints `max chars: <value>`.
+- Example: `cd chunking && python chunk_regulations.py --parts 1005 --max-chars 800 --out data/processed/chunks_800.jsonl`.
+- Re-ran Part 1005 with the default: still 313 chunks from 27 sections, same size stats as the previous entry.
+- Section 1005.11 gives 28 / 24 / 8 / 5 chunks at 500 / 800 / 2,000 / 4,000 chars.
+- 3 new tests on the real 1005.11 record (default gives the same 8 chunks; 800 gives more than 2,000; coverage holds at 500, 800, 2,000, 4,000). All 11 tests pass, run with a plain Python loop; still not run under pytest.
+
+### 2026-10-14: Chunker updated for Ujjwal's parser fix; all four parts chunked (Ishani + Claude)
+- **Parser fix (`232a564`, Ujjwal):** `PathTracker` now resolves the `(i)` letter-vs-roman case from context (a preceding `:` or dash, else the next marker), allows skipped levels, and recognises a second fused form, `(b) Record retention. (1) …` (`RUNIN_RE`). The committed `sections.jsonl` is byte-identical to a fresh run of the new parser (`--snapshot-date 2026-10-13`).
+- **Paths vs eCFR** (renderer API ids, fetched 2026-10-14), numbered regulation paragraphs whose path is not an eCFR id, before → after the fix: 1005: 171 / 738 → 0; 1026: 1,749 / 3,227 → 5; 1022: 210 / 739 → 0; 1006: 88 / 302 → 0. The 5 left are 1026.19(f)(4)(i) to (iv) and their parent: after (f)(3)(ii)(D)(3), "(4) Transactions involving a seller" is placed at (D)(4) and marked certain. Not yet reported to Ujjwal.
+- **Chunker changes** (`chunking/chunk_regulations.py`): the parser renamed `get_leading_markers` to `leading_markers`, which broke the chunker's import; fixed. `split_at_markers` now also splits the period form, mirroring `leading_markers` (only a marker that can start a list, value 1, counts). Before this, 205 of 2,102 chunks lacked a parent intro (e.g. `1005.12-a-2` lacked "(a) Relation to Truth in Lending.").
+- **Result, all four parts, default `--max-chars 2000`:** 1005: 309 chunks, 0 flagged, 2 over 2,000; 1026: 1,362, 1 flagged, 31 over; 1022: 341, 0, 3 over (max 3,450); 1006: 92, 0, 0 over. Total 2,104. Chunks missing a parent intro: **0**. Paragraph anchors not on eCFR: 5 of 2,072 (the 1026.19 case above). `chunking/data/processed/chunks.jsonl` regenerated locally, not committed.
+- **Tests:** 16, all passing (plain Python loop; pytest still not run). New: period-form split, a cross-reference that must not split, the real 1005.12(a)(2) case, and a corpus-wide check that every chunk contains the words of all its parent paragraphs at 500 and 2,000 chars. That check finds parent intros independently of the chunker (parser markers plus a plain text search for the next marker); run on the old chunker's output it reports the same 205 chunks.
+- **Still open:** the 1026.19 path; `parse_report.json` stores `§` as a broken character (`write_text` without `encoding="utf-8"`); the parser exits 1 because 1022 Appendix L is empty but not marked reserved; embedding model; Supplement I owner; Reg V section check.
+
+### 2026-10-14: Embedding model chosen; chunk size set to 1,400 chars (Ishani + Claude)
+- **Decision (Ishani with Ujjwal):** retrieval uses `sentence-transformers/all-mpnet-base-v2`. Its `max_seq_length` is 384 tokens (from the model's `sentence_bert_config.json`); longer input is cut from the end, and the 2 special tokens count toward the 384.
+- **Measurement:** every chunk tokenized with the model's own tokenizer (`tokenizers` 0.23.3 in the repo `.venv`, tokenizer files only, no model weights). The shipped `tokenizer.json` pads and truncates to 128 tokens, so both must be turned off before counting. Regulation text averages about 4.5 chars per token, so 384 tokens is roughly 1,700 chars.
+
+  | `--max-chars` | Chunks | Avg tokens | Over 384 | Could be split further | Cannot be split |
+  |---:|---:|---:|---:|---:|---:|
+  | 2000 | 2,104 | 198 | 160 | 124 | 36 |
+  | 1500 | 2,519 | 181 | 69 | 3 | 66 |
+  | 1450 | 2,566 | 179 | 67 | | |
+  | **1400** | **2,629** | **177** | **66** | **0** | **66** |
+  | 1200 | 2,920 | 168 | 66 | 0 | 66 |
+  | 1000 | 3,262 | 159 | 66 | 0 | 66 |
+  | 800 | 3,599 | 151 | 66 | 0 | 66 |
+
+  "Cannot be split" means a paragraph with no sub-paragraphs that is over the character limit. Smaller limits only add chunks once the over-384 count reaches 66.
+- **Change:** `MAX_CHARS` (default of `--max-chars`) is now 1400, the largest value that reaches 66. `chunks.jsonl` regenerated locally (not committed): 1005: 395 chunks; 1026: 1,706; 1022: 409; 1006: 119; total 2,629, 66 over 384 tokens. Tests: 1005.11 now gives 14 chunks at the default (the old 8-chunk test is pinned to 2,000), and the parent-intro check also runs at 1,400. 17 tests pass (plain Python loop).
+- **The 66 that no limit fixes:** only 8 are over 384 tokens because the paragraph itself is (e.g. 1022.30(e)(6), 651 tokens). The other 58 are over because of the parent intros the team rule requires (e.g. every 1026.20(c)(2) chunk repeats the (c) and (c)(2) intros, about 400 tokens together). Because the model cuts from the end and a chunk's own text comes last, **15 chunks lose their own text entirely and 30 lose more than half** (e.g. `1026.20-c-2-v-A`: 9 tokens of its own after about 420 of intros; first logged as 11, which wrongly included the 2 special tokens). Next: measure shortening parent intros to their headings for these chunks (team decision needed, since it changes the parent-intro rule).
+
+### 2026-10-15: `embed_text` field for the search index (Ishani + Claude)
+- **What:** every chunk now has `embed_text`, placed right after the seven agreed fields. It equals `text`, except when `text` is over 384 tokens for `all-mpnet-base-v2` (counted with its tokenizer, special tokens included, padding and truncation off). Then each parent intro is cut to its heading: up to the first dash, or the first period followed by a space (so "1026.20" is not a cut point). The chunk's own paragraphs are never cut. **`text` is unchanged** and remains the full legal text for generation and the NLI verifier; **embed `embed_text`** (and use it for BM25 too, or decide otherwise as a team).
+- **Why:** the model cuts input from the end, and a chunk's own text comes after its parent intros, so before this 15 chunks were embedded without any of their own words (Sec. 7, chunk-size entry above).
+- **Result (all four parts, `--max-chars 1400`):** `embed_text` differs from `text` for 63 chunks. Over 384 tokens: 66 by `text`, **9 by `embed_text`**. Of the 9, 8 are single paragraphs that are long on their own (e.g. 1022.30(e)(6), 649 tokens without special tokens); 1 (`1026.36-f-3-ii-A-2-iii`) has parent intros that are lead-in sentences with no heading to cut to. No chunk's `embed_text` loses all of its own text any more.
+- **Cost:** the shortened intros drop legal content that `text` keeps, e.g. in `1026.34-a-4-iii-B-1` "(iii) Presumption of compliance." loses "a creditor is presumed to have complied with this paragraph (a)(4) … if the creditor:".
+- **Dependency:** `chunk_regulations.py` now needs the `tokenizers` package (0.23.3 tested; listed in `requirements.txt`) and downloads the model's tokenizer from Hugging Face on first use (about 0.5 MB, then cached). Without the package it stops with install instructions. Run it with the repo venv: `cd chunking && ../.venv/bin/python chunk_regulations.py`.
+- **Tests:** 24, all passing (plain loop in `.venv`). New: field order, `heading_only` cases, shortening on a synthetic record, the missing-package message, `embed_text` never more tokens than `text` (and equal when `text` fits), and `text` unchanged. That check compares a SHA-1 over every chunk's id and text to fingerprints taken before this change (`8f7b9f2`): 2,629 chunks at 1,400 and 2,104 at 2,000.
+- **Correction:** the chunk-size entry above first said `1026.20-c-2-v-A` has 11 tokens of its own; it has 9 (the 11 included the 2 special tokens). Fixed in place.
+
+### 2026-10-15: `chunks.jsonl` is now tracked in git, on purpose (Ishani + Claude)
+- **What:** `chunking/data/processed/chunks.jsonl` is committed as the **fixed regulation corpus** for retrieval and evaluation: 2,629 chunks (regulation text of Parts 1005, 1026, 1022, 1006), `--max-chars 1400`, with `embed_text` (9 chunks over 384 tokens by `embed_text`, 66 by `text`). 5.0 MB, SHA-1 `0817b6f8ea4a08358a1e6fd28e547d153051308c`. Verified byte-identical to a fresh run of `chunk_regulations.py` at `81706b5`.
+- **Why:** everyone, including Colab runs from a code ZIP, must index and score against the same chunks. Gold labels, retrieval results (precision@k, recall@k) and the oracle passages refer to `chunk_id`s, so silently different local chunks would make numbers incomparable. Regenerating also needs the `tokenizers` package and a Hugging Face download, which a fixed file avoids.
+- **Exception to working rule 5** ("Never commit data", Sec. 0): this is a deliberate exception for a small derived file that defines an experiment input, like `data_fingerprint.json`. Its inputs (`sections.jsonl`, the part XML) are already tracked under `chunking/data/`.
+- **When to regenerate:** only on purpose, if the parser, the chunker or `--max-chars` changes. Then commit the new file in the same commit as the code change, log the new SHA-1 and chunk count here, and tell Pair C and the eval owner, since `chunk_id`s may change.
 
 ### 2026-10-15: v2 classifier baseline (Colab A100, run by a teammate; analysed by Aditya + Claude)
 - **Verified fresh v2 runs:** run_info rows are 111,527 / 14,022 / 13,905, and the prediction ids equal the v2 val/test ids exactly. Each history has 3 new epochs that differ from v1, so nothing resumed from stale checkpoints. The reported val score equals the best epoch. Environment: A100-SXM4-80GB, bf16, transformers 5.18.0, pandas 2.2.3, about 2.2 min per epoch, default settings. 14.4% of train narratives are truncated at 512 tokens.
@@ -563,3 +738,66 @@ In this window, all complaints by candidate regulation: V 6,152,294; F 332,548; 
 - **Tests:** 81 passed (9 new in `tests/test_pipeline_retrievers.py`, including a round trip of the batch runner's own `ranked.parquet`).
 - **For Pair B:** with `outputs/retrieval/bm25/ranked.parquet` saved locally, the demo picks it up with no code change. For live use, pass `FunctionRetriever(bm25.retrieve, load_corpus([...]), "bm25", min_top_score=...)` to `Pipeline`.
 
+
+### 2026-10-19: `regulation-corpus` merged into `chunking` (Aditya + Claude)
+- At Aditya's request, branch `regulation-corpus` was merged into Pair B's `chunking` branch, so Pair B (owner of chunking and retrieval) has everything in one place: the FCRA corpus code, our second regulation corpus, the annotation tooling, both LLM label files, and the final gold set.
+- The only merge conflict was this file. Both sides were kept: the status table now has one classifier row (v2 results) and one corpus row describing both corpora, and the log keeps Pair B's 10-14/10-15 entries followed by ours.
+- Added **Sec. 6.5**: both corpora compared; sources; our chunking design and statistics; the explicit note that our chunks are **not tuned to any embedding model**; design decisions (FCRA, interpretations, section-level scoring, abstention); open items; and the **BM25 baseline task for Pair B on a new branch `retrieval-bm25`** (Sec. 6.5.6).
+- No Pair B files were modified.
+
+### 2026-10-19: Chunking completed with FCRA
+- Ported the FCRA into `chunking/chunk_regulations.py` and Pair B's fixed JSONL schema. The default build now downloads/parses the GovInfo U.S. Code 2024 HTML when needed; `--no-fcra` reproduces the four-regulation ablation.
+- FCRA chunks keep legal subsection/paragraph structure, repeat the section heading, and pack to both `--max-chars 1400` and the `all-mpnet-base-v2` 384-token limit. Oversized statutory blocks split first at sentence boundaries and then, only when necessary, at word boundaries. All 249 source statute chunks are covered without text loss; the fixed representation has 325 chunks across 31 sections, max 1,400 chars and 354 tokens.
+- Regenerated `chunking/data/processed/chunks.jsonl`: **2,954 unique chunks** (E 395, Z 1,706, V 409, F 119, FCRA 325), SHA-1 `9928d5f3e676de365761b474e30a43d4691c25a6`. Overall, 66 full `text` values exceed 384 tokens because of existing regulation parent context, while only the same 9 existing regulation `embed_text` values exceed it; **0 FCRA `embed_text` values exceed 384**.
+- Gold compatibility: all 5 distinct FCRA gold sections are present, and all 70 FCRA evidence quotes across the two LLM label files occur verbatim in their cited section's fixed chunks.
+- Gold data remains deliberately separate from corpus construction: `chunk_regulations.py` does **not** read or tune against `annotation/gold_final.jsonl`. Retrieval evaluation will join a ranked chunk to the official 198-item gold set by `chunk.section == gold_section`; the 71 `NONE` items intentionally have no matching chunk. Of the 127 in-scope pairs, 36 are FCRA cases.
+- Paths are script-relative: `DEFAULT_SECTIONS_PATH` and `DEFAULT_OUT_PATH` resolve under `chunking/data/processed/`, while `DEFAULT_FCRA_PATH` resolves under repository-level `data/raw/fcra/`. The chunker can therefore be run from either the repository root or `chunking/` without explicit path arguments.
+- Tests: `tests/test_chunk_regulations.py` now has 28 tests, including FCRA schema, boundary packing, fixed-corpus integrity, token limits, evidence-quote coverage, and script-relative path defaults. Together with the 4 parser tests, **32/32 pass under pytest** (`Python 3.13.0`, `tokenizers 0.23.3`, `pytest 9.1.1`). The real-corpus source-coverage check above also passed.
+- Updated `docs/INTERFACES.md` to make the 2,954-chunk tracked JSONL the retrieval default and retain `reg_chunks.parquet` for interpretation/appendix and chunking ablations. Chunking is complete; BM25 is next and remains a separate retrieval task.
+
+### 2026-10-19: BM25 baseline on branch `retrieval-bm25`
+- **Code:** `src/cfpb/retrieval/bm25.py` (`BM25Retriever`: `retrieve(query, k)` per INTERFACES Sec. 2, plus section-deduplicated ranking), `src/cfpb/retrieval/metrics.py`, `scripts/run_bm25.py`, `tests/test_bm25.py` (5 tests, pass). `rank-bm25` is now enabled in `requirements.txt`.
+- **Setup:** `rank_bm25.BM25Okapi` (k1 1.5, b 0.75) over `embed_text`; queries are `narrative_clean`; tokens are lowercase `[a-z0-9]+`. Two variants: no stopword removal (main, `results/retrieval_bm25.json`) and sklearn English stopwords removed (`results/retrieval_bm25_stopwords.json`). Section-level hits, sections deduplicated keeping first occurrence, on the 127 in-scope items. Ranked lists (top 10 chunks per complaint) go to `outputs/retrieval/bm25/` and `bm25_no_fcra/` (git-ignored).
+- **Results, main variant (127 in-scope items):**
+
+  | Corpus | hit@1 | hit@5 | hit@10 | MRR |
+  |---|---:|---:|---:|---:|
+  | with FCRA (2,954 chunks) | 0.079 | 0.315 | 0.457 | 0.196 |
+  | without FCRA (2,629 chunks) | 0.055 | 0.220 | 0.339 | 0.144 |
+
+  recall@k equals hit@k (one gold section per item); precision@k = hit@k / k. With stopwords removed, with FCRA: 0.071 / 0.362 / 0.496, MRR 0.219. Per-regulation numbers are in the JSON files (with FCRA, hit@10: E 0.28, F 0.53, Z 0.33, FCRA 0.61, V 0.60; V has only 5 items).
+- **Observations:** (1) On the 91 non-FCRA items, hit@10 is 0.473 without the FCRA chunks, against 0.396 with them in the index (E drops from 0.45 to 0.28). The FCRA chunks therefore displace correct regulation sections under BM25. (2) Stopword removal helps hit@5/10 modestly; it is a single run on 127 items, so differences of a few points are not established.
+- **Abstention (top BM25 score as signal, all 198):** AUROC is **0.43** (0.49 with stopwords), at or below chance. Long narratives score high whether or not a section governs them, so the raw top score is not a usable abstain signal. The threshold was tuned on a fixed SHA-1 half and reported on the other (91 items, 26 NONE): P/R/F1 0.28 / 0.96 / 0.43, which is close to abstaining on nearly everything. A normalised score (for example top score divided by query length) is a cheap thing to try for the dense and hybrid retrievers.
+- **Not done:** the optional chunking ablation on `reg_chunks.parquet` (Sec. 6.5.6 item 7).
+
+### 2026-10-19: Generator, NLI verifier and attribution pilot (branch `generation-verification`, Aditya + Claude)
+- **Branch:** `generation-verification`, cut from `origin/backend` (Anirudh's pipeline skeleton) with `origin/retrieval-bm25` merged in, so it has the classifier, Pair B's 2,954-chunk corpus (with FCRA), BM25, the gold set and the backend. The only conflict was this file; both logs kept.
+- **Target LLM (decision 2026-10-19, Aditya):** NVIDIA Nemotron through the NVIDIA API catalog, default model id `nvidia/nemotron-3-super-120b-a12b` (picked from the public `/v1/models` list on 2026-10-19). Temperature 0. Keep it fixed for every reported number. The key goes in `NVIDIA_API_KEY` (environment or git-ignored `.env`); never commit it.
+- **Stage 3, `src/cfpb/generate/nemotron.py`:** `NemotronGenerator` implements the backend's `Generator` protocol. The prompt (`PROMPT_VERSION` = hash of the prompt text) asks for 3 to 6 sentences using only the given passages, each ending with `[P#]` tags; `[NONE]` if the passages do not apply. Tags are mapped to `cited_chunk_ids`; `<think>` blocks are stripped. Every call is cached in `outputs/generation/cache/<sha1>.json` keyed on model, prompt version, decoding settings, complaint and context.
+- **Stage 4, `src/cfpb/verify/nli.py`:** `NLIVerifier` implements `Verifier`, following SummaC: each sentence is checked against its cited chunks (all context if none), split into 400-token windows (stride 300); `entail_prob` = max over windows, `contradict_prob` from that window; supported if `entail_prob >= 0.5` (to be tuned on the checker set). Model `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`.
+  - Sanity check on Reg E 1005.11(c): correct paraphrase 0.992 entail; invented "refund within 24 hours" 0.001; wrong "60 business days" 0.997 contradiction; courtesy sentence 0.009. About 6 s per pair on CPU (torch is the CPU build).
+- **Wiring:** `load_pipeline(generator=..., verifier=...)`; `scripts/run_pipeline_batch.py` gains `--generator {stub,nemotron}`, `--verifier {stub,nli}`, `--ids FILE`, and records the generator and verifier settings in `run_info.json`. Stubs stay the default, so the demo is unchanged.
+- **Attribution pilot, `scripts/attribution_pilot.py`:** `select` wrote `annotation/pilot_ids.txt`: 41 in-scope gold items (9 each E, F, Z, FCRA; all 5 V; SHA-1 order). Run the batch twice (BM25 top-5 as `retrieved`, gold-section chunks as `oracle`), then `report` writes `results/attribution_pilot.json`: % supported per condition, the paired gap with a bootstrap 95% CI, the gap split by whether BM25's top 5 contained the gold section, and per-regulation rates.
+- **Checker validation (M1), `scripts/checker_benchmark.py`:** `sample` takes 50 pilot sentences (25 per condition, SHA-1, not by checker score) into `annotation/checker_set.jsonl` and a blind `checker_set.md`; two LLM annotators of different families label them; `compare` gives kappa and `checker_disagreements.md`; after human adjudication into `checker_gold.jsonl`, `score` gives balanced accuracy, AUROC and kappa vs gold in `results/checker_benchmark.json`.
+- **Tests:** `tests/test_generate_verify.py` (4: sentence/tag splitting, cache hit, premise choice). Full suite 118 passed.
+- **Status (superseded by the next entry):** code ready; pilot not yet run.
+
+### 2026-10-19: Attribution pilot results (branch `generation-verification`, Aditya + Claude)
+- **Runs:** `outputs/pipeline_runs/pilot-oracle` (76 min) and `pilot-bm25` (78 min), 41 complaints each, Nemotron `nvidia/nemotron-3-super-120b-a12b`, temperature 0, `max_tokens` 4096, verifier threshold 0.5 (not yet tuned). 83 API calls in total (about 0.6 per minute, far under the team's 40 rpm limit). Numbers in `results/attribution_pilot.json` (`python scripts/attribution_pilot.py report --retrieved pilot-bm25 --oracle pilot-oracle`).
+- **1 failed generation** (oracle, complaint 20515686, gold 1026.13): `finish_reason=length`, the whole 4,096-token budget went to reasoning (about 18.8k characters) and no answer was written. Reported as a failure, not rerun with different settings; 40 complaints are compared.
+- **New measure, added to the report script:** `supported_and_gold` = the sentence is supported **and** its premise chunk belongs to the gold section. Plain `supported` only measures faithfulness to whatever passage was given (the RAGAS definition).
+
+  | Per-complaint mean (40) | BM25 top 5 | Oracle | Gap | 95% CI (paired bootstrap) |
+  |---|---:|---:|---:|---|
+  | Gold section in context | 35% | 100% | | |
+  | Supported | 77.7% | 83.8% | +6.1 pts | −6.6 to +19.7 |
+  | Supported and gold section | 19.0% | 83.8% | **+64.9 pts** | +52.3 to +76.8 |
+
+  Micro (per sentence): supported 83.8% vs 81.5%; supported-and-gold 24.2% vs 81.5%.
+- **Findings:** retrieval dominates the error; faithfulness alone hides retrieval errors (the model faithfully restates the wrong section); generation error with the correct passage is about 16%. **Reg Z oracle drafts score only 42% supported:** many sentences apply the rule to the complaint's facts ("these charges constitute a billing error under 1026.13(a)(1)"), which the passage cannot confirm. Decide in the checker-set rubric whether such application sentences count as supported.
+- **Gap split by BM25 hit (supported measure):** hit in top 5 (14 complaints) +15.6 pts; miss (26) +1.0 pts, consistent with the faithfulness-vs-correctness finding.
+- **Caveats:** a pilot (40 complaints, BM25 only, checker not yet validated).
+- **Project documentation for the team:** pushed to a new branch `documents` (from `main`, one file `PROJECT_DOCUMENTATION.md`): goal, proposed vs current flow (two Mermaid diagrams, render-checked), data, gold set, results, 14 project decisions with reasons, changes from the proposal, milestone status. Project-level only; the team owns documentation and slides from here.
+- **Next:**
+  1. Checker validation set: `python scripts/checker_benchmark.py sample --runs pilot-bm25 pilot-oracle`, then label (Claude + ChatGPT with `annotation/chatgpt_package/CHECKER_PROMPT.md`), compare, adjudicate, score.
+  2. **After the midterm, move the checker to the GPU** (team decision 2026-10-19). The `.venv` has the CPU-only PyTorch build (`2.14.1+cpu`), so the GTX 1650 is unused and the checker takes about 1.5 min per complaint. Install the CUDA build, then rerun only the verifier on the cached drafts (no new API calls) and confirm the numbers match before scaling to 300 to 500 complaints.

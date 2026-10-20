@@ -115,13 +115,15 @@ def load_classifier(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_M
 
 
 def load_pipeline(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_MODEL,
-                  require_models: bool = False, k: int = 5) -> Pipeline:
+                  require_models: bool = False, k: int = 5,
+                  generator: Generator | None = None, verifier: Verifier | None = None) -> Pipeline:
     """Default pipeline: real stages where they exist, stubs elsewhere.
-    Swap in a real stage as it lands (e.g. retriever=BM25Retriever(...))."""
+    Swap in a real stage as it lands (e.g. retriever=BM25Retriever(...)),
+    or pass generator=NemotronGenerator(), verifier=NLIVerifier()."""
     return Pipeline(
         classifier=load_classifier(product_dir, issue_dir, require=require_models),
         retriever=StubRetriever(),
-        generator=StubGenerator(),
-        verifier=StubVerifier(),
+        generator=generator or StubGenerator(),
+        verifier=verifier or StubVerifier(),
         k=k,
     )
