@@ -1,0 +1,50 @@
+{"pair_id": "K01", "label": "supported", "rationale": "Section 1005.11(b)(2) expressly requires notice of the written-confirmation requirement and the mailing address when oral notice is given."}
+{"pair_id": "K02", "label": "unsupported", "rationale": "The passage defines two billing-error categories but does not impose resolution duties for every alleged billing error."}
+{"pair_id": "K03", "label": "unsupported", "rationale": "The sentence omits the prerequisite that the furnisher receive a dispute notice satisfying paragraphs (c) and (d)."}
+{"pair_id": "K04", "label": "unsupported", "rationale": "The passage prohibits conduct whose natural consequence is harassment in debt collection, not anything that merely could be deemed harassing."}
+{"pair_id": "K05", "label": "unsupported", "rationale": "The passage cannot establish that her particular notification supplied the pertinent information or otherwise satisfied the notification requirements."}
+{"pair_id": "K06", "label": "unsupported", "rationale": "The item omits the account-history condition for modified liability rules and the express disbursement exception allowing disclosures when the card is received."}
+{"pair_id": "K07", "label": "supported", "rationale": "Section 1026.12(b)(2) makes the listed notice and identification safeguards necessary conditions for liability, even though another necessary condition is omitted."}
+{"pair_id": "K08", "label": "unsupported", "rationale": "The address restriction omits the separately permitted furnisher address appearing on the consumer report, which need not be designated specifically for direct disputes."}
+{"pair_id": "K09", "label": "supported", "rationale": "Section 1005.6(a) expressly requires the cited disclosures and identification means as necessary conditions for access-device liability."}
+{"pair_id": "K10", "label": "supported", "rationale": "Section 1681i(a)(2)(A) requires furnisher notification within five business days and inclusion of all relevant dispute information received."}
+{"pair_id": "K11", "label": "supported", "rationale": "Section 1005.11(b)(3) expressly measures the 60-day notice period from when the institution sends the requested information."}
+{"pair_id": "K12", "label": "supported", "rationale": "The passage permits investigation for up to 45 days if the institution provisionally credits the account within 10 business days of the error notice."}
+{"pair_id": "K13", "label": "unsupported", "rationale": "The sentence omits the condition that the consumer notify the agency directly or through a reseller before the reinvestigation duty arises."}
+{"pair_id": "K14", "label": "supported", "rationale": "Section 1006.38(b)(1) expressly prohibits overshadowing collection activities or communications during the validation period."}
+{"pair_id": "K15", "label": "supported", "rationale": "Section 1006.34(b)(4) gives exactly this definition of a validation notice."}
+{"pair_id": "K16", "label": "unsupported", "rationale": "The passage cannot establish the particular dispute's subject matter or that it falls outside the listed exceptions."}
+{"pair_id": "K17", "label": "supported", "rationale": "Section 1005.11(c)(1) states the prompt-investigation duty and the 10-business-day determination deadline."}
+{"pair_id": "K18", "label": "supported", "rationale": "Section 1026.10(b)(4)(ii) expressly treats promoted payment methods as conforming and requires receipt-date crediting with the stated exception."}
+{"pair_id": "K19", "label": "unsupported", "rationale": "The sentence omits the substantive limit that additional liability covers only transfers occurring before notice to the institution."}
+{"pair_id": "K20", "label": "unsupported", "rationale": "The misrepresentation ground requires a material misrepresentation by the consumer relevant to the block request, limitations the sentence omits."}
+{"pair_id": "K21", "label": "unsupported", "rationale": "The passage limits this identity-theft investigation duty to disputes concerning liability for an account or debt with that furnisher."}
+{"pair_id": "K22", "label": "supported", "rationale": "Section 1681c-2(a) expressly requires blocking within four business days after receipt of the four listed items."}
+{"pair_id": "K23", "label": "supported", "rationale": "Section 1005.11(c)(1) expressly requires reporting results within three business days after completing the investigation."}
+{"pair_id": "K24", "label": "supported", "rationale": "Section 1681c-2(c)(2) expressly requires prompt notification in the stated reinsertion-notice manner when a block is declined or rescinded."}
+{"pair_id": "K25", "label": "unsupported", "rationale": "The sentence omits the requirement to count the consent-receipt date as the first day of the seven-day period."}
+{"pair_id": "K26", "label": "supported", "rationale": "Section 1026.7(b)(11)(i) lists the due date, late-payment fee, and potentially increased rates as required periodic-statement disclosures."}
+{"pair_id": "K27", "label": "unsupported", "rationale": "The definition cannot establish what the particular complaint concerns or whether its information satisfies the integrity criteria."}
+{"pair_id": "K28", "label": "unsupported", "rationale": "The passage references 1006.34(b)(5) as a definition of validation period, not as a provision specifying required validation information."}
+{"pair_id": "K29", "label": "supported", "rationale": "Section 1022.43(e)(4) expressly requires prompt notification and correction to each agency that received information found inaccurate."}
+{"pair_id": "K30", "label": "supported", "rationale": "Section 1005.11(c)(2)(i) expressly permits withholding up to $50 when both the reasonable-basis and 1005.6(a) conditions are satisfied."}
+{"pair_id": "K31", "label": "unsupported", "rationale": "The seven-year alert duty also requires an identity-theft report and appropriate proof of the requester's identity, which the sentence omits."}
+{"pair_id": "K32", "label": "unsupported", "rationale": "The creditor-at-itemization disclosure is conditional on a consumer-financial-product debt, and the account number is required only if one exists."}
+{"pair_id": "K33", "label": "supported", "rationale": "Section 1006.38(b)(1) expressly prohibits collection activities that overshadow the specified rights during the validation period."}
+{"pair_id": "K34", "label": "unsupported", "rationale": "The sentence omits the requirement that the written dispute arrive within the validation period and the alternative response permitted for duplicative disputes."}
+{"pair_id": "K35", "label": "supported", "rationale": "Section 1006.6(b)(1)(i) expressly prohibits unusual-time and knowingly inconvenient-time debt-collection communications or attempts."}
+{"pair_id": "K36", "label": "unsupported", "rationale": "The passage defines qualifying reports but cannot establish that the particular FTC and police reports meet those requirements."}
+{"pair_id": "K37", "label": "unsupported", "rationale": "The item combines direct-dispute and CRA-notified dispute remedies without preserving the distinct notice triggers for those duties."}
+{"pair_id": "K38", "label": "supported", "rationale": "Section 1026.7(b)(5) expressly permits the named-method and toll-free-number alternative when the method is identified in 1026.60(g)."}
+{"pair_id": "K39", "label": "unsupported", "rationale": "The segregation and bottom-of-notice placement requirements concern consumer-response information, not validation information generally."}
+{"pair_id": "K40", "label": "unsupported", "rationale": "The passage does not state that it fails to address this complaint, which the checker instructions expressly classify as unsupported."}
+{"pair_id": "K41", "label": "unsupported", "rationale": "The passage does not state that it fails to address the complaint about collection, harassment, services, or insurance billing."}
+{"pair_id": "K42", "label": "unsupported", "rationale": "The sentence omits both identification in accordance with subsection (a) and the displayed no-reseller-file exemption."}
+{"pair_id": "K43", "label": "unsupported", "rationale": "The passage restricts the fee cap to open-end, not home-secured consumer credit plans, a substantive account-type limitation the sentence omits."}
+{"pair_id": "K44", "label": "unsupported", "rationale": "The passage permits a named-method and telephone-number alternative, so explaining the balance calculation is not invariably mandatory."}
+{"pair_id": "K45", "label": "supported", "rationale": "Section 1681i(a)(6)(B)(iv) expressly requires notice of the consumer's right to add a statement disputing accuracy or completeness."}
+{"pair_id": "K46", "label": "supported", "rationale": "Section 1681c-2(a) expressly requires blocking within four business days after receipt of the four identified documents and statements."}
+{"pair_id": "K47", "label": "unsupported", "rationale": "The duty applies to specified agencies receiving qualifying Bureau-transmitted complaints, not to every complaint as the sentence implies."}
+{"pair_id": "K48", "label": "unsupported", "rationale": "The passage assigns development of the model form and procedures to the Commission in consultation with other agencies, not to each CRA."}
+{"pair_id": "K49", "label": "supported", "rationale": "Section 1026.7(b)(5) expressly requires disclosure of the fact and amount of credits and payments not first deducted from the balance."}
+{"pair_id": "K50", "label": "unsupported", "rationale": "The integrity definition additionally requires that the information be in the furnisher's possession and listed in appendix E, conditions the sentence omits."}
