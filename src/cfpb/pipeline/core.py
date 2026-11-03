@@ -114,15 +114,50 @@ def load_classifier(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_M
         return StubClassifier()
 
 
+def load_retriever(require: bool = False, kind: str = "bm25", alpha: float = 0.5,
+                   dense_model: str | None = None) -> Retriever:
+    """Retriever over Pair B's chunks.jsonl, else the stub (with a warning).
+    kind: "bm25" (default), "dense" or "hybrid" (cfpb.retrieval.dense; use the
+    alpha and model chosen in results/retrieval_*.json). Dense kinds embed the
+    corpus once and cache the vectors under outputs/retrieval/embeddings.
+
+    No abstention threshold: the top BM25 score does not separate NONE
+    complaints (AUROC 0.43, CLAUDE_PROGRESS.md 2026-10-19 BM25 entry), so this
+    retriever never abstains. `require=True` raises instead of falling back."""
+    from cfpb.pipeline.corpus import PAIR_B_CORPUS, Corpus
+    from cfpb.pipeline.retrievers import FunctionRetriever
+    try:
+        from cfpb.retrieval.bm25 import BM25Retriever, load_chunks  # branch retrieval-bm25
+        if not PAIR_B_CORPUS.exists():
+            raise FileNotFoundError(f"No Pair B corpus at {PAIR_B_CORPUS}")
+        chunks = load_chunks(PAIR_B_CORPUS)
+        if kind == "bm25":
+            r = BM25Retriever(chunks)
+        else:
+            from cfpb.retrieval.dense import DEFAULT_MODEL, DenseRetriever, HybridRetriever
+            dense = DenseRetriever(chunks, dense_model or DEFAULT_MODEL)
+            r = dense if kind == "dense" else HybridRetriever(BM25Retriever(chunks), dense, alpha)
+        return FunctionRetriever(r.retrieve, Corpus.load(PAIR_B_CORPUS), name=kind)
+    except (FileNotFoundError, ImportError) as e:
+        if require:
+            raise
+        log.warning("Retriever falls back to the stub: %s", e)
+        return StubRetriever()
+
+
 def load_pipeline(product_dir=DEFAULT_PRODUCT_MODEL, issue_dir=DEFAULT_ISSUE_MODEL,
                   require_models: bool = False, k: int = 5,
-                  generator: Generator | None = None, verifier: Verifier | None = None) -> Pipeline:
+                  require_retriever: bool = False,
+                  generator: Generator | None = None, verifier: Verifier | None = None,
+                  retriever_kind: str = "bm25", alpha: float = 0.5) -> Pipeline:
     """Default pipeline: real stages where they exist, stubs elsewhere.
-    Swap in a real stage as it lands (e.g. retriever=BM25Retriever(...)),
-    or pass generator=NemotronGenerator(), verifier=NLIVerifier()."""
+    `require_models` / `require_retriever` raise instead of falling back to
+    the stub classifier / retriever. Pass generator=NemotronGenerator(),
+    verifier=NLIVerifier() for the real drafting and checking stages, and
+    retriever_kind="hybrid", alpha=... for the retriever chosen in H1."""
     return Pipeline(
         classifier=load_classifier(product_dir, issue_dir, require=require_models),
-        retriever=StubRetriever(),
+        retriever=load_retriever(require=require_retriever, kind=retriever_kind, alpha=alpha),
         generator=generator or StubGenerator(),
         verifier=verifier or StubVerifier(),
         k=k,

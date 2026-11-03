@@ -153,3 +153,55 @@ def test_load_corpus_specs(chunking, reg_path, tmp_path):
     assert len(load_corpus(reg_path)) == 2
     both = load_corpus([reg_path, reg_path], keep_first=True)  # lookup-only union
     assert len(both) == 2
+
+
+def _fake_bm25_module(monkeypatch, seen):
+    """Stand-in for cfpb.retrieval.bm25 (branch retrieval-bm25), same API."""
+    import types
+    mod = types.ModuleType("cfpb.retrieval.bm25")
+
+    def load_chunks(path):
+        seen["path"] = path
+        return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines()]
+
+    class BM25Retriever:
+        def __init__(self, chunks):
+            self.chunks = chunks
+
+        def retrieve(self, query, k=10):
+            return [{"chunk_id": c["chunk_id"], "score": float(10 - i)} for i, c in enumerate(self.chunks[:k])]
+
+    mod.load_chunks, mod.BM25Retriever = load_chunks, BM25Retriever
+    monkeypatch.setitem(sys.modules, "cfpb.retrieval", types.ModuleType("cfpb.retrieval"))
+    monkeypatch.setitem(sys.modules, "cfpb.retrieval.bm25", mod)
+
+
+def test_load_retriever_uses_bm25_when_present(tmp_path, monkeypatch):
+    from cfpb.pipeline import corpus as corpus_mod
+    from cfpb.pipeline.core import load_retriever
+    path = tmp_path / "chunks.jsonl"
+    path.write_text("\n".join(json.dumps(r) for r in CHUNKING), encoding="utf-8")
+    monkeypatch.setattr(corpus_mod, "PAIR_B_CORPUS", path)
+    seen = {}
+    _fake_bm25_module(monkeypatch, seen)
+    retriever = load_retriever(require=True)
+    assert seen["path"] == path and not getattr(retriever, "is_stub", False)
+    r = _pipe(retriever).analyze(TEXT, k=2)
+    assert r.retrieval.retriever == "bm25" and len(r.retrieval.chunks) == 2
+    assert not r.retrieval.abstained  # no abstention threshold for BM25
+    assert "retrieve" not in r.stubbed_stages
+
+
+def test_load_retriever_falls_back_without_module_or_corpus(tmp_path, monkeypatch):
+    from cfpb.pipeline import corpus as corpus_mod
+    from cfpb.pipeline.core import load_retriever
+    from cfpb.pipeline.stages import StubRetriever
+    monkeypatch.setitem(sys.modules, "cfpb.retrieval.bm25", None)  # import fails
+    assert isinstance(load_retriever(), StubRetriever)
+    with pytest.raises(ImportError):
+        load_retriever(require=True)
+    _fake_bm25_module(monkeypatch, {})
+    monkeypatch.setattr(corpus_mod, "PAIR_B_CORPUS", tmp_path / "missing.jsonl")
+    assert isinstance(load_retriever(), StubRetriever)
+    with pytest.raises(FileNotFoundError):
+        load_retriever(require=True)

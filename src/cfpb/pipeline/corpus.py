@@ -1,14 +1,19 @@
 """Regulation corpus loader and the oracle retriever.
 
-Two chunk sets exist and the team has not picked one yet (CLAUDE_PROGRESS.md
-Sec. 7, 2026-10-15 overlap entry). `Corpus.load` reads either and maps both to
-one record shape, so retrievers and the demo do not care which is used:
+Two chunk sets exist. `Corpus.load` reads either and maps both to one
+record shape, so retrievers and the demo do not care which is used:
 
-  - data/processed/reg_chunks.parquet (branch regulation-corpus,
-    scripts/build_reg_corpus.py): regulation, interpretation, appendix and
-    FCRA statute chunks; paragraphs in full form, e.g. "1005.11(c)(2)".
-  - chunking/data/processed/chunks.jsonl (branch chunking): regulation text
-    only, no FCRA; paragraphs relative to the section, e.g. "(c)(2)".
+  - chunking/data/processed/chunks.jsonl (Pair B, branch chunking): the
+    retrieval default per INTERFACES.md Sec. 2 since 2026-10-19. 2,954 chunks:
+    regulation text of Regs E/F/V/Z plus the FCRA statute, sized for
+    all-mpnet-base-v2; paragraphs relative to the section, e.g. "(c)(2)".
+  - data/processed/reg_chunks.parquet (scripts/build_reg_corpus.py): 4,319
+    chunks, adding Supplement I interpretations and appendices, for
+    ablations; paragraphs in full form, e.g. "1005.11(c)(2)".
+
+`default_corpus_path()` picks the first of these that exists. The Pair B file
+is tracked on branch chunking, so until that branch is merged here the
+fallback (reg_chunks.parquet) is what runs.
 
 The oracle retriever returns the gold section's chunks for a gold complaint:
 the "oracle" condition of the attribution experiment (INTERFACES.md Sec. 4).
@@ -22,9 +27,18 @@ import pandas as pd
 from cfpb.config import PROCESSED_DIR, ROOT
 from cfpb.pipeline.schema import NONE_LABEL, Retrieval, RetrievedChunk
 
-DEFAULT_CORPUS = PROCESSED_DIR / "reg_chunks.parquet"
+PAIR_B_CORPUS = ROOT / "chunking" / "data" / "processed" / "chunks.jsonl"
+REG_CORPUS = PROCESSED_DIR / "reg_chunks.parquet"
+CORPUS_PREFERENCE = [PAIR_B_CORPUS, REG_CORPUS]  # default first, then fallback
 DEFAULT_GOLD = ROOT / "annotation" / "gold_final.jsonl"
 RULE_KINDS = ("regulation", "statute")  # binding text; interpretations are an ablation
+
+
+def default_corpus_path() -> Path:
+    """First existing file in CORPUS_PREFERENCE (Pair B's chunks.jsonl, else
+    reg_chunks.parquet). If neither exists, the Pair B path, so the error
+    message names the default."""
+    return next((p for p in CORPUS_PREFERENCE if p.exists()), CORPUS_PREFERENCE[0])
 
 
 @dataclass
@@ -67,15 +81,16 @@ class Corpus:
             self._by_section.setdefault(c.section, []).append(c)
 
     @classmethod
-    def load(cls, path=DEFAULT_CORPUS, kinds=None) -> "Corpus":
+    def load(cls, path=None, kinds=None) -> "Corpus":
         """Read one chunk file; `kinds` keeps only those kinds (e.g. ("statute",)).
         Rows without `regulation` or `kind` (e.g. FCRA rows appended to
         chunks.jsonl with only the INTERFACES fields) get them from the section."""
-        path = Path(path)
+        path = Path(path) if path is not None else default_corpus_path()
         if not path.exists():
             raise FileNotFoundError(
-                f"No corpus at {path}. Build it with scripts/build_reg_corpus.py --date 2026-10-13, "
-                "or pass the chunking branch's chunks.jsonl.")
+                f"No corpus at {path}. The default is Pair B's chunking/data/processed/chunks.jsonl "
+                "(branch chunking); the fallback is data/processed/reg_chunks.parquet, built with "
+                "scripts/build_reg_corpus.py --date 2026-10-13.")
         df = (pd.read_parquet(path) if path.suffix == ".parquet"
               else pd.read_json(path, lines=True, dtype=False))
         df = df.astype(object).where(df.notna(), "")

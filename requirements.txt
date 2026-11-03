@@ -10,8 +10,8 @@ tokenizers>=0.23          # embed_text token counts (all-mpnet-base-v2); 0.23.3 
 # Later stages (uncomment when the owning pair starts):
 # torch
 # transformers            # DistilBERT classifier, DeBERTa NLI verifier
-# sentence-transformers   # dense retrieval
-# faiss-cpu
+sentence-transformers>=3.0   # dense retrieval (H1)
+faiss-cpu
 rank-bm25
 # lxml                    # eCFR XML parsing
 # streamlit

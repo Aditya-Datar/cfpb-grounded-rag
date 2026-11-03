@@ -2,6 +2,7 @@
 stage tables of docs/INTERFACES.md.
 
     python scripts/run_pipeline_batch.py --retriever oracle
+    python scripts/run_pipeline_batch.py --retriever default        # BM25 if present, else stub
     python scripts/run_pipeline_batch.py --retriever stub --limit 10
     python scripts/run_pipeline_batch.py --retriever precomputed \
         --ranked outputs/retrieval/bm25/ranked.parquet \
@@ -32,8 +33,9 @@ from cfpb.annotation import load_items  # noqa: E402
 from cfpb.config import OUTPUT_DIR, ROOT  # noqa: E402
 from cfpb.pipeline import load_pipeline  # noqa: E402
 from cfpb.pipeline.batch import to_frames  # noqa: E402
-from cfpb.pipeline.corpus import DEFAULT_CORPUS, DEFAULT_GOLD, OracleRetriever, load_corpus, load_gold  # noqa: E402
+from cfpb.pipeline.corpus import DEFAULT_GOLD, OracleRetriever, default_corpus_path, load_corpus, load_gold  # noqa: E402
 from cfpb.pipeline.retrievers import PrecomputedRetriever  # noqa: E402
+from cfpb.pipeline.stages import StubRetriever  # noqa: E402
 
 
 def git_commit() -> str:
@@ -49,9 +51,11 @@ def git_commit() -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--retriever", choices=["stub", "oracle", "precomputed"], required=True)
-    ap.add_argument("--corpus", nargs="+", default=[str(DEFAULT_CORPUS)],
-                    help='chunk files for oracle/precomputed: "path" or "path::kind1+kind2"')
+    ap.add_argument("--retriever", choices=["default", "stub", "oracle", "precomputed"], required=True,
+                    help="default: Pair B's BM25 if its module and corpus are present, else the stub")
+    ap.add_argument("--corpus", nargs="+", default=None,
+                    help='chunk files for oracle/precomputed: "path" or "path::kind1+kind2"; default '
+                         "Pair B's chunking/data/processed/chunks.jsonl, else reg_chunks.parquet")
     ap.add_argument("--ranked", type=Path, help="ranked.parquet for --retriever precomputed")
     ap.add_argument("--min-top-score", type=float, default=None,
                     help="precomputed: abstain when the top score is below this")
@@ -60,7 +64,9 @@ def main() -> None:
     ap.add_argument("--run-name", default=None)
     ap.add_argument("--require-models", action="store_true")
     ap.add_argument("--generator", choices=["stub", "nemotron"], default="stub")
-    ap.add_argument("--verifier", choices=["stub", "nli"], default="stub")
+    ap.add_argument("--verifier", choices=["stub", "nli", "judge"], default="stub")
+    ap.add_argument("--threshold", type=float, default=0.5, help="verifier cutoff (supported iff score >= it)")
+    ap.add_argument("--judge-model", default=None, help="--verifier judge: model id (default in cfpb.verify.llm_judge)")
     ap.add_argument("--ids", type=Path, default=None, help="text file of complaint ids to run (one per line)")
     args = ap.parse_args()
 
@@ -84,10 +90,16 @@ def main() -> None:
         generator = NemotronGenerator()
     if args.verifier == "nli":
         from cfpb.verify.nli import NLIVerifier
-        verifier = NLIVerifier()
+        verifier = NLIVerifier(threshold=args.threshold)
+    elif args.verifier == "judge":
+        from cfpb.verify.llm_judge import DEFAULT_JUDGE, LLMJudgeVerifier
+        verifier = LLMJudgeVerifier(args.judge_model or DEFAULT_JUDGE, threshold=args.threshold)
     pipe = load_pipeline(require_models=args.require_models, k=args.k, generator=generator, verifier=verifier)
+    args.corpus = args.corpus or [str(default_corpus_path())]
     bound = None  # complaint_id -> retriever for that complaint
-    if args.retriever == "oracle":
+    if args.retriever == "stub":
+        pipe.retriever = StubRetriever()
+    elif args.retriever == "oracle":
         bound = OracleRetriever(load_corpus(args.corpus), gold).for_complaint
     elif args.retriever == "precomputed":
         if not args.ranked:

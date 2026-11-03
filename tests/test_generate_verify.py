@@ -28,6 +28,12 @@ def test_split_handles_none_out_of_range_and_think_blocks():
     assert s == ["The passages do not address this.", "Other."] and c == [[], []]
 
 
+
+def test_split_breaks_on_newlines_and_drops_list_markers():
+    s, c = split_sentences("The bank must investigate [P1]\n- It must send results [P2]\n\n2. Credit is due [P1][P2].", CTX)
+    assert s == ["The bank must investigate", "It must send results", "Credit is due."]
+    assert c == [["c1"], ["c2"], ["c1", "c2"]]
+
 def test_generate_uses_cache_and_never_calls_twice(tmp_path, monkeypatch):
     gen = NemotronGenerator(cache_dir=tmp_path)
     calls = []

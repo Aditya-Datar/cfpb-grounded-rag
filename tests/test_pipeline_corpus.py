@@ -9,7 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from cfpb.pipeline import Pipeline  # noqa: E402
 from cfpb.pipeline.core import DEFAULT_PRODUCT_MODEL, load_pipeline  # noqa: E402
-from cfpb.pipeline.corpus import DEFAULT_CORPUS, Corpus, OracleRetriever, load_gold  # noqa: E402
+from cfpb.pipeline import corpus as corpus_mod  # noqa: E402
+from cfpb.pipeline.corpus import Corpus, OracleRetriever, default_corpus_path, load_gold  # noqa: E402
 from cfpb.pipeline.stages import StubClassifier, StubGenerator, StubRetriever, StubVerifier  # noqa: E402
 
 REG_ROWS = [  # regulation-corpus format (reg_chunks.parquet)
@@ -107,9 +108,23 @@ def test_retriever_override_is_per_call(reg_corpus):
     assert pipe.analyze("again").retrieval.retriever == "stub"  # default unchanged
 
 
+
+def test_default_corpus_prefers_pair_b_then_falls_back(tmp_path, monkeypatch):
+    pair_b, reg = tmp_path / "chunks.jsonl", tmp_path / "reg_chunks.parquet"
+    monkeypatch.setattr(corpus_mod, "CORPUS_PREFERENCE", [pair_b, reg])
+    assert default_corpus_path() == pair_b          # neither exists: names the default
+    with pytest.raises(FileNotFoundError, match="chunks.jsonl"):
+        Corpus.load()
+    pd.DataFrame(REG_ROWS).to_parquet(reg)
+    assert default_corpus_path() == reg             # fallback
+    assert Corpus.load().name == "reg_chunks.parquet"
+    pair_b.write_text("\n".join(json.dumps(r) for r in CHUNKING_ROWS), encoding="utf-8")
+    assert default_corpus_path() == pair_b          # Pair B wins once present
+    assert Corpus.load().name == "chunks.jsonl"
+
 # --- real files: skipped unless present locally ---------------------------
 
-@pytest.mark.skipif(not DEFAULT_CORPUS.exists(), reason="build with scripts/build_reg_corpus.py")
+@pytest.mark.skipif(not default_corpus_path().exists(), reason="no corpus file present locally")
 def test_oracle_covers_every_in_scope_gold_item():
     oracle = OracleRetriever(Corpus.load())
     for gold in load_gold().values():

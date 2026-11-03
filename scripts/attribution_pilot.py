@@ -13,6 +13,13 @@ PER_REG items per regulation, all of Reg V (5 items), chosen by SHA-1 so it is
 fixed. The report gives % supported sentences per condition, the paired gap
 with a bootstrap 95% CI over complaints, and the gap split by whether the
 retriever's top k contained the gold section.
+
+Full run (H2/H3, docs/tasks/anirudh.md):
+    python scripts/attribution_pilot.py select --all          # all in-scope gold items -> annotation/attribution_ids.txt
+    ... run_pipeline_batch.py twice with --ids annotation/attribution_ids.txt (run names full-<retriever>, full-oracle)
+    python scripts/attribution_pilot.py report --retrieved full-bm25 --oracle full-oracle --out results/attribution_full_bm25.json
+    python scripts/attribution_pilot.py report ... --tau 0.37   # relabel sentences at a different checker cutoff
+--tau recomputes labels from the stored entail_prob, so no model rerun is needed.
 """
 import argparse
 import hashlib
@@ -31,15 +38,22 @@ from cfpb.pipeline.corpus import load_corpus  # noqa: E402
 
 GOLD = ROOT / "annotation" / "gold_final.jsonl"
 IDS = ROOT / "annotation" / "pilot_ids.txt"
+ALL_IDS = ROOT / "annotation" / "attribution_ids.txt"
 CORPUS = [str(ROOT / "chunking" / "data" / "processed" / "chunks.jsonl")]
 PER_REG = 9
 SEED = "attribution-pilot-v1"
 
 
-def select() -> None:
+def select(all_items: bool = False, exclude_pilot: bool = False) -> None:
     gold = pd.read_json(GOLD, lines=True, dtype=str)
     have_text = set(load_items()["complaint_id"])
     ins = gold[(gold["gold_regulation"] != "NONE") & gold["complaint_id"].isin(have_text)].copy()
+    if all_items:
+        if exclude_pilot:
+            ins = ins[~ins["complaint_id"].isin(IDS.read_text(encoding="utf-8").split())]
+        ALL_IDS.write_text("\n".join(sorted(ins["complaint_id"])) + "\n", encoding="utf-8")
+        print(f"wrote {ALL_IDS}: {len(ins)} items", ins["gold_regulation"].value_counts().to_dict())
+        return
     ins["h"] = ins["complaint_id"].map(lambda c: hashlib.sha1(f"{SEED}:{c}".encode()).hexdigest())
     picked = ins.sort_values("h").groupby("gold_regulation").head(PER_REG)
     IDS.write_text("\n".join(picked["complaint_id"]) + "\n", encoding="utf-8")
@@ -58,7 +72,8 @@ def _paired(r_o: pd.Series, r_r: pd.Series, ids: list[str], n_boot: int) -> dict
     return {"mean": float(diff.mean()), "ci95": [float(np.percentile(boot, 2.5)), float(np.percentile(boot, 97.5))]}
 
 
-def report(retrieved: str, oracle: str, k: int, n_boot: int = 10000) -> None:
+def report(retrieved: str, oracle: str, k: int, n_boot: int = 10000,
+           tau: float | None = None, out_path: Path | None = None) -> None:
     runs = OUTPUT_DIR / "pipeline_runs"
     gold = pd.read_json(GOLD, lines=True, dtype=str).set_index("complaint_id")
     s_r = pd.read_parquet(runs / retrieved / "sentences.parquet")
@@ -66,7 +81,7 @@ def report(retrieved: str, oracle: str, k: int, n_boot: int = 10000) -> None:
     ranked = pd.read_parquet(runs / retrieved / "ranked.parquet")
     corpus = load_corpus(CORPUS)
     for s in (s_r, s_o):
-        s["supported"] = s["label"] == "supported"
+        s["supported"] = s["label"] == "supported" if tau is None else s["entail_prob"] >= tau
         # Correct AND faithful: supported by a premise that belongs to the gold section.
         gold_sec = s["complaint_id"].map(gold["gold_section"])
         s["supported_gold"] = s["supported"] & np.array([g in {corpus.get(c).section for c in p}
@@ -93,6 +108,7 @@ def report(retrieved: str, oracle: str, k: int, n_boot: int = 10000) -> None:
     reg = gold.loc[ids, "gold_regulation"]
     out = {
         "retrieved_run": retrieved, "oracle_run": oracle, "n_complaints": len(ids), "k": k,
+        "tau": tau if tau is not None else "run threshold",
         "failed_generations": failed,
         "retrieved": cond(s_r, r_r, g_r), "oracle": cond(s_o, r_o, g_o),
         "gold_section_in_retrieved_topk": float(hit.mean()),
@@ -108,7 +124,7 @@ def report(retrieved: str, oracle: str, k: int, n_boot: int = 10000) -> None:
                           for g in sorted(reg.unique())},
         "run_info": {n: json.loads((runs / n / "run_info.json").read_text(encoding="utf-8")) for n in (retrieved, oracle)},
     }
-    path = ROOT / "results" / "attribution_pilot.json"
+    path = out_path or ROOT / "results" / "attribution_pilot.json"
     path.write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(json.dumps({k_: out[k_] for k_ in ("n_complaints", "failed_generations", "retrieved", "oracle",
                                              "gold_section_in_retrieved_topk", "gap_supported_oracle_minus_retrieved",
@@ -119,13 +135,20 @@ def report(retrieved: str, oracle: str, k: int, n_boot: int = 10000) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("select")
+    sp = sub.add_parser("select")
+    sp.add_argument("--all", action="store_true", help="every in-scope gold item, not the stratified pilot")
+    sp.add_argument("--exclude-pilot", action="store_true", help="with --all: leave out pilot_ids.txt")
     rp = sub.add_parser("report")
     rp.add_argument("--retrieved", required=True)
     rp.add_argument("--oracle", required=True)
     rp.add_argument("--k", type=int, default=5)
+    rp.add_argument("--tau", type=float, default=None, help="relabel: supported iff entail_prob >= tau")
+    rp.add_argument("--out", type=Path, default=None, help="default results/attribution_pilot.json")
     args = ap.parse_args()
-    select() if args.cmd == "select" else report(args.retrieved, args.oracle, args.k)
+    if args.cmd == "select":
+        select(args.all, args.exclude_pilot)
+    else:
+        report(args.retrieved, args.oracle, args.k, tau=args.tau, out_path=args.out)
 
 
 if __name__ == "__main__":

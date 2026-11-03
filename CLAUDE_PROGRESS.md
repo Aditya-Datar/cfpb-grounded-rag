@@ -835,3 +835,70 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
   - Do not use Nemotron as the judge (it is the generator).
   - Do this together with the GPU switch and the newline sentence-split fix.
 - **`documents` branch updated** with Sec. 4.3 (human cross-check, revised findings), Sec. 4.4 (checker results), the M1 row and the current-flow diagram.
+
+### 2026-10-19: Backend default corpus is now Pair B's `chunks.jsonl` (branch `backend`, Anirudh + Claude)
+- **Why:** Ujjwal's `5b90404` on `chunking` added 325 FCRA chunks to Pair B's corpus (2,954 in total), and `docs/INTERFACES.md` Sec. 2 on that branch now makes `chunking/data/processed/chunks.jsonl` the retrieval default.
+- **Change:** `cfpb.pipeline.corpus.default_corpus_path()` returns the first file that exists in `CORPUS_PREFERENCE`:
+  1. `chunking/data/processed/chunks.jsonl` (Pair B, the default)
+  2. `data/processed/reg_chunks.parquet` (the fallback)
+
+  `Corpus.load()` with no path, the oracle in the demo, and the batch runner (when `--corpus` is not given) all use it, resolved at run time rather than at import. The constant `DEFAULT_CORPUS` is gone.
+- **Not merged:** `chunking` is still not merged into `backend`, because it would bring the 39 MB `ECFR-title12.xml` into this branch's history (Sec. 6.5.5 says to remove it first). So on `backend` today the fallback runs. Once `chunking` is merged here or into `main`, the default switches with no code change.
+- **Checked with Pair B's file from `origin/chunking` (`5b90404`)**, placed temporarily at its tracked path and then removed:
+  - The backend loads all 2,954 chunks (E 395, F 119, V 409, Z 1,706, FCRA 325) with no format changes.
+  - The oracle puts a gold-paragraph chunk at rank 1 for **all 127 in-scope items, including the 36 FCRA ones**, and the 71 NONE items abstain. The real-data test passed against it.
+  - A batch oracle run on the 120 sample items gave 43 abstentions, the same as on the fallback.
+  - In the demo, an FCRA identity-theft complaint shows `15 U.S.C. 1681c-2(a)` (Pair B chunk `15-fcra-1681c-2-a`) at rank 1.
+  - Without the file, the same commands fall back to `reg_chunks.parquet`.
+- **For Ujjwal:** the committed `chunks.jsonl` at `5b90404` hashes to SHA-1 `13a8266064f95900313be4fa582e83386b1771b4` (from `git show`, LF endings, 2,954 lines). The log entry above gives `9928d5f3e676de365761b474e30a43d4691c25a6`. Counts and content checks match the entry, so the logged hash was probably taken from a different build or computed another way. Worth re-logging.
+- **Tests:** 82 passed, including a new test of the preference order (default, fallback, error naming the default).
+
+### 2026-10-19: BM25 as the default retriever when present; BM25-vs-oracle view in the demo (branch `backend`, Anirudh + Claude)
+- **New on other branches:**
+  - `retrieval-bm25` (`759989b`, Ujjwal): `cfpb.retrieval.bm25.BM25Retriever` over Pair B's 2,954-chunk `chunks.jsonl`, with results in `results/retrieval_bm25*.json`.
+  - `documents` (`d630786`, Aditya): `PROJECT_DOCUMENTATION.md` for the midterm. It reports **NVIDIA Nemotron** as the target LLM and a **40-complaint attribution pilot** with real drafts and the DeBERTa checker. That generation and checker code is **not on any pushed branch** (searched every remote branch on 2026-10-19), so the backend cannot use it yet.
+- **`load_retriever()` / `load_pipeline()`:**
+  - The default retriever is Pair B's BM25, wrapped in `FunctionRetriever` over `chunking/data/processed/chunks.jsonl`, whenever `cfpb.retrieval.bm25` and that file are both importable or present. Otherwise it falls back to the stub with a warning.
+  - **No abstention threshold.** The top BM25 score does not separate NONE complaints (AUROC 0.43, BM25 entry above), so the default retriever never abstains.
+  - New flag `require_retriever` (separate from `require_models`, which is still classifier-only) raises instead of falling back.
+  - Nothing from `retrieval-bm25` is copied into `backend`; BM25 switches on when that branch is merged.
+- **Batch runner:**
+  - New `--retriever default`: BM25 if present, else the stub.
+  - `--retriever stub` now always forces the stub.
+- **Demo:**
+  - "Default" mode uses BM25 when present.
+  - With a gold-set complaint selected and any non-oracle retriever, a **"Compare with oracle (gold section)"** toggle runs the complaint twice and shows passages, drafts and checks side by side. Each side says where the gold section ranked, or that it was missed, and gold-section chunks are marked.
+  - Rendering was split into `render_retrieval`, `render_draft` and `render_checks`, so the single view and the comparison share code.
+- **Checked with the `retrieval-bm25` files placed temporarily at their merged paths, then removed:**
+  - `analyze_complaint.py` used BM25: a validation-notice complaint returned 12 CFR 1006.34 chunks.
+  - `run_pipeline_batch.py --retriever default` ran all 120 sample items with no abstentions (outputs/pipeline_runs/bm25-live-sample, 9.5 s).
+  - In the browser, complaint 23571192 with Compare on: BM25 put `15 U.S.C. 1681c-1(i)(5)` at rank 1 and the gold section 1005.11 at rank 3; the oracle put 1005.11(d)(1) at rank 1. This is the FCRA-displacement effect in the BM25 entry, visible for a single complaint.
+  - Without the files, the same commands fall back to the stub with a warning.
+- **Tests:** 84 passed, including 2 new tests of BM25 detection against a stand-in module with the same API.
+- **Next for the backend:** wrap the Nemotron generator and the DeBERTa checker as pipeline stages once that code is pushed. The `generate()` and `verify()` contracts in `stages.py` are what they need to match.
+
+
+### 2026-11-02: Final-experiment code and CARC handoff (branch `final-experiments`, Aditya + Claude)
+- **Branch:** `final-experiments`, created from `generation-verification`, with `origin/backend` (`87f7cc3`, Anirudh) merged in. Conflicts in `src/cfpb/pipeline/core.py`, `scripts/run_pipeline_batch.py` and this file were resolved by keeping both sides (BM25 default retriever plus pluggable generator/verifier). `git fetch` on 2026-11-02: no teammate branch had dense retrieval or any of the work below.
+- **Plan:** the code is written and tested here; five teammates run it at full scale on USC CARC and hand back results JSONs plus a short write-up. One file per person in `docs/tasks/` (README + `ishani.md` H1, `gagan.md` H5, `anirudh.md` H2/H3 + demo, `atharva.md` H4, `ujjwal.md` chunking/FCRA ablations), written for each person's Claude to follow. Aditya keeps the shared scripts, error analysis and the final report.
+- **New code:**
+  - `src/cfpb/retrieval/dense.py`: `DenseRetriever` (Sentence-Transformers, normalised embeddings, exact FAISS `IndexFlatIP`, numpy fallback, embeddings cached under `outputs/retrieval/embeddings`) and `HybridRetriever` (alpha * minmax(dense) + (1 - alpha) * minmax(BM25), per query).
+  - `scripts/run_retrieval.py`: BM25 vs dense vs hybrid, with and without FCRA; alpha chosen by dev-half MRR (`metrics.half == 0`); metrics on the report half with bootstrap CIs and the paired gain over BM25; writes `ranked.parquet` per retriever, per-complaint features (for H5) and gold-section ranks.
+  - `scripts/run_abstention.py` (H5): single confidence signals and a logistic regression, dev-half fit, report-half AUROC with CI, repeated 5-fold CV, P/R/F1 at a dev-tuned threshold.
+  - `src/cfpb/verify/llm_judge.py` + `scripts/llm_judge.py` (H4): LLM entailment judge with the NLI verifier's interface, cached and spaced for the 40 requests/minute limit; benchmarked against `checker_gold` side by side with NLI. Default judge `deepseek-ai/deepseek-v4.1-flash` (end-to-end test: 2 calls, 32 and 115 s, both parsed); `mistralai/mistral-large-4-1t-a52b` is the second judge. Of the other NVIDIA-catalog models tried, `mistral-large-2-instruct`, `mistral-large` and `kimi-k2.6` returned 404 and `gemma-4-31b-it` and `gpt-oss-20b` timed out. Mistral Large 4 is a reasoning model: at 1,024 max tokens it spent the whole budget reasoning and returned no answer, so the budget is 4,096 and empty replies are not cached; a retest at 4,096 had not answered after about 15 minutes and was stopped.
+  - `scripts/make_fixed_chunks.py`: fixed word-window and whole-section chunkings for the chunking ablation (FCRA chunks copied unchanged). Every gold section is present in both.
+  - `scripts/make_data_bundle.py`: zips the git-ignored inputs teammates need (complaint texts, FCRA HTML, generation cache, pilot runs, BM25 rankings) to `outputs/cfpb_data_bundle.zip`, 98 files, 0.5 MB, with no `.env`.
+  - `carc/`: `env.sh`, `setup_env.sh`, `check_data.sh`, `retrieval.sbatch`, `generate.sh` (API calls on a login node in tmux), `verify.sbatch` (GPU NLI from the cache). The account, partition and module names are placeholders that each person verifies.
+- **Changed code:**
+  - `split_sentences` now also splits on line breaks and drops list markers. 62 of the 83 cached Nemotron responses contain line breaks, so full-run sentence counts will differ from the pilot's.
+  - `checker_benchmark.py`: `--tag` (second label set without overwriting set 1), `sample --per-condition/--exclude-tag`, `score --tau`. `compare` refuses to overwrite an adjudicated disagreements file.
+  - `attribution_pilot.py`: `select --all` (writes `annotation/attribution_ids.txt`: 127 items, FCRA 36, F 30, E 29, Z 27, V 5) and `report --tau/--out`.
+  - `run_pipeline_batch.py`: `--verifier judge`, `--threshold`, `--judge-model`.
+  - `load_retriever`/`load_pipeline`: `kind`/`retriever_kind` = bm25, dense or hybrid, with alpha.
+  - `requirements.txt`: `sentence-transformers` and `faiss-cpu` enabled.
+- **Checks (2026-11-02, laptop CPU):**
+  - The new BM25 path reproduces `results/retrieval_bm25.json` → `in_scope_all` exactly, with and without FCRA.
+  - `checker_benchmark.py score` reproduces `results/checker_benchmark.json` exactly.
+  - `attribution_pilot.py report` reproduces `results/attribution_pilot.json` exactly; `--tau 0.5` gives the same output.
+  - End-to-end smoke runs of `run_retrieval.py` and `run_abstention.py` used the small MiniLM model. Their numbers are not results (deleted; the teammates' mpnet runs are the results).
+  - Tests: 128 passed, including new tests for dense, hybrid, judge parsing and newline splitting.

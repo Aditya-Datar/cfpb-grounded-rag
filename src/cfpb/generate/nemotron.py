@@ -73,7 +73,10 @@ def split_sentences(response: str, context: list[RetrievedChunk]) -> tuple[list[
     text = _THINK.sub("", response).strip()
     text = re.sub(rf"([.!?])((?:\s*{_TAG})+)", r"\2\1", text)  # "x. [P1]" -> "x [P1]."
     sentences, cited = [], []
-    for raw in re.split(r"(?<=[.!?])\s+(?=[A-Z\"(])", text):
+    # Line breaks always end a sentence (lists and paragraphs that lack final punctuation);
+    # leading list markers ("- ", "* ", "2. ") are dropped.
+    pieces = [re.sub(r"^\s*(?:[-*•]|\d+[.)])\s+", "", line) for line in re.split(r"\n+", text)]
+    for raw in (r for line in pieces for r in re.split(r"(?<=[.!?])\s+(?=[A-Z\"(])", line)):
         tags = re.findall(r"\[P(\d+)\]", raw)
         ids = [context[int(t) - 1].chunk_id for t in dict.fromkeys(tags) if 0 < int(t) <= len(context)]
         clean = re.sub(r"\s+([.!?,;:])", r"\1", re.sub(rf"\s*{_TAG}", "", raw)).strip()
