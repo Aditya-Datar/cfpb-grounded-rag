@@ -1,0 +1,332 @@
+{
+  "judge_model": "deepseek-ai/deepseek-v4.1-flash",
+  "prompt_version": "judge-v1-5ead5110",
+  "label_set": "checker_set",
+  "n": 50,
+  "n_supported_gold": 26,
+  "unreadable_replies": 0,
+  "judge": {
+    "balanced_accuracy": 0.7131410256410255,
+    "kappa_vs_gold": 0.4318181818181819,
+    "accuracy": 0.72,
+    "flagged_unsupported_recall": 0.5416666666666666,
+    "auroc_confidence": 0.8381410256410257
+  },
+  "nli": {
+    "balanced_accuracy": 0.625,
+    "kappa_vs_gold": 0.25742574257425743,
+    "accuracy": 0.64,
+    "flagged_unsupported_recall": 0.25,
+    "tau": 0.5,
+    "auroc": 0.842948717948718
+  },
+  "judge_minus_nli_balanced_accuracy": {
+    "mean": 0.08814102564102555,
+    "ci95": [
+      -0.06666666666666665,
+      0.2342995169082125
+    ]
+  },
+  "per_pair": [
+    {
+      "pair_id": "K01",
+      "gold": "supported",
+      "judge_prob": 0.99,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K02",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K03",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K04",
+      "gold": "supported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K05",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K06",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K07",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K08",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K09",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K10",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K11",
+      "gold": "supported",
+      "judge_prob": 0.92,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K12",
+      "gold": "supported",
+      "judge_prob": 0.9,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K13",
+      "gold": "unsupported",
+      "judge_prob": 0.92,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K14",
+      "gold": "supported",
+      "judge_prob": 0.99,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K15",
+      "gold": "supported",
+      "judge_prob": 0.99,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K16",
+      "gold": "unsupported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K17",
+      "gold": "supported",
+      "judge_prob": 0.9,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K18",
+      "gold": "supported",
+      "judge_prob": 0.99,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K19",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K20",
+      "gold": "unsupported",
+      "judge_prob": 0.9,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K21",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K22",
+      "gold": "supported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K23",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K24",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K25",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K26",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K27",
+      "gold": "unsupported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K28",
+      "gold": "unsupported",
+      "judge_prob": 0.05,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K29",
+      "gold": "supported",
+      "judge_prob": 0.97,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K30",
+      "gold": "supported",
+      "judge_prob": 0.99,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K31",
+      "gold": "unsupported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K32",
+      "gold": "unsupported",
+      "judge_prob": 0.92,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K33",
+      "gold": "supported",
+      "judge_prob": 0.98,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K34",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K35",
+      "gold": "supported",
+      "judge_prob": 0.97,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K36",
+      "gold": "unsupported",
+      "judge_prob": 0.05,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K37",
+      "gold": "unsupported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K38",
+      "gold": "supported",
+      "judge_prob": 0.99,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K39",
+      "gold": "unsupported",
+      "judge_prob": 0.05,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K40",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K41",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K42",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K43",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K44",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K45",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K46",
+      "gold": "supported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K47",
+      "gold": "unsupported",
+      "judge_prob": 0.92,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K48",
+      "gold": "unsupported",
+      "judge_prob": 0.05,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "K49",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "K50",
+      "gold": "unsupported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    }
+  ]
+}
