@@ -1,0 +1,78 @@
+17546708	E	Charged for a purchase or transfer you did not make with the card
+16823509	E	Transaction was not authorized
+15928734	E	Problem using a debit or ATM card
+21903013	E	Banking errors
+17021537	E	Money was taken from your account on the wrong day or for the wrong amount
+18318850	E	Card company isn't resolving a dispute about a purchase or transfer
+23542375	E	Problem using a debit or ATM card
+16743023	E	Banking errors
+17362489	E	Transaction was not authorized
+17203764	E	Card company isn't resolving a dispute about a purchase or transfer
+15342056	E	Money was taken from your account on the wrong day or for the wrong amount
+18140264	E	Charged for a purchase or transfer you did not make with the card
+15280062	E	Banking errors
+18502978	E	Transaction was not authorized
+23717244	E	Problem using a debit or ATM card
+16890307	E	Card company isn't resolving a dispute about a purchase or transfer
+22429538	E	Money was taken from your account on the wrong day or for the wrong amount
+21757875	E	Charged for a purchase or transfer you did not make with the card
+23303594	E	Transaction was not authorized
+18575078	E	Banking errors
+16473047	E	Problem using a debit or ATM card
+20075698	E	Card company isn't resolving a dispute about a purchase or transfer
+24533783	E	Money was taken from your account on the wrong day or for the wrong amount
+21154339	E	Charged for a purchase or transfer you did not make with the card
+20836150	E	Transaction was not authorized
+16568388	E	Problem using a debit or ATM card
+23337172	E	Banking errors
+18107288	E	Money was taken from your account on the wrong day or for the wrong amount
+22814022	E	Card company isn't resolving a dispute about a purchase or transfer
+15945297	E	Charged for a purchase or transfer you did not make with the card
+18359541	Z	Credit card company isn't resolving a dispute about a purchase on your statement
+23218918	Z	Card was charged for something you did not purchase with the card
+20287801	Z	Problem with fees
+23084662	Z	Problem during payment process
+17918173	Z	Card opened without my consent or knowledge
+18902970	Z	Charged too much interest
+17477503	Z	Credit card company isn't resolving a dispute about a purchase on your statement
+18128802	Z	Card was charged for something you did not purchase with the card
+20834286	Z	Problem with fees
+24180973	Z	Card opened without my consent or knowledge
+15940589	Z	Problem during payment process
+15477036	Z	Charged too much interest
+21260751	Z	Credit card company isn't resolving a dispute about a purchase on your statement
+18709571	Z	Problem with fees
+20982087	Z	Card was charged for something you did not purchase with the card
+21264807	Z	Card opened without my consent or knowledge
+18991618	Z	Charged too much interest
+23139158	Z	Problem during payment process
+15615432	Z	Credit card company isn't resolving a dispute about a purchase on your statement
+18907177	Z	Card was charged for something you did not purchase with the card
+18672068	Z	Problem with fees
+19099608	Z	Card opened without my consent or knowledge
+18717666	Z	Problem during payment process
+24401680	Z	Charged too much interest
+21835203	Z	Credit card company isn't resolving a dispute about a purchase on your statement
+24442257	Z	Card was charged for something you did not purchase with the card
+20096006	Z	Problem with fees
+15771889	Z	Card opened without my consent or knowledge
+16577114	Z	Problem during payment process
+21837494	Z	Charged too much interest
+20515686	Z	Credit card company isn't resolving a dispute about a purchase on your statement
+22400994	Z	Card was charged for something you did not purchase with the card
+24016588	Z	Problem with fees
+17902984	Z	Card opened without my consent or knowledge
+23079314	Z	Problem during payment process
+20530684	Z	Charged too much interest
+23948582	F	You told them to stop contacting you, but they keep trying
+22358574	F	Frequent or repeated calls
+22147352	F	Didn't receive enough information to verify debt
+18431712	F	Didn't receive notice of right to dispute
+16991564	F	Threatened to sue you for very old debt
+18971277	F	Didn't receive enough information to verify debt
+19609645	F	Frequent or repeated calls
+21757513	F	You told them to stop contacting you, but they keep trying
+20495314	F	Didn't receive notice of right to dispute
+16023918	F	Threatened to sue you for very old debt
+15342295	F	Frequent or repeated calls
+16809825	F	Didn't receive enough information to verify debt

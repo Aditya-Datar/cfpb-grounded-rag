@@ -1,0 +1,202 @@
+{
+  "retrieved_run": "pilot-bm25",
+  "oracle_run": "pilot-oracle",
+  "n_complaints": 40,
+  "k": 5,
+  "failed_generations": {
+    "pilot-bm25": [],
+    "pilot-oracle": [
+      "20515686"
+    ]
+  },
+  "retrieved": {
+    "n_sentences": 99,
+    "pct_supported_micro": 0.8383838383838383,
+    "pct_supported_macro": 0.7770833333333333,
+    "pct_supported_and_gold_section_micro": 0.24242424242424243,
+    "pct_supported_and_gold_section_macro": 0.18958333333333335,
+    "mean_entail": 0.8249991253168896
+  },
+  "oracle": {
+    "n_sentences": 119,
+    "pct_supported_micro": 0.8151260504201681,
+    "pct_supported_macro": 0.8383333333333333,
+    "pct_supported_and_gold_section_micro": 0.8151260504201681,
+    "pct_supported_and_gold_section_macro": 0.8383333333333333,
+    "mean_entail": 0.8057119425605325
+  },
+  "gold_section_in_retrieved_topk": 0.35,
+  "gap_supported_oracle_minus_retrieved": {
+    "mean": 0.061250000000000006,
+    "ci95": [
+      -0.06625,
+      0.19708333333333333
+    ]
+  },
+  "gap_supported_and_gold_oracle_minus_retrieved": {
+    "mean": 0.64875,
+    "ci95": [
+      0.5229166666666667,
+      0.7683333333333333
+    ]
+  },
+  "gap_by_retrieval_hit": {
+    "True": {
+      "n": 14,
+      "mean_gap": 0.15595238095238098
+    },
+    "False": {
+      "n": 26,
+      "mean_gap": 0.010256410256410258
+    }
+  },
+  "by_regulation": {
+    "E": {
+      "n": 9,
+      "supported": {
+        "retrieved": 0.6388888888888888,
+        "oracle": 0.9777777777777779
+      },
+      "supported_and_gold": {
+        "retrieved": 0.08333333333333333,
+        "oracle": 0.9777777777777779
+      }
+    },
+    "F": {
+      "n": 9,
+      "supported": {
+        "retrieved": 0.9259259259259258,
+        "oracle": 0.9777777777777779
+      },
+      "supported_and_gold": {
+        "retrieved": 0.3111111111111111,
+        "oracle": 0.9777777777777779
+      }
+    },
+    "FCRA": {
+      "n": 9,
+      "supported": {
+        "retrieved": 0.7592592592592592,
+        "oracle": 0.8999999999999999
+      },
+      "supported_and_gold": {
+        "retrieved": 0.337037037037037,
+        "oracle": 0.8999999999999999
+      }
+    },
+    "V": {
+      "n": 5,
+      "supported": {
+        "retrieved": 0.8,
+        "oracle": 0.9
+      },
+      "supported_and_gold": {
+        "retrieved": 0.2,
+        "oracle": 0.9
+      }
+    },
+    "Z": {
+      "n": 8,
+      "supported": {
+        "retrieved": 0.7708333333333333,
+        "oracle": 0.41666666666666663
+      },
+      "supported_and_gold": {
+        "retrieved": 0.0,
+        "oracle": 0.41666666666666663
+      }
+    }
+  },
+  "run_info": {
+    "pilot-bm25": {
+      "date_utc": "2026-10-20T04:29:31+00:00",
+      "git_commit": "bb6deb7-dirty",
+      "args": {
+        "retriever": "precomputed",
+        "corpus": "['chunking/data/processed/chunks.jsonl']",
+        "ranked": "outputs\\retrieval\\bm25\\ranked.parquet",
+        "min_top_score": "None",
+        "k": "5",
+        "limit": "None",
+        "run_name": "pilot-bm25",
+        "require_models": "False",
+        "generator": "nemotron",
+        "verifier": "nli",
+        "ids": "annotation\\pilot_ids.txt"
+      },
+      "condition": "retrieved",
+      "classifier": "distilbert:product+issue",
+      "retriever": "bm25",
+      "corpus": "regulation+statute",
+      "stubbed_stages": [],
+      "generator": {
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "prompt_version": "v1-9d0f038c",
+        "temperature": 0.0
+      },
+      "verifier": {
+        "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+        "threshold": 0.5
+      },
+      "n_gold": 198,
+      "n_gold_without_text": 0,
+      "n_run": 41,
+      "n_abstained": 0,
+      "seconds": 4694.8,
+      "rows": {
+        "classification": 41,
+        "ranked": 205,
+        "responses": 41,
+        "sentences": 100
+      },
+      "versions": {
+        "python": "3.12.2"
+      }
+    },
+    "pilot-oracle": {
+      "date_utc": "2026-10-20T03:10:39+00:00",
+      "git_commit": "bb6deb7-dirty",
+      "args": {
+        "retriever": "oracle",
+        "corpus": "['chunking/data/processed/chunks.jsonl']",
+        "ranked": "None",
+        "min_top_score": "None",
+        "k": "5",
+        "limit": "None",
+        "run_name": "pilot-oracle",
+        "require_models": "False",
+        "generator": "nemotron",
+        "verifier": "nli",
+        "ids": "annotation\\pilot_ids.txt"
+      },
+      "condition": "oracle",
+      "classifier": "distilbert:product+issue",
+      "retriever": "oracle",
+      "corpus": "chunks.jsonl:regulation+statute",
+      "stubbed_stages": [],
+      "generator": {
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "prompt_version": "v1-9d0f038c",
+        "temperature": 0.0
+      },
+      "verifier": {
+        "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+        "threshold": 0.5
+      },
+      "n_gold": 198,
+      "n_gold_without_text": 0,
+      "n_run": 41,
+      "n_abstained": 0,
+      "seconds": 4563.0,
+      "rows": {
+        "classification": 41,
+        "ranked": 203,
+        "responses": 41,
+        "sentences": 119
+      },
+      "versions": {
+        "python": "3.12.2"
+      }
+    }
+  }
+}

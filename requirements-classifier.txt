@@ -1,0 +1,8 @@
+# Stage 1: DistilBERT classifier. Colab already has all of these preinstalled;
+# locally, install a torch build that matches your hardware first
+# (https://pytorch.org/get-started/locally/), then: pip install -r requirements-classifier.txt
+# Tested 2026-10-10 with torch 2.14.1 (CPU) and transformers 5.19.0.
+-r requirements.txt
+torch>=2.3
+transformers>=4.40
+matplotlib

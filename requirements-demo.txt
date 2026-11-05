@@ -1,0 +1,6 @@
+# Backend pipeline and Streamlit demo: classifier stack plus Streamlit.
+# pip install -r requirements-demo.txt
+# Tested 2026-10-19 on macOS (CPU) with Python 3.14.7, torch 2.14.1,
+# transformers 5.20.2, streamlit 1.66.0, pandas 3.0.6, pyarrow 26.0.0.
+-r requirements-classifier.txt
+streamlit>=1.45

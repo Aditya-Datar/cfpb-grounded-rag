@@ -1,0 +1,50 @@
+{"pair_id": "K01", "label": "supported", "rationale": "1005.11(b)(2): institution requiring written confirmation shall inform consumer and give the address when oral notice is given.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K02", "label": "unsupported", "rationale": "Passage only gives billing-error definitions (a)(4), (a)(6); it states no duty to comply with resolution requirements.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K03", "label": "supported", "rationale": "1022.43(e)(3) states this duty verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K04", "label": "supported", "rationale": "1006.14(a) bars conduct whose natural consequence is to harass; (b)(1) bars repeated calls with intent to annoy; sentence paraphrases both.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K05", "label": "unsupported", "rationale": "Rule content is in (b)(3)-(4), but the sentence asserts that her notification satisfied the requirement, a complaint fact the passage cannot confirm.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K06", "label": "supported", "rationale": "All four claims match 1005.18(a), (e)(1)(i)-(ii) and (b)(1)(i); only cross-reference exceptions are omitted.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K07", "label": "supported", "rationale": "1026.12(b)(2)(ii)-(iii) list notice and identification as necessary conditions; naming two of three necessary conditions is still entailed.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K08", "label": "unsupported", "rationale": "Says investigation is required only for a specified address or any business address, omitting (c)(1) (address on the consumer report), so the 'only if' claim is wrong.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K09", "label": "supported", "rationale": "1005.6(a) conditions liability on the 1005.7(b)(1)-(3) disclosures and a means to identify the consumer.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K10", "label": "supported", "rationale": "1681i(a)(2)(A): within 5 business days the agency must notify the furnisher with all relevant information.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K11", "label": "supported", "rationale": "1005.11(b)(3) states this verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K12", "label": "supported", "rationale": "1005.11(c)(2)(i): up to 45 days if the account is provisionally credited within 10 business days.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K13", "label": "unsupported", "rationale": "1681i(a)(1)(A) gives the duty, but the sentence applies it to 'the disputed collection accounts', complaint facts the passage cannot confirm.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K14", "label": "supported", "rationale": "1006.38(b)(1) verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K15", "label": "supported", "rationale": "1006.34(b)(4) verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K16", "label": "unsupported", "rationale": "Asserts the complaint's dispute falls under (a)(3) and outside the (b) exceptions, which are complaint facts not in the passage.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K17", "label": "supported", "rationale": "1005.11(c)(1) verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K18", "label": "supported", "rationale": "1026.10(b)(4)(ii) verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K19", "label": "supported", "rationale": "1005.6(b)(3) paraphrased accurately.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K20", "label": "supported", "rationale": "1681c-2(c)(1)(A)-(C); 'the company' is the consumer reporting agency in context.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K21", "label": "supported", "rationale": "1022.43(a)(1) lists identity theft or fraud disputes.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K22", "label": "supported", "rationale": "1681c-2(a): block within 4 business days after the four listed items.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K23", "label": "supported", "rationale": "1005.11(c)(1): report results within three business days.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K24", "label": "supported", "rationale": "1681c-2(c)(2) verbatim.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K25", "label": "supported", "rationale": "1006.14(b)(3)(i): calls with prior consent within seven consecutive days are excluded.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K26", "label": "supported", "rationale": "1026.7(b)(11)(i)(A)-(B): due date, late fee and penalty rate on each statement; only a cross-reference exception omitted.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K27", "label": "unsupported", "rationale": "Claims the complaint 'falls under' the integrity definition; a complaint fact, and a definition does not cover complaints.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K28", "label": "unsupported", "rationale": "1006.34(b)(5) is the validation-period definition, not validation information; the claimed duty is not in the passage.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K29", "label": "supported", "rationale": "1022.43(e)(4) paraphrased accurately.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K30", "label": "supported", "rationale": "1005.11(c)(2)(i): may withhold up to $50 under the stated conditions.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K31", "label": "unsupported", "rationale": "1681c-1(b)(1) requires an identity theft report and proof of identity for an extended alert; the sentence drops these conditions ('if the consumer requests a fraud alert').", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K32", "label": "supported", "rationale": "1006.34(c)(2)(i)-(ix) list these items; only a cross-reference exception omitted.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K33", "label": "supported", "rationale": "1006.38(b)(1), with 'or communications' omitted, still entailed.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K34", "label": "unsupported", "rationale": "1006.38(d)(2) applies only to disputes submitted in writing within the validation period; that condition is dropped.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K35", "label": "supported", "rationale": "1006.6(b)(1)(i) verbatim apart from a cross-reference exception.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K36", "label": "unsupported", "rationale": "Asserts the consumer's FTC and police reports meet the definition, a complaint fact the passage cannot confirm.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K37", "label": "supported", "rationale": "Each claim maps to 1022.43(e)(1)-(4), 1681s-2(b)(1)(E) and 1681i(a)(5)(A).", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K38", "label": "supported", "rationale": "1026.7(b)(5) alternative for 1026.60(g) methods.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K39", "label": "unsupported", "rationale": "It is the consumer-response information that must be segregated from the validation information; the sentence names the wrong item.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K40", "label": "unsupported", "rationale": "A statement about what the passages do not cover is not entailed by the passage text.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K41", "label": "unsupported", "rationale": "A statement about what the passages do not cover is not entailed by the passage text.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K42", "label": "supported", "rationale": "1681c-2(d)(2): a reseller's sole obligation is to block the report when (A) and (B) hold.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K43", "label": "supported", "rationale": "1026.52(a)(1)-(2)(i) paraphrased accurately.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K44", "label": "supported", "rationale": "1026.7(b)(5) first sentence.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K45", "label": "supported", "rationale": "1681i(a)(6)(B)(iv).", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K46", "label": "supported", "rationale": "1681c-2(a) four items and 4 business days.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K47", "label": "unsupported", "rationale": "1681i(e)(3) applies to complaints transmitted by the Bureau to nationwide agencies; the sentence drops that condition and applies it to this complaint.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K48", "label": "unsupported", "rationale": "The model form is the Commission's duty under 1681s(f)(2), not each consumer reporting agency's.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K49", "label": "supported", "rationale": "1026.7(b)(5) second sentence.", "annotator": "llm:claude-opus-5-5"}
+{"pair_id": "K50", "label": "unsupported", "rationale": "1022.41(d)(3) is part of a definition, not a duty, and also requires the item to be listed in appendix E; the sentence drops that.", "annotator": "llm:claude-opus-5-5"}
