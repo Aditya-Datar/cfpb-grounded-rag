@@ -21,7 +21,7 @@ from cfpb.config import OUTPUT_DIR
 from cfpb.generate.nemotron import NemotronGenerator
 from cfpb.pipeline.schema import SUPPORTED, UNSUPPORTED, Draft, RetrievedChunk, SentenceCheck, Verification
 
-DEFAULT_JUDGE = "deepseek-ai/deepseek-v4.1-flash"  # 2026-11-02: tested end to end (30-120 s per call)
+DEFAULT_JUDGE = "deepseek-ai/deepseek-v4.1-flash"  # tested end to end: 30-120 s per call on 2026-11-02, 78-188 s on 2026-11-04
 SECOND_JUDGE = "mistralai/mistral-large-4-1t-a52b"  # answers, but a reasoning model: slow, needs >1,024 tokens
 DEFAULT_CACHE = OUTPUT_DIR / "judge" / "cache"
 
@@ -60,7 +60,8 @@ class LLMJudgeVerifier:
                  cache_dir: Path = DEFAULT_CACHE, min_interval: float = 1.6):
         self.model_name, self.threshold = model, threshold
         self.cache_dir, self.min_interval = Path(cache_dir), min_interval
-        self._client = NemotronGenerator(model=model, max_tokens=max_tokens)  # reuses the HTTP + retry code
+        # Reuses the HTTP + retry code. 600 s because the NVIDIA queue alone took up to 185 s on 2026-11-04.
+        self._client = NemotronGenerator(model=model, max_tokens=max_tokens, timeout=600)
         self._last_call = 0.0
 
     def _reply(self, premise: str, sentence: str) -> str:
