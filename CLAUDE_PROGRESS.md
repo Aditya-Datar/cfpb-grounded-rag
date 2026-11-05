@@ -902,3 +902,9 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
   - `attribution_pilot.py report` reproduces `results/attribution_pilot.json` exactly; `--tau 0.5` gives the same output.
   - End-to-end smoke runs of `run_retrieval.py` and `run_abstention.py` used the small MiniLM model. Their numbers are not results (deleted; the teammates' mpnet runs are the results).
   - Tests: 128 passed, including new tests for dense, hybrid, judge parsing and newline splitting.
+
+### 2026-11-05: LLM judge timeout raised to 600 s (branch `final-experiments`, Aditya + Claude)
+- **Problem (Atharva):** the DeepSeek judge cached K01, then K02 got no response after all five retries at the 180 s timeout.
+- **Probe (2026-11-04, Aditya's laptop, one streaming call each, not cached):** K01 187.7 s, K02 153.7 s, K03 78.2 s, all valid JSON. Waits before the response headers were 184.6, 104.7 and 74.8 s, so most of the time is before the first response. Three calls only; queueing on NVIDIA's side is the likely cause, not proven.
+- **Fix:** `LLMJudgeVerifier` passes `timeout=600` to its client. The timeout is not in the judge cache key, and model, prompt, temperature and max tokens are unchanged. Nemotron generation keeps 180 s. `docs/tasks/atharva.md` now gives the new timings and 1 to 3 hours per 50 calls.
+- **Checks:** 128 tests pass. The patched non-streaming path was not confirmed before pushing, at Aditya's request; to be tested on 2026-11-06.
