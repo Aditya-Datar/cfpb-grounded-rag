@@ -16,4 +16,4 @@ Pending Anirudh's `full-bm25` and `full-oracle-nli` runs, blind annotation, adju
 
 ## Commands and job IDs
 
-Pending experiment runs.
+- 2026-11-04, local setup: `.venv/bin/python scripts/llm_judge.py`. The first DeepSeek set-1 response completed and was cached. The next request exhausted five 180-second attempts and ended with `TimeoutError: The read operation timed out`; no results JSON was written. A keyless endpoint check returned HTTP 405 in 0.62 seconds, confirming that the endpoint itself was reachable. No shared script was changed. Job ID: n/a (local run).
