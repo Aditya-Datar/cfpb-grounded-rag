@@ -918,3 +918,10 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
   - Flag rate with FCRA by gold regulation: Z 13/15, E 7/13, F 4/15, V 1/4, FCRA 3/18. AUROC without FCRA-gold items is 0.688.
   - Logistic regression minus best single signal (`dense_top5_mean`): 0.074 [-0.005, 0.167].
 - **Requested from Gagan before merge:** correct the length and FCRA claims, add CIs to the single-signal table, state the cost (28 wrong referrals per 22 correct, 1.27), add job IDs, drop `results/retrieval_mpnet.json` (Ishani's deliverable).
+
+### 2026-11-10: CARC environment fix for H1 and every model-loading job (Aditya + Claude)
+- **Problem (Ishani, jobs 13917005-13917007):** `setup_env.sh` installed torch from the cu121 index (newest 2.5.1), and the unpinned `sentence-transformers>=3.0` pulled sentence-transformers 6.2.0 and transformers 5.22.2, which switched PyTorch off ("PyTorch >= 2.6 is required"). Every retrieval job failed with `NameError: name 'nn' is not defined`. The tests passed because they load no real model.
+- **Tried first, failed:** keeping torch 2.5.1 and pinning transformers 5.19.0. Its metadata allows torch 2.5, but importing `PreTrainedModel` fails (`module 'torch' has no attribute 'accelerator'`, added in torch 2.6).
+- **Fix:** `setup_env.sh` installs torch 2.14.1 from the cu126 index and then checks that sentence-transformers imports with PyTorch on. `requirements.txt` pins transformers 5.19.0 and sentence-transformers 6.2.0. `env.sh` sets `OPENBLAS_NUM_THREADS=4` (pytest could crash on login nodes). The README tells anyone who set up before today to rerun setup.
+- **Checks (fresh scratch venv, laptop CPU, torch 2.14.1+cpu):** mpnet embeddings identical to the laptop environment (max difference 0.0), DeBERTa NLI probabilities identical, 128 tests pass. The CUDA 12.6 build has not been tested on a CARC GPU node.
+- **Open:** Gagan's H5 run produced results, so his environment differed. Ask what versions he had.
