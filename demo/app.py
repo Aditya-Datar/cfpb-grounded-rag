@@ -9,18 +9,28 @@ text); this needs a corpus (Pair B's chunking/data/processed/chunks.jsonl,
 else data/processed/reg_chunks.parquet) and annotation_sample.csv.
 "Precomputed rankings" replays a ranked.parquet found under
 outputs/retrieval/*/ or outputs/pipeline_runs/*/ (e.g. Pair B's BM25 run).
-"Default" uses Pair B's BM25 when cfpb.retrieval.bm25 and their chunks.jsonl
-are present (branch retrieval-bm25), else a stub. For a gold-set complaint,
-"Compare with oracle" shows that retriever and the gold section side by side.
+"Default" uses the live retriever (RETRIEVER_KIND below) over Pair B's
+chunks.jsonl, else a stub. For a gold-set complaint, "Compare with oracle"
+shows that retriever and the gold section side by side.
+"Full runs" replays the saved attribution runs (outputs/pipeline_runs/full-*,
+from Drive final-experiments/anirudh/): real Nemotron drafts and NLI labels for
+every gold complaint, retrieved vs oracle, with no API call or NLI model.
+
+Free-text input uses the stub generator and verifier unless NVIDIA_API_KEY is
+set in .streamlit/secrets.toml (git-ignored); then it drafts with Nemotron
+(GENERATOR_MODEL in secrets.toml overrides the model) and checks with the NLI
+model, which is slow on a CPU.
 """
 import html
 import json
+import os
 import sys
 from pathlib import Path
 
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from cfpb.pipeline import load_pipeline  # noqa: E402
 from cfpb.config import OUTPUT_DIR, PROCESSED_DIR, ROOT  # noqa: E402
@@ -28,9 +38,18 @@ from cfpb.pipeline.corpus import (PAIR_B_CORPUS, REG_CORPUS, Corpus, OracleRetri
                                   default_corpus_path, load_gold)
 from cfpb.pipeline.retrievers import PrecomputedRetriever  # noqa: E402
 from cfpb.pipeline.schema import SUPPORTED, UNSUPPORTED  # noqa: E402
-from cfpb.pipeline.stages import citation  # noqa: E402
+from cfpb.pipeline.stages import StubRetriever, citation  # noqa: E402
+from replay import ORACLE_RUN, ReplayRun, full_runs  # noqa: E402
 
 st.set_page_config(page_title="CFPB Complaint Triage", layout="wide")
+
+# Live retriever for "Default" mode. Set to the winner of H1 once Ishani reports it
+# (e.g. "hybrid" with its tuned alpha); "bm25" ignores alpha.
+RETRIEVER_KIND, ALPHA = "bm25", 0.5
+# NLI cutoffs offered in "Full runs": the run threshold, and Atharva's cutoff frozen
+# on checker set 1 (docs/tasks/results/atharva.md).
+FROZEN_CUTOFF = 0.99658203125
+RUNS_DIR = OUTPUT_DIR / "pipeline_runs"
 
 LABEL_STYLE = {SUPPORTED: ("rgba(46,160,67,0.18)", "supported"),
                UNSUPPORTED: ("rgba(218,54,51,0.20)", "flagged")}
@@ -39,12 +58,33 @@ UNCHECKED_STYLE = ("rgba(128,128,128,0.15)", "not checked")
 # ids from any of them (Pair B's chunks.jsonl, reg_chunks.parquet).
 CHUNK_FILES = [PAIR_B_CORPUS, REG_CORPUS, PROCESSED_DIR / "chunks_chunking.jsonl"]
 METRICS_FILE = ROOT / "results" / "classifier_test_metrics.json"
-MODES = ["Default", "Oracle (gold section)", "Precomputed rankings"]
+MODES = ["Default", "Oracle (gold section)", "Precomputed rankings", "Full runs (saved drafts)"]
+
+
+def secret(name: str) -> str | None:
+    try:
+        return st.secrets.get(name)
+    except Exception:  # no .streamlit/secrets.toml (the exception type varies by Streamlit version)
+        return None
 
 
 @st.cache_resource(show_spinner="Loading models...")
 def get_pipeline():
-    return load_pipeline()
+    generator = verifier = None
+    if key := secret("NVIDIA_API_KEY"):
+        from cfpb.generate.nemotron import NemotronGenerator
+        from cfpb.verify.nli import NLIVerifier
+        os.environ["NVIDIA_API_KEY"] = key
+        model = secret("GENERATOR_MODEL")
+        generator = NemotronGenerator(model=model) if model else NemotronGenerator()
+        verifier = NLIVerifier()
+    return load_pipeline(generator=generator, verifier=verifier,
+                         retriever_kind=RETRIEVER_KIND, alpha=ALPHA)
+
+
+@st.cache_resource(show_spinner="Loading saved run...")
+def get_replay(name: str) -> ReplayRun:
+    return ReplayRun(RUNS_DIR / name, get_lookup_corpus())
 
 
 @st.cache_resource(show_spinner="Loading regulation corpus...")
@@ -169,43 +209,67 @@ def render_checks(result, table: bool = True) -> None:
 
 
 st.title("CFPB complaint triage")
-st.caption("Drafts for a compliance officer to review. Not legal advice; every draft needs human review.")
+st.info("**For compliance staff, not legal advice.** This tool drafts a response for a compliance "
+        "officer to review: it names the regulation section it relied on and flags sentences the "
+        "cited text may not support. A person must check every draft before anything is sent.")
 
 pipe = get_pipeline()
 
 with st.sidebar:
     st.header("Settings")
     oracle_ok, rankings = default_corpus_path().exists(), ranked_files()
+    runs = full_runs(RUNS_DIR) if (RUNS_DIR / ORACLE_RUN).is_dir() else []
     available = [m for m in MODES if m == "Default" or (m == MODES[1] and oracle_ok)
-                 or (m == MODES[2] and rankings)]
+                 or (m == MODES[2] and rankings) or (m == MODES[3] and runs)]
     mode = st.radio("Retriever", available,
                     help="Oracle returns the hand-labelled section for a gold-set complaint. "
-                         "Precomputed replays a saved ranking for a gold-set complaint.")
+                         "Precomputed replays a saved ranking for a gold-set complaint. "
+                         "Full runs replays the saved drafts and sentence checks of the "
+                         "attribution experiment, retrieved vs oracle.")
     if not oracle_ok:
         st.caption("Oracle needs chunking/data/processed/chunks.jsonl or data/processed/reg_chunks.parquet.")
-    precomputed = None
+    if not runs:
+        st.caption("Full runs needs outputs/pipeline_runs/full-oracle-nli and a full-<retriever> folder "
+                   "(Drive final-experiments/anirudh/).")
+    precomputed = replay = oracle_replay = None
+    cutoff = None
     if mode == MODES[2]:
         precomputed = get_precomputed(st.selectbox("Rankings file", rankings))
-    k = st.slider("Chunks to retrieve (k)", 1, 10, 5)
+    if mode == MODES[3]:
+        replay = get_replay(st.selectbox("Retrieved run", runs))
+        oracle_replay = get_replay(ORACLE_RUN)
+        cutoffs = {f"{replay.run_threshold:g} (run threshold)": replay.run_threshold,
+                   f"{FROZEN_CUTOFF:.4f} (frozen on checker set 1)": FROZEN_CUTOFF}
+        cutoff = cutoffs[st.radio("NLI cutoff", list(cutoffs),
+                                  help="A sentence is supported if its entailment score is at least "
+                                       "the cutoff. Scores are stored, so changing it reruns nothing.")]
+        st.caption(f"Drafted by {replay.model}; checked by {replay.verifier.removeprefix('nli:')}.")
+    k = st.slider("Chunks to retrieve (k)", 1, 10, 5, disabled=mode == MODES[3],
+                  help="Full runs always show the k = 5 the drafts were written from.")
+    if mode == MODES[3]:
+        k = 5
     examples = gold_examples()
-    if precomputed:
-        ranked_ids = set(precomputed.complaint_ids)
-        examples = {cid: v for cid, v in examples.items() if cid in ranked_ids}
+    restrict = (precomputed.complaint_ids if precomputed
+                else replay.complaint_ids & oracle_replay.complaint_ids if replay else None)
+    if restrict is not None:
+        examples = {cid: v for cid, v in examples.items() if cid in set(restrict)}
     complaint_id = None
     if examples:
-        complaint_id = st.selectbox("Gold-set complaint", [None, *examples],
+        options = list(examples) if replay else [None, *examples]
+        complaint_id = st.selectbox("Gold-set complaint", options,
                                     format_func=lambda c: "Type your own" if c is None else examples[c][0])
     elif mode != "Default":
         st.warning("No gold-set complaint text found for this mode (data/processed/annotation_sample.csv).")
-    compare = False
-    if complaint_id and mode != MODES[1] and oracle_ok:
+    compare = bool(replay)
+    if complaint_id and mode in (MODES[0], MODES[2]) and oracle_ok:
         compare = st.toggle("Compare with oracle (gold section)",
                             help="Runs the complaint twice, with this retriever and with the gold "
                                  "section, side by side: the attribution experiment for one complaint.")
 
 default_text = examples[complaint_id][1] if complaint_id else ""
 text = st.text_area("Complaint narrative", value=default_text, height=200,
-                    key=f"text-{complaint_id}")
+                    key=f"text-{complaint_id}", disabled=bool(replay),
+                    help="Full runs show the saved drafts for this exact text." if replay else None)
 needs_id = mode != "Default"
 if needs_id and not complaint_id:
     st.info(f"Pick a gold-set complaint in the sidebar to use the {mode.lower()} retriever.")
@@ -216,9 +280,16 @@ if st.button("Analyze", type="primary", disabled=not text.strip() or (needs_id a
         retriever = get_oracle().for_complaint(complaint_id)
     elif mode == MODES[2]:
         retriever = precomputed.for_complaint(complaint_id)
-    result = pipe.analyze(text, k=k, retriever=retriever)
-    oracle_result = (pipe.analyze(text, k=k, retriever=get_oracle().for_complaint(complaint_id))
-                     if compare else None)
+    if replay:
+        # Classify live; an abstaining stub retriever skips drafting and checking,
+        # which come from the saved runs instead.
+        base = pipe.analyze(text, k=k, retriever=StubRetriever(abstain=True))
+        result = replay.result(base, complaint_id, k, cutoff)
+        oracle_result = oracle_replay.result(base, complaint_id, k, cutoff)
+    else:
+        result = pipe.analyze(text, k=k, retriever=retriever)
+        oracle_result = (pipe.analyze(text, k=k, retriever=get_oracle().for_complaint(complaint_id))
+                         if compare else None)
     gold = load_gold()[complaint_id] if complaint_id else None
 
     st.subheader("1. Classification")
@@ -236,7 +307,9 @@ if st.button("Analyze", type="primary", disabled=not text.strip() or (needs_id a
         st.caption("Same complaint, two passages: what the retriever found (left) and the hand-labelled "
                    "gold section (right). With real drafting and checking, the difference between the "
                    "two drafts is the error caused by retrieval; what remains on the right is generation "
-                   "error (the attribution experiment).")
+                   "error (the attribution experiment)."
+                   + (f" Saved drafts and NLI scores from the full runs, labelled at cutoff {cutoff:g}."
+                      if replay else ""))
         panes = [(f"Retrieved ({result.retrieval.retriever})", result), ("Oracle (gold section)", oracle_result)]
         st.subheader("2. Governing regulation")
         for col, (title, res) in zip(st.columns(2), panes):
@@ -252,7 +325,7 @@ if st.button("Analyze", type="primary", disabled=not text.strip() or (needs_id a
         for col, (title, res) in zip(st.columns(2), panes):
             with col:
                 st.markdown(f"**{title}**")
-                render_checks(res, table=False)
+                render_checks(res, table=bool(replay))
     else:
         st.subheader("2. Governing regulation")
         render_retrieval(result, gold)
