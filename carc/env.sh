@@ -13,6 +13,7 @@ export CFPB_VENV="${CFPB_VENV:-/project/$USER/cfpb-venv}"  # EDIT: a /project or
 export HF_HOME="${HF_HOME:-/scratch1/$USER/hf_cache}"
 export HF_HUB_DISABLE_SYMLINKS_WARNING=1
 export TOKENIZERS_PARALLELISM=false
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-4}"   # login nodes: OpenBLAS starting 32 threads can crash pytest
 mkdir -p "$HF_HOME"
 
 if [ -f "$CFPB_VENV/bin/activate" ]; then source "$CFPB_VENV/bin/activate"; else echo "no venv at $CFPB_VENV yet (run carc/setup_env.sh)"; fi

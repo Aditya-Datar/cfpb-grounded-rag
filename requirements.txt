@@ -7,10 +7,11 @@ pytest>=8
 # Stage 2: regulation chunking
 tokenizers>=0.23          # embed_text token counts (all-mpnet-base-v2); 0.23.3 tested
 
-# Later stages (uncomment when the owning pair starts):
-# torch
-# transformers            # DistilBERT classifier, DeBERTa NLI verifier
-sentence-transformers>=3.0   # dense retrieval (H1)
+# Later stages. torch is installed separately (CUDA build on CARC: carc/setup_env.sh).
+# Pinned 2026-11-10 to the tested versions (with torch 2.14.1). transformers 5.x needs torch >= 2.6
+# in practice, although its metadata says 2.5: with torch 2.5.1 it fails on import.
+transformers==5.19.0         # DistilBERT classifier, DeBERTa NLI verifier
+sentence-transformers==6.2.0 # dense retrieval (H1)
 faiss-cpu
 rank-bm25
 # lxml                    # eCFR XML parsing

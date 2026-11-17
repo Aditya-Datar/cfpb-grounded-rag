@@ -9,8 +9,20 @@ source "$CFPB_VENV/bin/activate"
 mkdir -p logs   # Slurm needs this folder to exist before any sbatch
 
 pip install --upgrade pip
-pip install torch --index-url https://download.pytorch.org/whl/cu121
-pip install -r requirements.txt
+# torch 2.14.1 (CUDA 12.6 build): transformers 5.x needs torch >= 2.6 (it calls torch.accelerator),
+# and the cu121 index stops at 2.5.1. Same torch version as the tested laptop setup.
+pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
+pip install -r requirements.txt   # pins transformers and sentence-transformers to the tested versions
+
+# The tests never load a real model, so check the stack imports here: fail now, not inside a GPU job.
+python - <<'EOF'
+import torch, transformers, sentence_transformers
+from transformers.utils import is_torch_available
+assert is_torch_available(), f"transformers {transformers.__version__} disabled torch {torch.__version__}"
+from sentence_transformers import SentenceTransformer  # noqa: F401  (raised NameError 'nn' when broken)
+print("torch", torch.__version__, "| transformers", transformers.__version__,
+      "| sentence-transformers", sentence_transformers.__version__, "| CUDA build", torch.version.cuda)
+EOF
 
 python - <<'EOF'
 from huggingface_hub import snapshot_download
