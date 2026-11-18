@@ -21,7 +21,24 @@ Relative to NLI@0.5, the DeepSeek judge improved balanced accuracy by 0.088; the
 
 ## Set 2
 
-Pending Anirudh's `full-bm25` and `full-oracle-nli` runs, blind annotation, adjudication, and scoring.
+### Input handoff and preparation (2026-11-17)
+
+Anirudh's `full-bm25` and `full-oracle-nli` folders have been received and copied into `outputs/pipeline_runs/`. All ten copied files match the supplied originals by SHA-256. Both runs cover the expected 127 complaint IDs with 127 nonempty responses; the retrieved run has 326 sentence rows and the oracle run has 511. Row counts match the run metadata, sentence keys are unique within each run, every NLI probability is finite and in [0, 1], and every premise chunk resolves in the local corpus. The source did not include the producer's `SHA256SUMS` manifest, so these checks establish local copy integrity, not independent verification against his original upload. The local audit is saved in the git-ignored `outputs/h4_v2/input_manifest.json`.
+
+Both runs identify source commit `e5ac79a-dirty`, generator `nvidia/nemotron-3.5-super-vl-120b-a12b`, prompt `v1-9d0f038c`, temperature 0, and the unchanged DeBERTa NLI model at threshold 0.5. The tracked local passage corpus matches commit `e5ac79a`. The generator differs from set 1, so set 2 will also test transfer of the prespecified cutoff across generators. **T remains 0.99658203125.**
+
+| Source sentence file | SHA-256 |
+|---|---|
+| `full-bm25/sentences.parquet` | `baee055612cd169222d6f2bdbd42ac4b785f4eb4d055aea02220f9a69322fa74` |
+| `full-oracle-nli/sentences.parquet` | `c6e1824d719e893068b910a9cedaa9e181c4aee151742374e95c0c064ec7de74` |
+
+### Frozen sample and approved exclusion correction
+
+Atharva approved an H4-only preparation step on 2026-11-17: exclude every exact set-1 sentence string before sampling, regardless of complaint ID, while leaving shared scripts unchanged. The existing sampler only excludes `(complaint_id, sentence)` tuples; its original 100-pair selection would repeat one set-1 sentence under a different complaint ID. The preparation expands the exclusions to matching tuples in the new runs and passes them as an additional exclusion set to the original `sample()` function. It changes neither the `checker-set-v1_v2` hash ordering nor the source run data. Four matching source rows are excluded before selection, without filtering by checker score or label.
+
+The frozen sample contains **100 pairs, 50 oracle and 50 retrieved**, with zero exact sentence overlap with set 1 and zero duplicate sentence strings within v2. It represents 72 unique complaints, 16 of which also appear in set 1: this is a held-out sentence evaluation, not a disjoint-complaint evaluation. Sample/source hashes, the exact sampler invocation, and the preparation script are recorded in `results/checker_sample_v2_manifest.json`. The unchanged annotation conventions, with only the count and IDs adapted, are in `annotation/checker_prompt_v2.md`. Each independent annotator receives only that prompt and `annotation/checker_set_v2.md` in a fresh isolated session.
+
+Blind annotation, human adjudication, and scoring remain pending. No shared script or set-1 artifact has been changed.
 
 ## Commands and job IDs
 

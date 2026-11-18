@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-17",
+  "frozen_tau": 0.99658203125,
+  "user_authorized_preparation": "Exact set-1 sentence-text exclusion before original deterministic sampling; shared scripts unchanged.",
+  "sampling_seed": "checker-set-v1_v2",
+  "runs": [
+    "full-bm25",
+    "full-oracle-nli"
+  ],
+  "n": 100,
+  "by_condition": {
+    "oracle": 50,
+    "retrieved": 50
+  },
+  "unique_complaints": 72,
+  "complaints_also_in_set1": 16,
+  "set1_sentence_overlap": 0,
+  "within_set_duplicate_sentences": 0,
+  "excluded_source_rows": 4,
+  "exclusion_rule": "Exact sentence string membership in checker_set.jsonl, independent of complaint_id; no score or label based filtering.",
+  "sampler_call": "sample(['full-bm25', 'full-oracle-nli'], tag='v2', per_condition=50, exclude_tags=['', 'exact_text_exclusions']); ANN redirected to a staging directory containing original set 1 and additional exclusion tuples.",
+  "source_files": {
+    "outputs/pipeline_runs/full-bm25/classification.parquet": {
+      "sha256": "885a5e1d2ea8d973b397ec5352b3bf1d0ce53621757c4ac946aa97e802a3736f",
+      "bytes": 5772
+    },
+    "outputs/pipeline_runs/full-bm25/ranked.parquet": {
+      "sha256": "674113ea9c3c04a25a7c6241be8f7579defd1d10f343db834a213d10d0b69701",
+      "bytes": 18656
+    },
+    "outputs/pipeline_runs/full-bm25/responses.parquet": {
+      "sha256": "940e023d53da0bab7dd6b3f1938f6a8acc93fbfc753c141ef70d3a9f0fc1bc63",
+      "bytes": 61760
+    },
+    "outputs/pipeline_runs/full-bm25/run_info.json": {
+      "sha256": "95456803dc176a7828cc2dd00d44cd813cda7de9ad0e740f4a135dd697aff721",
+      "bytes": 1164
+    },
+    "outputs/pipeline_runs/full-bm25/sentences.parquet": {
+      "sha256": "baee055612cd169222d6f2bdbd42ac4b785f4eb4d055aea02220f9a69322fa74",
+      "bytes": 37484
+    },
+    "outputs/pipeline_runs/full-oracle-nli/classification.parquet": {
+      "sha256": "885a5e1d2ea8d973b397ec5352b3bf1d0ce53621757c4ac946aa97e802a3736f",
+      "bytes": 5772
+    },
+    "outputs/pipeline_runs/full-oracle-nli/ranked.parquet": {
+      "sha256": "6509c1a4560335d82bea2f684803ec884d76071d8ddd4c9a899bfff2391b5e15",
+      "bytes": 9197
+    },
+    "outputs/pipeline_runs/full-oracle-nli/responses.parquet": {
+      "sha256": "932993c1fc597ecab765bb471d0dc94e3939203a2fec5700512f067f534e377d",
+      "bytes": 81442
+    },
+    "outputs/pipeline_runs/full-oracle-nli/run_info.json": {
+      "sha256": "9ef12dd8039f40206cc36f8105bae6557b1c7e70cc9007558de54940427ed6f2",
+      "bytes": 1144
+    },
+    "outputs/pipeline_runs/full-oracle-nli/sentences.parquet": {
+      "sha256": "c6e1824d719e893068b910a9cedaa9e181c4aee151742374e95c0c064ec7de74",
+      "bytes": 47346
+    }
+  },
+  "hashes": {
+    "annotation/checker_set.jsonl": "dc7d4450d31d46092612fca8f9ad12886212a9c674330ab143c7fd4b4a9e3a9f",
+    "scripts/checker_benchmark.py": "f4daca0de18fdb5564139fdf373fb84d866a220e05ef1979a415e7451505af5e",
+    "annotation/checker_set_v2.jsonl": "ecdab5f9427f2df59d6ac666aa4e57bc406f429760d51d2793221d90026b473d",
+    "annotation/checker_set_v2.md": "e90533b840bb858545705e96a34e65d0d95c5aa6532b80489e387992ade421a4",
+    "outputs/h4_v2/CHECKER_PROMPT_v2.txt": "8f48daac0eca183401c8d81cd28b4b0bf07f08a1535ef5f215f90a41792c7abd",
+    "outputs/h4_v2/prepare_sample.py": "63512066be3f3ae6bebc3eff3c87cc3e1373dd37bb0e56ae070d678ca10ee7fe",
+    "outputs/h4_v2/sample_staging/checker_set_exact_text_exclusions.jsonl": "6ccd94c9951cee107a4155a28e0ec6de6ba19dbfdd2f280c64a2f39afca5f02e",
+    "annotation/checker_prompt_v2.md": "8f48daac0eca183401c8d81cd28b4b0bf07f08a1535ef5f215f90a41792c7abd"
+  },
+  "preparation_script": "\"\"\"Approved H4-only exact-text exclusion using the unchanged team's sampler.\n\nRun from the repository root with .venv/bin/python outputs/h4_v2/prepare_sample.py.\nThe additional exclusion set expands the existing sentence exclusions across\ncomplaint IDs. The shared sample() function keeps its hash order and rendering.\n\"\"\"\nimport hashlib\nimport importlib.util\nimport json\nfrom pathlib import Path\nimport shutil\n\nimport pandas as pd\n\nROOT = Path(__file__).resolve().parents[2]\nAUDIT = ROOT / 'outputs/h4_v2'\nANN = ROOT / 'annotation'\nRUNS = ['full-bm25', 'full-oracle-nli']\n\n\ndef sha(path):\n    return hashlib.sha256(path.read_bytes()).hexdigest()\n\n\ndef main():\n    for name in ['checker_set_v2.jsonl', 'checker_set_v2.md']:\n        if (ANN / name).exists():\n            raise SystemExit(f'Refusing to overwrite frozen sample: {name}')\n    baseline = json.loads((AUDIT / 'input_manifest.json').read_text())\n    for name, digest in baseline['protected_files'].items():\n        assert sha(ROOT / name) == digest, name\n    for name, meta in baseline['files'].items():\n        assert sha(ROOT / name) == meta['sha256'], name\n\n    old = pd.read_json(ANN / 'checker_set.jsonl', lines=True, dtype={'complaint_id': str})\n    sentences = pd.concat([\n        pd.read_parquet(ROOT / 'outputs/pipeline_runs' / run / 'sentences.parquet').assign(run=run)\n        for run in RUNS\n    ], ignore_index=True)\n    excluded = sentences[sentences.sentence.isin(set(old.sentence))].copy()\n    staging = AUDIT / 'sample_staging'\n    staging.mkdir(exist_ok=False)\n    shutil.copy2(ANN / 'checker_set.jsonl', staging / 'checker_set.jsonl')\n    exclusion_path = staging / 'checker_set_exact_text_exclusions.jsonl'\n    exclusion_records = [\n        {'complaint_id': str(r.complaint_id), 'sentence': r.sentence}\n        for r in excluded.itertuples()\n    ]\n    assert exclusion_records, 'Expected overlap diagnostic must still reproduce'\n    exclusion_path.write_text(''.join(json.dumps(r, ensure_ascii=False) + '\\n' for r in exclusion_records))\n\n    spec = importlib.util.spec_from_file_location('checker_benchmark', ROOT / 'scripts/checker_benchmark.py')\n    benchmark = importlib.util.module_from_spec(spec)\n    spec.loader.exec_module(benchmark)\n    benchmark.ANN = staging  # Output/exclusion directory only; source and sampler are unchanged.\n    benchmark.sample(RUNS, tag='v2', per_condition=50, exclude_tags=['', 'exact_text_exclusions'])\n\n    pairs = pd.read_json(staging / 'checker_set_v2.jsonl', lines=True, dtype={'complaint_id': str})\n    assert len(pairs) == 100\n    assert pairs.pair_id.tolist() == [f'Kv2-{i:03d}' for i in range(1, 101)]\n    assert pairs.condition.value_counts().to_dict() == {'oracle': 50, 'retrieved': 50}\n    assert not (set(pairs.sentence) & set(old.sentence))\n    assert not pairs.sentence.duplicated().any()\n    assert all(pairs.premise.str.strip())\n    # Independently reproduce the selection from sentence-text-only exclusion.\n    candidates = sentences[~sentences.sentence.isin(set(old.sentence))].copy()\n    candidates['h'] = [hashlib.sha1(f'checker-set-v1_v2:{r.run}:{r.complaint_id}:{r.sentence_idx}'.encode()).hexdigest()\n                       for r in candidates.itertuples()]\n    expected = candidates.sort_values('h').groupby('condition').head(50).sort_values(['condition', 'h'])\n    key = lambda df: list(zip(df.run, df.complaint_id.astype(str), df.sentence_idx))\n    assert key(pairs) == key(expected), 'Selection differs from the original hash ordering'\n    # Rendering must exactly match the original sampler's blind schema.\n    md = [\"# Checker validation set: label each pair supported / unsupported\\n\",\n          \"Label **supported** only if the passage text alone entails the sentence. Background knowledge, \"\n          \"plausible inferences and true-but-unstated facts are **unsupported**.\\n\"]\n    for row in pairs.to_dict('records'):\n        md += [f\"## {row['pair_id']}\\n\", f\"**Sentence:** {row['sentence']}\\n\", \"**Passage:**\\n\",\n               '```text\\n' + row['premise'] + '\\n```\\n']\n    assert (staging / 'checker_set_v2.md').read_text() == '\\n'.join(md)\n    for name in ['checker_set_v2.jsonl', 'checker_set_v2.md']:\n        with (ANN / name).open('xb') as out:\n            out.write((staging / name).read_bytes())\n\n    manifest = {\n        'date': '2026-11-17', 'frozen_tau': 0.99658203125,\n        'user_authorized_preparation': 'Exact set-1 sentence-text exclusion before original deterministic sampling; shared scripts unchanged.',\n        'sampling_seed': 'checker-set-v1_v2', 'runs': RUNS, 'n': 100,\n        'by_condition': pairs.condition.value_counts().to_dict(),\n        'unique_complaints': int(pairs.complaint_id.nunique()),\n        'complaints_also_in_set1': len(set(pairs.complaint_id) & set(old.complaint_id)),\n        'set1_sentence_overlap': 0, 'within_set_duplicate_sentences': 0,\n        'excluded_source_rows': len(excluded),\n        'exclusion_rule': 'Exact sentence string membership in checker_set.jsonl, independent of complaint_id; no score or label based filtering.',\n        'sampler_call': \"sample(['full-bm25', 'full-oracle-nli'], tag='v2', per_condition=50, exclude_tags=['', 'exact_text_exclusions']); ANN redirected to a staging directory containing original set 1 and additional exclusion tuples.\",\n        'source_files': baseline['files'],\n        'hashes': {str(p.relative_to(ROOT)): sha(p) for p in [\n            ANN / 'checker_set.jsonl', ROOT / 'scripts/checker_benchmark.py',\n            ANN / 'checker_set_v2.jsonl', ANN / 'checker_set_v2.md',\n            AUDIT / 'CHECKER_PROMPT_v2.txt', Path(__file__), exclusion_path\n        ]},\n        'preparation_script': Path(__file__).read_text(),\n    }\n    (ROOT / 'results/checker_sample_v2_manifest.json').write_text(json.dumps(manifest, indent=2) + '\\n')\n    for name, digest in baseline['protected_files'].items():\n        assert sha(ROOT / name) == digest, name\n    print(json.dumps({k: manifest[k] for k in ['n', 'by_condition', 'unique_complaints', 'complaints_also_in_set1', 'set1_sentence_overlap', 'excluded_source_rows']}, indent=2))\n\n\nif __name__ == '__main__':\n    main()\n"
+}
