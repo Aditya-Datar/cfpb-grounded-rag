@@ -1,0 +1,71 @@
+{
+  "n": 100,
+  "n_supported_gold": 63,
+  "verifier": {
+    "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+    "threshold": 0.5
+  },
+  "auroc": 0.7142857142857143,
+  "at_run_threshold": {
+    "threshold": 0.5,
+    "balanced_accuracy": 0.6327756327756328,
+    "accuracy": 0.72,
+    "kappa_vs_gold": 0.3065874195146111,
+    "flagged_unsupported_recall": 0.2972972972972973
+  },
+  "at_fixed_tau": {
+    "threshold": 0.99658203125,
+    "balanced_accuracy": 0.6696696696696697,
+    "accuracy": 0.64,
+    "kappa_vs_gold": 0.3052875337707448,
+    "flagged_unsupported_recall": 0.7837837837837838,
+    "note": "cutoff fixed before seeing this set"
+  },
+  "best_threshold_in_sample": {
+    "threshold": 0.9965820312499999,
+    "balanced_accuracy": 0.6799656799656799,
+    "accuracy": 0.66,
+    "kappa_vs_gold": 0.3304450571090981,
+    "flagged_unsupported_recall": 0.7567567567567568,
+    "note": "tuned on the same 50 pairs; optimistic"
+  },
+  "tuned_threshold_5fold_cv": {
+    "balanced_accuracy": 0.619039039039039,
+    "kappa_vs_gold": 0.22378772084440787,
+    "flagged_unsupported_recall": 0.6291891891891892,
+    "balanced_accuracy_p5_p95": [
+      0.570999570999571,
+      0.648069498069498
+    ],
+    "note": "cutoff chosen on 4 folds, scored on the 5th; 50 repeats"
+  },
+  "score_quantiles": {
+    "supported_p10_p50": [
+      0.9657226562500001,
+      0.9975585937499999
+    ],
+    "unsupported_p50_p90": [
+      0.9921875,
+      0.9985351562499999
+    ]
+  },
+  "by_condition": {
+    "oracle": {
+      "n": 50,
+      "gold_supported": 37,
+      "gold_supported_and_gold_section": 37,
+      "accuracy": 0.8
+    },
+    "retrieved": {
+      "n": 50,
+      "gold_supported": 26,
+      "gold_supported_and_gold_section": 6,
+      "accuracy": 0.64
+    }
+  },
+  "reference_status": "PROVISIONAL \u2014 AI reference, not human-adjudicated gold",
+  "reference_kind": "claude_reference",
+  "human_validated": false,
+  "frozen_sample_sha256": "ecdab5f9427f2df59d6ac666aa4e57bc406f429760d51d2793221d90026b473d",
+  "reference_note": "Sensitivity analysis against the other independent annotator; not a second held-out dataset."
+}

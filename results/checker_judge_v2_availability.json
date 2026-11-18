@@ -27,5 +27,56 @@
     "error": "Remote end closed connection without response",
     "ended_utc": "2026-11-18T03:20:02.284000+00:00"
   },
-  "mistral_retry": "One retry launched; final status pending."
+  "mistral_retry": "Stopped on Kv2-004 with RemoteDisconnected after 3/100 readable predictions; no complete benchmark. Team decision needed on judge availability.",
+  "mistral_attempt2": {
+    "started_utc": "2026-11-18T03:20:54.387621+00:00",
+    "model": "mistralai/mistral-large-4-1t-a52b",
+    "prompt_version": "judge-v1-5ead5110",
+    "sample_sha256": "ecdab5f9427f2df59d6ac666aa4e57bc406f429760d51d2793221d90026b473d",
+    "mode": "predictions only; no gold read and no metrics calculated",
+    "completed": 3,
+    "unreadable": 0,
+    "total": 100,
+    "state": "stopped",
+    "in_flight_pair": "Kv2-004",
+    "last_completed_pair": "Kv2-003",
+    "last_call_seconds": 91.39,
+    "error_type": "RemoteDisconnected",
+    "error": "Remote end closed connection without response",
+    "ended_utc": "2026-11-18T03:31:35.496774+00:00"
+  },
+  "streaming_probe": {
+    "started_utc": "2026-11-18T03:38:11.570202+00:00",
+    "state": "probe_complete",
+    "model": "mistralai/mistral-large-4-1t-a52b",
+    "prompt_version": "judge-v1-5ead5110",
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "transport": "SSE; only stream/Accept differ from original request",
+    "workers": 1,
+    "minimum_request_interval_seconds": 1.6,
+    "completed": 4,
+    "total": 100,
+    "completed_ids": [
+      "Kv2-001",
+      "Kv2-002",
+      "Kv2-003",
+      "Kv2-004"
+    ],
+    "new_jobs": 1,
+    "errors": [],
+    "sample_sha256": "ecdab5f9427f2df59d6ac666aa4e57bc406f429760d51d2793221d90026b473d",
+    "human_gold_read": false,
+    "metrics_calculated": false,
+    "last_completed": {
+      "pair_id": "Kv2-004",
+      "mode": "sse",
+      "attempt": 1,
+      "seconds": 303.54,
+      "prompt_version": "judge-v1-5ead5110"
+    },
+    "ended_utc": "2026-11-18T03:43:15.170114+00:00"
+  },
+  "streaming_run_status_path": "outputs/h4_v2/streaming/full_status.json",
+  "transport_note": "A completed SSE probe resolved the previously failing pair without changing model, prompt, temperature, max_tokens or cache key. Full run and provisional-reference scoring are in progress; no new judge selected."
 }

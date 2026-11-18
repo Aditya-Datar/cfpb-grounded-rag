@@ -1,0 +1,132 @@
+{
+  "status": "PROVISIONAL: no human validation",
+  "method": "Paired nonparametric bootstrap of 100 pairs, 10000 resamples, seed 0, percentile 95% intervals; both classes required. Conditional on fixed AI reference labels; does not capture adjudication uncertainty or within-complaint dependence.",
+  "n": 100,
+  "frozen_tau": 0.99658203125,
+  "references": {
+    "ai_provisional": {
+      "NLI@0.5": {
+        "balanced_accuracy": {
+          "estimate": 0.6153846153846154,
+          "ci95": [
+            0.5531914893617021,
+            0.6820553994379768
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.23742786479802136,
+          "ci95": [
+            0.10958336643551883,
+            0.3783671777869871
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.25,
+          "ci95": [
+            0.13333333333333333,
+            0.37777777777777777
+          ]
+        }
+      },
+      "NLI@T": {
+        "balanced_accuracy": {
+          "estimate": 0.6730769230769231,
+          "ci95": [
+            0.5797501521627171,
+            0.7612744290733421
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.3436754176610979,
+          "ci95": [
+            0.15593497436343096,
+            0.52
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.75,
+          "ci95": [
+            0.6222222222222222,
+            0.8679245283018868
+          ]
+        }
+      },
+      "auroc": {
+        "estimate": 0.7449919871794871,
+        "ci95": [
+          0.6433146136155093,
+          0.8383428125
+        ]
+      },
+      "NLI_T_minus_NLI_0.5_balanced_accuracy": {
+        "estimate": 0.05769230769230771,
+        "ci95": [
+          -0.03901646407355213,
+          0.15295133333462627
+        ]
+      }
+    },
+    "claude_reference": {
+      "NLI@0.5": {
+        "balanced_accuracy": {
+          "estimate": 0.6327756327756328,
+          "ci95": [
+            0.5574712643678161,
+            0.7121601743934816
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.3065874195146111,
+          "ci95": [
+            0.13580246913580227,
+            0.4772531394229918
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.2972972972972973,
+          "ci95": [
+            0.15384615384615385,
+            0.45161290322580644
+          ]
+        }
+      },
+      "NLI@T": {
+        "balanced_accuracy": {
+          "estimate": 0.6696696696696697,
+          "ci95": [
+            0.5752660780009234,
+            0.7573413870699344
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.3052875337707448,
+          "ci95": [
+            0.13350562732863752,
+            0.46919613009635136
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.7837837837837838,
+          "ci95": [
+            0.6444444444444445,
+            0.9090909090909091
+          ]
+        }
+      },
+      "auroc": {
+        "estimate": 0.7142857142857143,
+        "ci95": [
+          0.6035659713800632,
+          0.8150169089740544
+        ]
+      },
+      "NLI_T_minus_NLI_0.5_balanced_accuracy": {
+        "estimate": 0.03689403689403692,
+        "ci95": [
+          -0.064862430687397,
+          0.13862505653550428
+        ]
+      }
+    }
+  }
+}

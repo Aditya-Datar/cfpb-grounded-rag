@@ -1,0 +1,63 @@
+{
+  "status": "Numerical audit; no threshold or shared-source change",
+  "frozen_tau": 0.99658203125,
+  "affected_count": 4,
+  "cause": "Default pandas.read_json decoding slightly lowers four exact-boundary values; precise_float=True and standard-library JSON match source Parquet values.",
+  "primary_provisional_outputs": "Preserve the unchanged shared scorer for reproducibility; final scoring needs owner review of this boundary behavior.",
+  "affected_pairs": [
+    {
+      "pair_id": "Kv2-004",
+      "source_and_exact_json_score": 0.99658203125,
+      "shared_reader_score": 0.9965820312499999,
+      "exact_predicted_label": "supported",
+      "shared_predicted_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-018",
+      "source_and_exact_json_score": 0.99658203125,
+      "shared_reader_score": 0.9965820312499999,
+      "exact_predicted_label": "supported",
+      "shared_predicted_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-021",
+      "source_and_exact_json_score": 0.99658203125,
+      "shared_reader_score": 0.9965820312499999,
+      "exact_predicted_label": "supported",
+      "shared_predicted_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-064",
+      "source_and_exact_json_score": 0.99658203125,
+      "shared_reader_score": 0.9965820312499999,
+      "exact_predicted_label": "supported",
+      "shared_predicted_label": "unsupported"
+    }
+  ],
+  "sensitivity": {
+    "ai_provisional": {
+      "shared_reader": {
+        "balanced_accuracy": 0.6730769230769231,
+        "kappa_vs_reference": 0.3436754176610979,
+        "unsupported_recall": 0.75
+      },
+      "source_exact_reader": {
+        "balanced_accuracy": 0.6915064102564102,
+        "kappa_vs_reference": 0.3814844373503591,
+        "unsupported_recall": 0.7291666666666666
+      }
+    },
+    "claude_reference": {
+      "shared_reader": {
+        "balanced_accuracy": 0.6696696696696697,
+        "kappa_vs_reference": 0.3052875337707448,
+        "unsupported_recall": 0.7837837837837838
+      },
+      "source_exact_reader": {
+        "balanced_accuracy": 0.6799656799656799,
+        "kappa_vs_reference": 0.3304450571090981,
+        "unsupported_recall": 0.7567567567567568
+      }
+    }
+  }
+}

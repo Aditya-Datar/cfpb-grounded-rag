@@ -1,0 +1,8 @@
+{
+  "provisional_analysis_complete": false,
+  "original_human_validated_task_complete": false,
+  "human_review_required": true,
+  "shared_scorer_precision_review_required": true,
+  "frozen_tau": 0.99658203125,
+  "judge_full_results_present": false
+}

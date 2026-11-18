@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-17",
+  "status": "AI-adjudicated provisional; not human validated",
+  "user_request": "do it then",
+  "n_disagreements": 17,
+  "adjudicator": "Codex assistant (GPT-6 family), with study context and both annotators' rationales",
+  "checker_predictions_used_for_decisions": false,
+  "agrees_with_claude": 0,
+  "agrees_with_chatgpt": 17,
+  "limitation": "All 17 decisions agree with GPT-6-Astra, so the provisional reference equals that annotator's entire 100-label set. This is not independent human-adjudicated gold and may carry same-family adjudication bias.",
+  "sha256": "323402154426845a220cae03bc009a8cffb3403d285b1aaddcef7e4c05ef0665"
+}
