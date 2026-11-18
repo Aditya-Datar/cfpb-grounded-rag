@@ -38,9 +38,30 @@ Atharva approved an H4-only preparation step on 2026-11-17: exclude every exact 
 
 The frozen sample contains **100 pairs, 50 oracle and 50 retrieved**, with zero exact sentence overlap with set 1 and zero duplicate sentence strings within v2. It represents 72 unique complaints, 16 of which also appear in set 1: this is a held-out sentence evaluation, not a disjoint-complaint evaluation. Sample/source hashes, the exact sampler invocation, and the preparation script are recorded in `results/checker_sample_v2_manifest.json`. The unchanged annotation conventions, with only the count and IDs adapted, are in `annotation/checker_prompt_v2.md`. Each independent annotator receives only that prompt and `annotation/checker_set_v2.md` in a fresh isolated session.
 
-Blind annotation, human adjudication, and scoring remain pending. No shared script or set-1 artifact has been changed.
+### Independent annotation and pending human adjudication
+
+Claude Opus 5.5 and GPT-6-Astra each completed 100 valid independent labels. Claude ran through the Claude CLI in safe mode with tools disabled; GPT ran through the ChatGPT-authenticated Codex CLI in a fresh session with shell, web search, delegation, and host skill discovery disabled. Each received an identical blind prompt-plus-pairs input in a separate directory outside the repository. Actual model names, commands, input/output hashes, and execution times are recorded in `results/checker_annotation_v2_manifest.json`. The initial GPT CLI default model was rejected before producing labels; a fresh request used the available GPT-6-Astra model.
+
+| Annotation check | Result |
+|---|---:|
+| Valid unique labels per annotator | 100 |
+| Agreement | 83/100 (83.0%) |
+| Cohen's kappa | 0.656 |
+| Disagreements requiring human adjudication | 17 |
+
+Source: `results/checker_annotation_agreement_v2.json`; the unchanged `compare` command reproduced the same agreement and rounded kappa. `annotation/checker_disagreements_v2.md` includes both independent rationales alongside the sentence and full passage, without checker scores or run conditions. Every human decision is currently blank. This agreement statistic describes the annotators, not checker performance. No gold file or benchmark metrics have been created; H4 remains unresolved until human adjudication and scoring. No shared script or set-1 artifact has been changed.
+
+### Judge availability
+
+On 2026-11-17 (local date), an attempt to cache DeepSeek predictions without reading gold failed on the first pair with HTTP 410. NVIDIA's response states that `deepseek-ai/deepseek-v4.1-flash` reached end of life at `2026-11-16T08:00:00Z`. Zero v2 predictions were completed, and no DeepSeek v2 performance metric is reported. The exact error and sample hash are recorded in `results/checker_judge_v2_availability.json`.
+
+The already-specified Mistral second judge also failed on its first pair, with `RemoteDisconnected: Remote end closed connection without response`, after approximately 340 seconds; zero v2 predictions were completed. That first attempt is preserved in the availability record. One identical retry is currently running with the existing prompt and implementation. No replacement model has been introduced, and no Mistral v2 performance metric is available yet.
 
 ## Commands and job IDs
+
+- 2026-11-17, local: `.venv/bin/python outputs/h4_v2/prepare_sample.py` prepared the user-approved exact-text exclusions and called the unchanged team sampler. The complete preparation source is embedded in `results/checker_sample_v2_manifest.json`. Sample, prompt, provenance, and hashes were frozen in commit `80331d7` before annotation. Job ID: n/a.
+- 2026-11-17, local: ran independent text-only Claude and GPT CLI annotation sessions, with the exact commands and timestamps in `results/checker_annotation_v2_manifest.json`; validated 100 unique ordered IDs and valid labels/rationales from each. Then ran `OPENBLAS_NUM_THREADS=1 .venv/bin/python scripts/checker_benchmark.py compare --a claude --b chatgpt --tag v2`: agreement 0.830, kappa 0.656, 17 disagreements. The generated review file was supplemented with the original annotator rationales; no human decision was filled. Job ID: n/a.
+- 2026-11-17, local: `OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 .venv/bin/python -u outputs/h4_v2/cache_judge_v2.py` attempted prediction-only prefetch through the unchanged `LLMJudgeVerifier`, with no gold read or performance calculation. DeepSeek returned HTTP 410 on the first pair. The same helper with `--model mistralai/mistral-large-4-1t-a52b` failed on its first request with `RemoteDisconnected`; one identical retry is running. Any successful cached replies can later be reused by the standard `scripts/llm_judge.py --tag v2 --nli-tau 0.99658203125 --model mistralai/mistral-large-4-1t-a52b` after gold is built. Job ID: n/a (local API-only process).
 
 - 2026-11-05 to 2026-11-06, USC CARC login node in `tmux` session `setup`: ran `python scripts/llm_judge.py --model mistralai/mistral-large-4-1t-a52b` with the same thread limits as the DeepSeek run. The run stopped after 23/50 Mistral responses with `RemoteDisconnected: Remote end closed connection without response`. One restart reused the cache and reached 26/50, then stopped again; the process was confirmed absent with `pgrep` and the cache remained at 76 total files (50 DeepSeek plus 26 Mistral). In accordance with the task's slow/timeout fallback, the incomplete Mistral run is documented but not scored. Job ID: n/a (API-only login-node run in `tmux`).
 - 2026-11-05, USC CARC login node in `tmux` session `setup`: ran `OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python scripts/llm_judge.py`. The first pass produced 48 cached responses and two unreadable replies; rerunning the identical command retried only those uncached pairs and completed 50/50 with zero unreadable replies. Final output: `results/llm_judge_deepseek-v4.1-flash.json`. Job ID: n/a (API-only login-node run in `tmux`).

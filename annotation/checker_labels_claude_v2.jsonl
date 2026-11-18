@@ -1,0 +1,100 @@
+{"pair_id": "Kv2-001", "label": "supported", "rationale": "§1006.18(c)(2) bars communicating credit information known or that should be known to be false, including failing to communicate that a disputed debt is disputed."}
+{"pair_id": "Kv2-002", "label": "supported", "rationale": "§1681i(a)(3)(A)-(C) allow termination for a frivolous dispute, including insufficient information, and require notice within 5 business days with the reasons and the information needed."}
+{"pair_id": "Kv2-003", "label": "unsupported", "rationale": "It drops the passage's alternative of mailing a letter or sending an electronic message and waiting a reasonable period, so it overstates the prohibition."}
+{"pair_id": "Kv2-004", "label": "supported", "rationale": "§1005.11(c)(1) requires a prompt investigation and a determination within 10 business days of receiving a notice of error."}
+{"pair_id": "Kv2-005", "label": "supported", "rationale": "§1005.11(c)(2)(i) allows up to 45 days provided the account is provisionally credited within 10 business days of receiving the error notice."}
+{"pair_id": "Kv2-006", "label": "supported", "rationale": "§1681i(a)(3) allows termination for a frivolous or irrelevant dispute and requires notice within 5 business days with the reasons and the information required."}
+{"pair_id": "Kv2-007", "label": "supported", "rationale": "§1022.43(e)(4) requires prompt notice to each CRA that received the inaccurate information, along with any necessary correction."}
+{"pair_id": "Kv2-008", "label": "supported", "rationale": "§1681i(a)(3)(A)-(B) state the termination grounds, including insufficient information, and the 5-business-day notice requirement."}
+{"pair_id": "Kv2-009", "label": "unsupported", "rationale": "The definition applies only for purposes of paragraph (b), and the sentence drops the condition that the single account number is the one in place when the debt collector obtained the debts."}
+{"pair_id": "Kv2-010", "label": "supported", "rationale": "§1005.11(c)(2)(ii) requires informing the consumer within two business days of the amount and date of the provisional credit and giving full use of the funds."}
+{"pair_id": "Kv2-011", "label": "supported", "rationale": "§1026.13(a)(3) defines this billing error as credit for property or services not accepted, or not delivered as agreed."}
+{"pair_id": "Kv2-012", "label": "supported", "rationale": "§1005.11(c)(1) requires a prompt investigation and a determination within 10 business days of receiving a notice of error."}
+{"pair_id": "Kv2-013", "label": "supported", "rationale": "§1005.11(c)(2)(ii) requires notice within two business days of the amount and date of the provisional credit and full use of the funds."}
+{"pair_id": "Kv2-014", "label": "supported", "rationale": "§1681i(a)(1)(A) requires a free reasonable reinvestigation and recording the current status or deleting the item within the 30-day period."}
+{"pair_id": "Kv2-015", "label": "supported", "rationale": "§1681c-2(a) requires a block within 4 business days after receipt of the four listed items."}
+{"pair_id": "Kv2-016", "label": "unsupported", "rationale": "It omits that the same-creditor alternative also requires notifying the consumer and referring them to the earlier validation information, and it drops 'reasonably'."}
+{"pair_id": "Kv2-017", "label": "supported", "rationale": "§1022.43(d)(1)-(3) list exactly these three contents of a dispute notice."}
+{"pair_id": "Kv2-018", "label": "unsupported", "rationale": "The passage cannot confirm the complaint-specific claim that the institution actually determined no error or a different error occurred."}
+{"pair_id": "Kv2-019", "label": "supported", "rationale": "§1006.34(b)(4) defines a validation notice as a written or electronic notice that provides the validation information required by paragraph (c)."}
+{"pair_id": "Kv2-020", "label": "supported", "rationale": "§1681c-2(d)(1)-(3) give the no-file reseller exception, the block-only obligation for a reseller with a file, and the notice contents."}
+{"pair_id": "Kv2-021", "label": "supported", "rationale": "§1005.11(b)(1)(ii)-(iii) list these as required contents of a covered notice of error."}
+{"pair_id": "Kv2-022", "label": "supported", "rationale": "§1006.18(c)(2) bars a debt collector from communicating credit information it knows or should know is false."}
+{"pair_id": "Kv2-023", "label": "supported", "rationale": "§1681i(a)(1) piece 2 says subparagraph (B)'s extension does not apply if the information is found inaccurate or incomplete, or unverifiable, within the 30 days."}
+{"pair_id": "Kv2-024", "label": "supported", "rationale": "§1006.18(a) bars any false, deceptive, or misleading representation or means in connection with collecting any debt."}
+{"pair_id": "Kv2-025", "label": "unsupported", "rationale": "The passage does not establish that the complaint's 'unauthorized transactions' are covered by a notice of error; it gives only the general timelines."}
+{"pair_id": "Kv2-026", "label": "supported", "rationale": "§1006.38(c)(1)-(2) state both ways to satisfy the duty to cease collection after a request for original-creditor information."}
+{"pair_id": "Kv2-027", "label": "supported", "rationale": "§1005.11(c)(2)(ii) requires notice within two business days of the provisional credit's amount and date and full use of the funds."}
+{"pair_id": "Kv2-028", "label": "supported", "rationale": "§1681c-2(d)(1)-(3) provide the reseller exception, the block-only obligation, and the notice naming each source agency's name, address, and phone number."}
+{"pair_id": "Kv2-029", "label": "supported", "rationale": "§1681c-2(a) requires a block within 4 business days after receipt of the four listed items."}
+{"pair_id": "Kv2-030", "label": "supported", "rationale": "§1022.43(a)(3) requires a reasonable investigation of direct disputes about the consumer's performance, such as current payment status or payment amount."}
+{"pair_id": "Kv2-031", "label": "unsupported", "rationale": "It drops the requirement that consent calls be placed within seven consecutive days after the prior consent was received."}
+{"pair_id": "Kv2-032", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-033", "label": "supported", "rationale": "§1026.13(a)(3) includes credit for property or services not delivered to the consumer or the consumer's designee as agreed."}
+{"pair_id": "Kv2-034", "label": "supported", "rationale": "§1005.11(c)(2)(i) allows 45 days provided the account is provisionally credited in the amount of the alleged error within 10 business days."}
+{"pair_id": "Kv2-035", "label": "unsupported", "rationale": "§1026.12(a) limits when cards may be issued but does not impose any duty to verify."}
+{"pair_id": "Kv2-036", "label": "unsupported", "rationale": "The passages only define billing errors; they do not say these allegations qualify or impose a duty to evaluate them under the resolution provisions."}
+{"pair_id": "Kv2-037", "label": "supported", "rationale": "§1681i(a)(1)(A) requires a free reasonable reinvestigation before the end of the 30-day period starting when the agency receives notice of the dispute."}
+{"pair_id": "Kv2-038", "label": "unsupported", "rationale": "It drops the passage's alternatives (sending a copy of a judgment, or the duplicative-dispute response), which also end the duty to cease collection."}
+{"pair_id": "Kv2-039", "label": "supported", "rationale": "§1681s-2(b)(1)(E) requires prompt modification, deletion, or permanent blocking of an item found inaccurate, incomplete, or unverifiable."}
+{"pair_id": "Kv2-040", "label": "supported", "rationale": "§1005.11(c)(2)(i) allows 45 days provided the account is provisionally credited within 10 business days."}
+{"pair_id": "Kv2-041", "label": "unsupported", "rationale": "The passage cannot confirm the complaint facts or that an interest charge is an extension of credit, and the sentence's citation is incomplete."}
+{"pair_id": "Kv2-042", "label": "supported", "rationale": "§1681c-2(a) requires a block within 4 business days after receipt of the four listed items."}
+{"pair_id": "Kv2-043", "label": "supported", "rationale": "§1006.18(a) prohibits any false, deceptive, or misleading representation or means in connection with collecting any debt."}
+{"pair_id": "Kv2-044", "label": "unsupported", "rationale": "The passage defines the term but cannot confirm that this consumer made such a request."}
+{"pair_id": "Kv2-045", "label": "unsupported", "rationale": "The passage cannot confirm the consumer's request, and it covers extensions of credit rather than any 'charge'."}
+{"pair_id": "Kv2-046", "label": "supported", "rationale": "§1006.18(b)(2)(i) bars falsely representing the character, amount, or legal status of any debt."}
+{"pair_id": "Kv2-047", "label": "supported", "rationale": "§1681c-2(c)(1)-(2) list these three grounds to decline or rescind a block and require prompt notice to the consumer."}
+{"pair_id": "Kv2-048", "label": "supported", "rationale": "§1681i(a)(1) piece 2 makes the 15-day extension inapplicable when the information is found inaccurate or incomplete, or unverifiable, within the 30 days."}
+{"pair_id": "Kv2-049", "label": "supported", "rationale": "§1005.11(c)(2)(i) states the 45-day period, the provisional credit within 10 business days, the $50 withholding, and the exceptions."}
+{"pair_id": "Kv2-050", "label": "supported", "rationale": "§1681i(a)(4) requires reviewing and considering all relevant information the consumer submits in the paragraph (1)(A) period."}
+{"pair_id": "Kv2-051", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-052", "label": "supported", "rationale": "§1022.43(e)(3) requires completing the investigation and reporting results before the period under FCRA §611(a)(1) expires."}
+{"pair_id": "Kv2-053", "label": "supported", "rationale": "§1006.34(c)(4)(i) lists 'This is not my debt.' among prompts in a set order with the specified or substantially similar phrasing."}
+{"pair_id": "Kv2-054", "label": "supported", "rationale": "§1022.43(e)(1)-(3) require the investigation, the review of information, and reporting results before the applicable period expires."}
+{"pair_id": "Kv2-055", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-056", "label": "unsupported", "rationale": "It drops the time limit that the written request must be made on or before the end of the validation period."}
+{"pair_id": "Kv2-057", "label": "supported", "rationale": "§1005.11(c)(2)(i) allows withholding up to $50 when there is a reasonable basis to believe an unauthorized EFT occurred and §1005.6(a) is satisfied."}
+{"pair_id": "Kv2-058", "label": "supported", "rationale": "§1026.54(b) exempts finance-charge adjustments resulting from dispute resolution or a returned payment."}
+{"pair_id": "Kv2-059", "label": "supported", "rationale": "§1006.34(c)(4) requires this segregation and placement at the bottom under the quoted headings."}
+{"pair_id": "Kv2-060", "label": "supported", "rationale": "§1006.38(d)(2)(i) requires collection to cease until verification or a judgment is sent in writing or electronically as §1006.42 requires."}
+{"pair_id": "Kv2-061", "label": "unsupported", "rationale": "The purpose statement says the part imposes record retention requirements but does not state that the company must retain records."}
+{"pair_id": "Kv2-062", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-063", "label": "supported", "rationale": "§1006.1(c)(1) says the part applies to debt collectors as defined in §1006.2(i)."}
+{"pair_id": "Kv2-064", "label": "supported", "rationale": "§1006.34(c)(2)(i) requires the debt collector's name and the mailing address where it accepts disputes and original-creditor requests."}
+{"pair_id": "Kv2-065", "label": "supported", "rationale": "§1681i(a)(5)(A)(i)-(ii) require prompt deletion or modification and prompt notice to the furnisher."}
+{"pair_id": "Kv2-066", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-067", "label": "unsupported", "rationale": "It makes the itemization-date creditor name unconditional, but §1006.34(c)(2)(iii) requires it only for debts related to a consumer financial product or service."}
+{"pair_id": "Kv2-068", "label": "supported", "rationale": "§1006.34(c)(2)(v), (viii) and (ix) require these three items."}
+{"pair_id": "Kv2-069", "label": "supported", "rationale": "§1022.43(d)(1)-(3) list these three required contents."}
+{"pair_id": "Kv2-070", "label": "unsupported", "rationale": "§1006.6(d)(3) says when procedures count as reasonably adapted; it does not require the company to maintain them."}
+{"pair_id": "Kv2-071", "label": "supported", "rationale": "§1006.34(c)(2)(v)-(ix) require these items."}
+{"pair_id": "Kv2-072", "label": "unsupported", "rationale": "It drops the condition that the furnisher must already have performed its duties for the earlier, substantially similar dispute."}
+{"pair_id": "Kv2-073", "label": "supported", "rationale": "§1006.38(d)(2)(i) requires sending the verification or judgment in writing or electronically as §1006.42 requires."}
+{"pair_id": "Kv2-074", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-075", "label": "supported", "rationale": "§1026.7(b)(14) requires this payoff date on the front of a page of each periodic statement issued during the deferred interest period."}
+{"pair_id": "Kv2-076", "label": "unsupported", "rationale": "It drops that the duty applies only to §1681a(p) agencies, with referral to each other such agency."}
+{"pair_id": "Kv2-077", "label": "unsupported", "rationale": "It drops the trigger that the dispute notice must be received under §1681i(a)(2), so it broadens the duty to any dispute notice."}
+{"pair_id": "Kv2-078", "label": "supported", "rationale": "§1681s-2(b)(1)(E) requires prompt modification, deletion, or permanent blocking, as appropriate, of an inaccurate, incomplete, or unverifiable item."}
+{"pair_id": "Kv2-079", "label": "unsupported", "rationale": "It drops the condition that the debt collector acts on behalf of a third party that is a creditor or other user of a consumer report."}
+{"pair_id": "Kv2-080", "label": "supported", "rationale": "§1022.43(e)(2) requires reviewing all relevant information the consumer provides with the dispute notice."}
+{"pair_id": "Kv2-081", "label": "unsupported", "rationale": "It drops the conditions of a victim's request, the 30-day deadline, and the verification of identity and the claim."}
+{"pair_id": "Kv2-082", "label": "unsupported", "rationale": "It drops the limit to nationwide agencies to which the person actually furnished the information."}
+{"pair_id": "Kv2-083", "label": "supported", "rationale": "§1006.34(c)(3)(i) states that a written dispute on or before the validation end date requires ceasing collection until verification or a copy of a judgment is sent."}
+{"pair_id": "Kv2-084", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-085", "label": "unsupported", "rationale": "It drops the 4-business-day timing and the required receipt of proof of identity, an identity theft report, the identification, and the statement."}
+{"pair_id": "Kv2-086", "label": "supported", "rationale": "§1681i(f)(2)(A) requires a reseller to determine within 5 business days whether the item is wrong due to its own act or omission."}
+{"pair_id": "Kv2-087", "label": "supported", "rationale": "§1681b(f)(1)-(2) state both conditions for using or obtaining a consumer report."}
+{"pair_id": "Kv2-088", "label": "unsupported", "rationale": "It changes 'may send if' to 'only if' and misstates the 60-day and since-last-text conditions for confirming the number was not reassigned."}
+{"pair_id": "Kv2-089", "label": "unsupported", "rationale": "The definition applies only for purposes of §1006.38, and the passage cannot confirm what the complaint refers to."}
+{"pair_id": "Kv2-090", "label": "supported", "rationale": "§1006.1(b) says the record retention requirements will facilitate supervision of debt collectors and the assessment and detection of risks to consumers."}
+{"pair_id": "Kv2-091", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-092", "label": "supported", "rationale": "§1006.38(c)(1)-(2) require ceasing collection until the information is sent or, if the creditors are the same, the consumer is notified and referred to the earlier validation information."}
+{"pair_id": "Kv2-093", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-094", "label": "unsupported", "rationale": "It makes the itemization-date creditor name unconditional, but §1006.34(c)(2)(iii) applies only to consumer financial product or service debts."}
+{"pair_id": "Kv2-095", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-096", "label": "supported", "rationale": "§1681m(g)(2) requires a debt collector acting for a third party to provide this information on the consumer's request."}
+{"pair_id": "Kv2-097", "label": "supported", "rationale": "§1026.7(b)(5) requires disclosing this balance and how it was determined, using the term Balance Subject to Interest Rate."}
+{"pair_id": "Kv2-098", "label": "supported", "rationale": "§1681a(q)(4)(A)-(C) define an identity theft report with these three minimum elements."}
+{"pair_id": "Kv2-099", "label": "unsupported", "rationale": "The passage cannot confirm that the company is a service provider or that these obligations apply to this complaint."}
+{"pair_id": "Kv2-100", "label": "supported", "rationale": "§1681i(a)(6)(B)(iii) requires notice that, on request, the procedure description including the furnisher's name, address, and phone number if reasonably available will be provided."}

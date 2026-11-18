@@ -1,0 +1,100 @@
+{"pair_id": "Kv2-001", "label": "supported", "rationale": "Paragraph (c)(2) expressly prohibits knowingly or negligently communicating false credit information, including omitting a debt's disputed status."}
+{"pair_id": "Kv2-002", "label": "supported", "rationale": "Paragraph (3) permits termination for insufficient information and requires notice within five business days stating reasons and required information."}
+{"pair_id": "Kv2-003", "label": "unsupported", "rationale": "The passage also permits furnishing after mailing a letter or sending an electronic message and satisfying the undeliverability requirements."}
+{"pair_id": "Kv2-004", "label": "supported", "rationale": "Paragraph (c)(1) requires prompt investigation and an error determination within ten business days of receiving notice."}
+{"pair_id": "Kv2-005", "label": "supported", "rationale": "Paragraph (c)(2) permits up to 45 days when investigation cannot finish within ten business days and specifies provisional credit within ten business days."}
+{"pair_id": "Kv2-006", "label": "supported", "rationale": "Paragraph (3) authorizes termination of frivolous or irrelevant disputes and requires the stated notice, timing, and contents."}
+{"pair_id": "Kv2-007", "label": "supported", "rationale": "Paragraph (e)(4) requires prompt notification and necessary corrections to each agency that received inaccurate information."}
+{"pair_id": "Kv2-008", "label": "supported", "rationale": "Subparagraphs (A) and (B) expressly authorize termination on these grounds and require notification within five business days."}
+{"pair_id": "Kv2-009", "label": "unsupported", "rationale": "The student-loan grouping depends on the account number when the collector obtained the debts, a timing condition the sentence omits."}
+{"pair_id": "Kv2-010", "label": "supported", "rationale": "Paragraph (c)(2)(ii) requires notice of the provisional credit's amount and date within two business days and full use during investigation."}
+{"pair_id": "Kv2-011", "label": "unsupported", "rationale": "The definition requires the extension of credit to be reflected on or with a periodic statement."}
+{"pair_id": "Kv2-012", "label": "supported", "rationale": "Paragraph (c)(1) expressly requires prompt investigation and determination within ten business days of receiving an error notice."}
+{"pair_id": "Kv2-013", "label": "supported", "rationale": "Paragraph (c)(2)(ii) expressly requires the stated two-business-day notification and full use of provisionally credited funds."}
+{"pair_id": "Kv2-014", "label": "unsupported", "rationale": "The passage expressly permits up to 15 additional days when relevant consumer information arrives during the initial 30-day period."}
+{"pair_id": "Kv2-015", "label": "supported", "rationale": "Subsection (a) requires blocking within four business days after receipt of all four listed identity-theft materials."}
+{"pair_id": "Kv2-016", "label": "supported", "rationale": "Both permitted routes require either sending original-creditor information or determining that the original and current creditors are the same."}
+{"pair_id": "Kv2-017", "label": "supported", "rationale": "Paragraph (d) lists identifying information, the disputed information and basis, and reasonably required supporting materials."}
+{"pair_id": "Kv2-018", "label": "unsupported", "rationale": "The passage does not establish that the institution actually determined no error or a different error occurred."}
+{"pair_id": "Kv2-019", "label": "supported", "rationale": "Paragraph (b)(4) defines validation notice using the same written-or-electronic notice requirement."}
+{"pair_id": "Kv2-020", "label": "unsupported", "rationale": "The reseller-with-file obligation requires the consumer to identify identity-theft information in accordance with subsection (a), which the sentence omits."}
+{"pair_id": "Kv2-021", "label": "supported", "rationale": "Paragraphs (b)(1)(ii) and (iii) specify these identifying details, reasons, and available error particulars."}
+{"pair_id": "Kv2-022", "label": "supported", "rationale": "Paragraph (c)(2) prohibits a debt collector from communicating credit information it knows or should know is false."}
+{"pair_id": "Kv2-023", "label": "unsupported", "rationale": "The excerpt does not identify subparagraph (B) as a 15-day extension."}
+{"pair_id": "Kv2-024", "label": "supported", "rationale": "Paragraph (a) expressly prohibits false, deceptive, or misleading representations or means in collecting any debt."}
+{"pair_id": "Kv2-025", "label": "unsupported", "rationale": "The passage supplies the deadlines but does not establish that the referenced transactions were unauthorized."}
+{"pair_id": "Kv2-026", "label": "supported", "rationale": "Paragraph (c) requires collection to cease pending the listed original-creditor information or same-creditor determination, notification, and referral."}
+{"pair_id": "Kv2-027", "label": "supported", "rationale": "Paragraph (c)(2)(ii) requires notification within two business days after provisional crediting and full access during investigation."}
+{"pair_id": "Kv2-028", "label": "unsupported", "rationale": "Reseller status alone does not establish the exemption or blocking obligation, and the notice duty applies when carrying out the blocking obligation."}
+{"pair_id": "Kv2-029", "label": "supported", "rationale": "Subsection (a) expressly requires the four-business-day block after receipt of the four specified materials."}
+{"pair_id": "Kv2-030", "label": "supported", "rationale": "Paragraph (a)(3) requires reasonable investigation of direct disputes concerning account performance, including payment status and payment amounts."}
+{"pair_id": "Kv2-031", "label": "unsupported", "rationale": "The consent exclusion requires consent given directly to the collector and calls within seven consecutive days after receipt."}
+{"pair_id": "Kv2-032", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-033", "label": "supported", "rationale": "Paragraph (a)(3) includes statement reflections of credit for property or services not delivered to the consumer or designee as agreed."}
+{"pair_id": "Kv2-034", "label": "supported", "rationale": "Paragraph (c)(2)(i) specifies the 45-day investigation option and provisional credit of the alleged error within ten business days."}
+{"pair_id": "Kv2-035", "label": "unsupported", "rationale": "The passage restricts card issuance but does not impose a separate duty to verify how each card was issued."}
+{"pair_id": "Kv2-036", "label": "unsupported", "rationale": "The passages define billing errors but do not establish the complaint's allegations or require their evaluation as billing errors."}
+{"pair_id": "Kv2-037", "label": "unsupported", "rationale": "The passage allows a conditional extension of up to 15 days beyond the stated 30-day deadline."}
+{"pair_id": "Kv2-038", "label": "unsupported", "rationale": "The passage permits a judgment or a qualifying duplicative-dispute response instead of verification."}
+{"pair_id": "Kv2-039", "label": "unsupported", "rationale": "The correction duty is conditioned on findings after a reinvestigation under paragraph (1), which the sentence omits."}
+{"pair_id": "Kv2-040", "label": "supported", "rationale": "Paragraph (c)(2) states the 45-day option when ten business days are insufficient and specifies provisional credit within ten business days."}
+{"pair_id": "Kv2-041", "label": "unsupported", "rationale": "The passage does not establish the consumer's interest-charge dispute or identify an interest charge as an extension of credit."}
+{"pair_id": "Kv2-042", "label": "supported", "rationale": "Subsection (a) requires blocking within four business days after receiving the listed identity proof, report, identification, and statement."}
+{"pair_id": "Kv2-043", "label": "supported", "rationale": "Paragraph (a) directly prohibits false, deceptive, or misleading representations or means in debt collection."}
+{"pair_id": "Kv2-044", "label": "unsupported", "rationale": "The passage defines a billing error but does not establish that this consumer made the described request."}
+{"pair_id": "Kv2-045", "label": "unsupported", "rationale": "The passage does not establish the consumer's request or that the referenced charge is an extension of credit."}
+{"pair_id": "Kv2-046", "label": "supported", "rationale": "Paragraph (b)(2)(i) expressly prohibits falsely representing a debt's character, amount, or legal status."}
+{"pair_id": "Kv2-047", "label": "unsupported", "rationale": "The misrepresentation ground requires a material misrepresentation of fact by the consumer relevant to the blocking request."}
+{"pair_id": "Kv2-048", "label": "supported", "rationale": "Subparagraph (C) expressly disallows the 15-day extension when the specified adverse findings occur during the initial 30 days."}
+{"pair_id": "Kv2-049", "label": "supported", "rationale": "Paragraph (c)(2)(i) provides the stated investigation period, provisional-credit requirement, exceptions, and withholding allowance."}
+{"pair_id": "Kv2-050", "label": "supported", "rationale": "Paragraph (4) expressly requires review and consideration of all relevant consumer information submitted during the specified period."}
+{"pair_id": "Kv2-051", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint's obligations."}
+{"pair_id": "Kv2-052", "label": "supported", "rationale": "Paragraph (e)(3) requires completion and reporting to the consumer before the referenced FCRA period expires."}
+{"pair_id": "Kv2-053", "label": "supported", "rationale": "Paragraph (i) lists the quoted dispute statement and requires the specified order with identical or substantially similar phrasing."}
+{"pair_id": "Kv2-054", "label": "supported", "rationale": "Paragraphs (e)(1) through (3) require reasonable investigation, review of relevant consumer information, and timely completion and reporting."}
+{"pair_id": "Kv2-055", "label": "unsupported", "rationale": "The passages do not state that they fail to address the specified complaint issues."}
+{"pair_id": "Kv2-056", "label": "unsupported", "rationale": "The passage requires the written request on or before the validation period's end date."}
+{"pair_id": "Kv2-057", "label": "supported", "rationale": "Paragraph (c)(2)(i) expressly permits withholding up to $50 when both stated conditions are satisfied."}
+{"pair_id": "Kv2-058", "label": "supported", "rationale": "Paragraph (b) lists exceptions for finance-charge adjustments resulting from dispute resolution or returned payments."}
+{"pair_id": "Kv2-059", "label": "supported", "rationale": "Paragraph (c)(4) requires segregation and conditional placement at the notice's bottom under the two specified headings."}
+{"pair_id": "Kv2-060", "label": "unsupported", "rationale": "A qualifying duplicative-dispute response can permit collection to resume without sending verification or a judgment."}
+{"pair_id": "Kv2-061", "label": "supported", "rationale": "The passage states that the part imposes record-retention requirements for FDCPA administration and consumer-risk assessment and detection."}
+{"pair_id": "Kv2-062", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint."}
+{"pair_id": "Kv2-063", "label": "supported", "rationale": "Paragraph (c)(1) states that the part applies to debt collectors as defined in section 1006.2(i)."}
+{"pair_id": "Kv2-064", "label": "supported", "rationale": "Paragraph (c)(2)(i) requires the collector's name and mailing address for disputes and original-creditor requests."}
+{"pair_id": "Kv2-065", "label": "supported", "rationale": "Subparagraph (A) requires prompt deletion or modification after the specified findings and prompt notification to the furnisher."}
+{"pair_id": "Kv2-066", "label": "unsupported", "rationale": "The passages do not state that they fail to address the listed complaint allegations."}
+{"pair_id": "Kv2-067", "label": "unsupported", "rationale": "The sentence omits the consumer-financial-product condition for the earlier creditor's name and the account-number qualifications."}
+{"pair_id": "Kv2-068", "label": "supported", "rationale": "Paragraphs (v), (viii), and (ix) require the current creditor, itemization since the itemization date, and current debt amount."}
+{"pair_id": "Kv2-069", "label": "supported", "rationale": "Paragraph (d) requires account identification, the disputed information and basis, and reasonably required supporting documentation."}
+{"pair_id": "Kv2-070", "label": "unsupported", "rationale": "The passage describes procedures that qualify as reasonably adapted for a defense rather than imposing a universal duty to maintain them."}
+{"pair_id": "Kv2-071", "label": "supported", "rationale": "Paragraphs (v) through (ix) require each listed element of the debt's validation information."}
+{"pair_id": "Kv2-072", "label": "unsupported", "rationale": "The repeated-dispute ground additionally requires that the furnisher already performed its duties on the earlier dispute."}
+{"pair_id": "Kv2-073", "label": "supported", "rationale": "Paragraph (d)(2)(i) specifies written or electronic delivery in the manner required by section 1006.42."}
+{"pair_id": "Kv2-074", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint about payment drafts or resulting fees."}
+{"pair_id": "Kv2-075", "label": "unsupported", "rationale": "The requirement begins with the first statement reflecting the deferred-interest transaction and is limited to the specified open-end plans."}
+{"pair_id": "Kv2-076", "label": "supported", "rationale": "Subsection (f)(1) requires covered agencies to maintain procedures for referring identity-theft complaints and blocking requests to other such agencies."}
+{"pair_id": "Kv2-077", "label": "unsupported", "rationale": "The investigation duty requires notice pursuant to section 1681i(a)(2), rather than any notice of a dispute."}
+{"pair_id": "Kv2-078", "label": "unsupported", "rationale": "The passage conditions this duty on findings after a reinvestigation under paragraph (1)."}
+{"pair_id": "Kv2-079", "label": "unsupported", "rationale": "The passage limits these duties to collectors acting for a third party that is a creditor or other consumer-report user."}
+{"pair_id": "Kv2-080", "label": "supported", "rationale": "Paragraph (e)(2) expressly requires review of all relevant information supplied by the consumer with the dispute notice."}
+{"pair_id": "Kv2-081", "label": "unsupported", "rationale": "The sentence omits the qualifying victim request, identity and claim verification, and limitation to records controlled by the business."}
+{"pair_id": "Kv2-082", "label": "unsupported", "rationale": "Reporting to other nationwide agencies is required only for agencies to which the furnisher previously supplied the information."}
+{"pair_id": "Kv2-083", "label": "supported", "rationale": "Paragraph (c)(3)(i) states the written-dispute deadline and cessation requirement pending verification or a judgment copy."}
+{"pair_id": "Kv2-084", "label": "unsupported", "rationale": "The passages do not state that they fail to address the company's obligations in this complaint."}
+{"pair_id": "Kv2-085", "label": "unsupported", "rationale": "The blocking duty additionally requires receipt of identity proof, an identity-theft report, and the consumer's transaction-disavowal statement."}
+{"pair_id": "Kv2-086", "label": "supported", "rationale": "Paragraph (2)(A) requires the reseller to determine within five business days whether its own act or omission caused the disputed defect."}
+{"pair_id": "Kv2-087", "label": "supported", "rationale": "Subsection (f) prohibits obtaining or using a report without an authorized purpose and certification under section 1681e."}
+{"pair_id": "Kv2-088", "label": "unsupported", "rationale": "The passage states one permissive route rather than an exclusive rule and requires reassignment confirmation within 60 days using a complete and accurate database."}
+{"pair_id": "Kv2-089", "label": "unsupported", "rationale": "The passage defines validation period for the section but does not establish what the complaint references."}
+{"pair_id": "Kv2-090", "label": "supported", "rationale": "The final sentence expressly says record-retention requirements facilitate supervision and assessment and detection of consumer risks."}
+{"pair_id": "Kv2-091", "label": "unsupported", "rationale": "The passages do not state that they fail to address the complaint or the specified transaction-reporting obligations."}
+{"pair_id": "Kv2-092", "label": "supported", "rationale": "Paragraph (c) makes sending creditor information or the same-creditor notification and referral prerequisites to resuming collection."}
+{"pair_id": "Kv2-093", "label": "unsupported", "rationale": "The passages do not state that they fail to address credit reporting or fraudulent-item removal."}
+{"pair_id": "Kv2-094", "label": "unsupported", "rationale": "The sentence omits the condition for disclosing the itemization-date creditor and the qualifications allowing no account number or a truncated number."}
+{"pair_id": "Kv2-095", "label": "unsupported", "rationale": "The passages do not state that they fail to address unauthorized transactions or disputed-charge obligations."}
+{"pair_id": "Kv2-096", "label": "unsupported", "rationale": "The third party must be a creditor or other consumer-report user, a substantive limitation the sentence omits."}
+{"pair_id": "Kv2-097", "label": "unsupported", "rationale": "The passage allows qualifying creditors to provide the computation method's name and a toll-free number instead of an explanation."}
+{"pair_id": "Kv2-098", "label": "unsupported", "rationale": "The passage also permits reports filed with other government agencies deemed appropriate by the Bureau, so law-enforcement filing is not universally required."}
+{"pair_id": "Kv2-099", "label": "unsupported", "rationale": "The passage does not establish that the complaint involves a service provider or circumstances covered by these rules."}
+{"pair_id": "Kv2-100", "label": "supported", "rationale": "Subparagraph (B)(iii) expressly states the requested procedure description must include contacted furnishers' names, addresses, and reasonably available telephone numbers."}
