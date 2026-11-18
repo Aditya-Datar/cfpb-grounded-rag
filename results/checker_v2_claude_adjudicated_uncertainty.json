@@ -1,0 +1,143 @@
+{
+  "status": "PROVISIONAL: AI-adjudicated (Claude Opus 5.5, delegated by Atharva); not human-validated gold",
+  "frozen_tau": 0.99658203125,
+  "n": 100,
+  "n_supported_reference": 49,
+  "method": "Paired nonparametric bootstrap of 100 pairs, 10000 resamples, seed 0, percentile 95%; both classes required. Conditional on fixed AI reference labels; ignores adjudication uncertainty and within-complaint dependence.",
+  "shared_reader": {
+    "NLI@0.5": {
+      "balanced_accuracy": {
+        "estimate": 0.6074429771908764,
+        "ci95": [
+          0.5478191276510604,
+          0.6726214371738257
+        ]
+      },
+      "kappa_vs_gold": {
+        "estimate": 0.21166732361056362,
+        "ci95": [
+          0.09206081081081074,
+          0.3432606373554486
+        ]
+      },
+      "flagged_unsupported_recall": {
+        "estimate": 0.23529411764705882,
+        "ci95": [
+          0.125,
+          0.35714285714285715
+        ]
+      }
+    },
+    "NLI@T": {
+      "balanced_accuracy": {
+        "estimate": 0.678671468587435,
+        "ci95": [
+          0.5855037878714419,
+          0.7678571428571428
+        ]
+      },
+      "kappa_vs_gold": {
+        "estimate": 0.3582029683112715,
+        "ci95": [
+          0.17004048582995945,
+          0.5332792207792207
+        ]
+      },
+      "flagged_unsupported_recall": {
+        "estimate": 0.7450980392156863,
+        "ci95": [
+          0.6190476190476191,
+          0.86
+        ]
+      }
+    },
+    "auroc": {
+      "estimate": 0.7338935574229692,
+      "ci95": [
+        0.6322081367924528,
+        0.8289264143157263
+      ]
+    },
+    "NLI_T_minus_NLI_0.5_balanced_accuracy": {
+      "estimate": 0.07122849139655862,
+      "ci95": [
+        -0.024599112425786048,
+        0.165661786130536
+      ]
+    }
+  },
+  "source_exact_reader": {
+    "NLI@0.5": {
+      "balanced_accuracy": {
+        "estimate": 0.6074429771908764,
+        "ci95": [
+          0.5478191276510604,
+          0.6726214371738257
+        ]
+      },
+      "kappa_vs_gold": {
+        "estimate": 0.21166732361056362,
+        "ci95": [
+          0.09206081081081074,
+          0.3432606373554486
+        ]
+      },
+      "flagged_unsupported_recall": {
+        "estimate": 0.23529411764705882,
+        "ci95": [
+          0.125,
+          0.35714285714285715
+        ]
+      }
+    },
+    "NLI@T": {
+      "balanced_accuracy": {
+        "estimate": 0.6994797919167667,
+        "ci95": [
+          0.60457647531112,
+          0.788888888888889
+        ]
+      },
+      "kappa_vs_gold": {
+        "estimate": 0.39927913496195433,
+        "ci95": [
+          0.20860389610389607,
+          0.5766129032258065
+        ]
+      },
+      "flagged_unsupported_recall": {
+        "estimate": 0.7254901960784313,
+        "ci95": [
+          0.6,
+          0.8431372549019608
+        ]
+      }
+    },
+    "auroc": {
+      "estimate": 0.7338935574229692,
+      "ci95": [
+        0.6322081367924528,
+        0.8289264143157263
+      ]
+    },
+    "NLI_T_minus_NLI_0.5_balanced_accuracy": {
+      "estimate": 0.09203681472589031,
+      "ci95": [
+        -0.002020202020202033,
+        0.1868738063087722
+      ]
+    }
+  },
+  "boundary_pairs_moved_by_shared_reader": [
+    "Kv2-004",
+    "Kv2-018",
+    "Kv2-021",
+    "Kv2-064"
+  ],
+  "reference_labels_on_boundary_pairs": {
+    "Kv2-004": "supported",
+    "Kv2-018": "unsupported",
+    "Kv2-021": "supported",
+    "Kv2-064": "supported"
+  }
+}

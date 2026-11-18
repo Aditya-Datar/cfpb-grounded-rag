@@ -78,5 +78,13 @@
     "ended_utc": "2026-11-18T03:43:15.170114+00:00"
   },
   "streaming_run_status_path": "outputs/h4_v2/streaming/full_status.json",
-  "transport_note": "A completed SSE probe resolved the previously failing pair without changing model, prompt, temperature, max_tokens or cache key. Full run and provisional-reference scoring are in progress; no new judge selected."
+  "transport_note": "SSE recovered readable responses without changing inference settings. The run and one completed retry ended with 87/100 cached responses; 13 token-limit failures remain. No full-cache metrics were produced.",
+  "streaming_final_status": {
+    "state": "incomplete",
+    "readable": 87,
+    "total": 100,
+    "failed": 13,
+    "ended_utc": "2026-11-18T18:59:43.050281+00:00",
+    "audit": "results/checker_judge_v2_completion_audit.json"
+  }
 }

@@ -4,5 +4,21 @@
   "human_review_required": true,
   "shared_scorer_precision_review_required": true,
   "frozen_tau": 0.99658203125,
-  "judge_full_results_present": false
+  "judge_full_results_present": false,
+  "judge_run_state": "incomplete",
+  "judge_readable_responses": 87,
+  "judge_total_pairs": 100,
+  "judge_failed_pairs": 13,
+  "ai_references": {
+    "A_gpt_family_adjudicator": {
+      "gold": "annotation/checker_gold_v2_ai_provisional.jsonl",
+      "human_validated": false
+    },
+    "B_claude_adjudicator": {
+      "gold": "annotation/checker_gold_v2_claude_adjudicated.jsonl",
+      "human_validated": false
+    }
+  },
+  "canonical_human_gold_created": false,
+  "worksheet_filled_by": "AI (Claude Opus 5.5), delegated; tagged not human-validated"
 }

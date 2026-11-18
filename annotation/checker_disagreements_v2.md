@@ -8,6 +8,8 @@ Use the same conventions as `checker_prompt_v2.md`: support must come from the p
 
 You can also return decisions in chat as `Kv2-011: supported` (one per ID). Ask Aditya to spot-check a few decisions. No gold labels will be built until all decisions are supplied.
 
+> **Status (2026-11-18): AI-adjudicated, not human-validated.** Atharva delegated these 17 decisions to the assistant (Claude Opus 5.5) rather than deciding them himself. Each decision applies the conventions above to the passage alone; checker scores, judge outputs and run conditions were not seen. Rationales: `annotation/checker_adjudication_claude_v2.jsonl`. Close calls for a human or Aditya to spot-check: Kv2-014/Kv2-037 (must match), Kv2-076, Kv2-097. An earlier, separate AI adjudication by a GPT-family assistant (`annotation/checker_adjudication_ai_v2.jsonl`) differs on Kv2-016, Kv2-061 and Kv2-076.
+
 ## Kv2-011
 
 **Sentence:** Under 12 CFR 1026.13(a)(3), a billing error includes an extension of credit for property or services not accepted by the consumer or not delivered as agreed.
@@ -18,7 +20,7 @@ You can also return decisions in chat as `Kv2-011: supported` (one per ID). Ask 
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The definition requires the extension of credit to be reflected on or with a periodic statement.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -39,7 +41,7 @@ You can also return decisions in chat as `Kv2-011: supported` (one per ID). Ask 
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The passage expressly permits up to 15 additional days when relevant consumer information arrives during the initial 30-day period.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -65,7 +67,7 @@ Except as provided in subparagraph (C), the 30-day period described in subparagr
 - GPT-6-Astra: **supported**
 - GPT rationale: Both permitted routes require either sending original-creditor information or determining that the original and current creditors are the same.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -87,7 +89,7 @@ Except as provided in subparagraph (C), the 30-day period described in subparagr
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The reseller-with-file obligation requires the consumer to identify identity-theft information in accordance with subsection (a), which the sentence omits.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -121,7 +123,7 @@ In carrying out its obligation under paragraph (2), the reseller shall promptly 
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The excerpt does not identify subparagraph (B) as a 15-day extension.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -141,7 +143,7 @@ Subparagraph (B) shall not apply to any reinvestigation in which, during the 30-
 - GPT-6-Astra: **unsupported**
 - GPT rationale: Reseller status alone does not establish the exemption or blocking obligation, and the notice duty applies when carrying out the blocking obligation.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -175,7 +177,7 @@ In carrying out its obligation under paragraph (2), the reseller shall promptly 
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The passage allows a conditional extension of up to 15 days beyond the stated 30-day deadline.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -201,7 +203,7 @@ Except as provided in subparagraph (C), the 30-day period described in subparagr
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The correction duty is conditioned on findings after a reinvestigation under paragraph (1), which the sentence omits.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -232,7 +234,7 @@ After receiving notice pursuant to section 1681i(a)(2) of this title of a disput
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The misrepresentation ground requires a material misrepresentation of fact by the consumer relevant to the blocking request.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -261,7 +263,7 @@ For purposes of this subsection, if a consumer reporting agency rescinds a block
 - GPT-6-Astra: **unsupported**
 - GPT rationale: A qualifying duplicative-dispute response can permit collection to resume without sending verification or a judgment.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -287,7 +289,7 @@ For purposes of this subsection, if a consumer reporting agency rescinds a block
 - GPT-6-Astra: **supported**
 - GPT rationale: The passage states that the part imposes record-retention requirements for FDCPA administration and consumer-risk assessment and detection.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -307,7 +309,7 @@ For purposes of this subsection, if a consumer reporting agency rescinds a block
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The requirement begins with the first statement reflecting the deferred-interest transaction and is limited to the specified open-end plans.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -329,7 +331,7 @@ The creditor shall furnish the consumer with a periodic statement that discloses
 - GPT-6-Astra: **supported**
 - GPT rationale: Subsection (f)(1) requires covered agencies to maintain procedures for referring identity-theft complaints and blocking requests to other such agencies.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -355,7 +357,7 @@ Each consumer reporting agency described in section 1681a(p) of this title shall
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The passage conditions this duty on findings after a reinvestigation under paragraph (1).
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -386,7 +388,7 @@ After receiving notice pursuant to section 1681i(a)(2) of this title of a disput
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The third party must be a creditor or other consumer-report user, a substantive limitation the sentence omits.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -409,7 +411,7 @@ If a person acting as a debt collector (as that term is defined in subchapter V)
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The passage allows qualifying creditors to provide the computation method's name and a toll-free number instead of an explanation.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 
@@ -431,7 +433,7 @@ The creditor shall furnish the consumer with a periodic statement that discloses
 - GPT-6-Astra: **unsupported**
 - GPT rationale: The passage also permits reports filed with other government agencies deemed appropriate by the Bureau, so law-enforcement filing is not universally required.
 
-- **Adjudicated label:** 
+- **Adjudicated label:** unsupported [AI: Claude Opus 5.5, delegated by Atharva; not human-validated]
 
 **Passage:**
 

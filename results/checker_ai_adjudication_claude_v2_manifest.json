@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-18",
+  "status": "AI-adjudicated provisional (reference B); not human validated",
+  "user_request": "Atharva: \"be the judge yourself, i dont know how to do it. you can do it for me\"",
+  "n_disagreements": 17,
+  "adjudicator": "Claude Opus 5.5 (claude-opus-5-5), Claude Code session; passage, sentence and both annotator rationales only",
+  "checker_predictions_used_for_decisions": false,
+  "judge_outputs_seen": false,
+  "labels": {
+    "supported": 0,
+    "unsupported": 17
+  },
+  "agrees_with_claude": 3,
+  "agrees_with_chatgpt": 14,
+  "differs_from_reference_A": [
+    "Kv2-016",
+    "Kv2-061",
+    "Kv2-076"
+  ],
+  "close_calls_for_human_spot_check": [
+    "Kv2-014",
+    "Kv2-037",
+    "Kv2-076",
+    "Kv2-097"
+  ],
+  "worksheet": "annotation/checker_disagreements_v2.md (17 lines tagged \"[AI: Claude Opus 5.5, delegated by Atharva; not human-validated]\")",
+  "reference": "annotation/checker_gold_v2_claude_adjudicated.jsonl",
+  "canonical_gold_created": false,
+  "limitation": "Same model family as annotator A (Claude Opus 5.5); applied \"when in doubt, unsupported\" strictly, so all 17 are unsupported. Not a substitute for human adjudication.",
+  "sha256": {
+    "annotation/checker_adjudication_claude_v2.jsonl": "5a8df68bbb93cd56d8342c9b11ca804ec7b4c45b49b3520de15f3fabb74f24eb",
+    "annotation/checker_gold_v2_claude_adjudicated.jsonl": "b437c8cbcb0be7812bd6bf7d1ea170d4ed98d986d8b3753d9df679e2106d4177",
+    "annotation/checker_disagreements_v2.md": "266d3e450a97a1d63638ffa22c2a17c25bf418a2d34322da1fd89edf237cb9eb"
+  }
+}
