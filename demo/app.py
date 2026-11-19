@@ -43,9 +43,11 @@ from replay import ORACLE_RUN, ReplayRun, full_runs  # noqa: E402
 
 st.set_page_config(page_title="CFPB Complaint Triage", layout="wide")
 
-# Live retriever for "Default" mode. Set to the winner of H1 once Ishani reports it
-# (e.g. "hybrid" with its tuned alpha); "bm25" ignores alpha.
-RETRIEVER_KIND, ALPHA = "bm25", 0.5
+# Live retriever for "Default" mode: the H1 winner, hybrid mpnet with alpha 0.8 tuned on
+# the dev half (docs/tasks/results/ishani.md). Hybrid embeds the corpus once on first
+# load (cached under outputs/retrieval/embeddings); "bm25" is the fast fallback.
+RETRIEVER_KIND, ALPHA = "hybrid", 0.8
+DEFAULT_RUN = "full-hybrid_mpnet"  # preselected in "Full runs" when present
 # NLI cutoffs offered in "Full runs": the run threshold, and Atharva's cutoff frozen
 # on checker set 1 (docs/tasks/results/atharva.md).
 FROZEN_CUTOFF = 0.99658203125
@@ -236,7 +238,8 @@ with st.sidebar:
     if mode == MODES[2]:
         precomputed = get_precomputed(st.selectbox("Rankings file", rankings))
     if mode == MODES[3]:
-        replay = get_replay(st.selectbox("Retrieved run", runs))
+        replay = get_replay(st.selectbox("Retrieved run", runs,
+                                         index=runs.index(DEFAULT_RUN) if DEFAULT_RUN in runs else 0))
         oracle_replay = get_replay(ORACLE_RUN)
         cutoffs = {f"{replay.run_threshold:g} (run threshold)": replay.run_threshold,
                    f"{FROZEN_CUTOFF:.4f} (frozen on checker set 1)": FROZEN_CUTOFF}
