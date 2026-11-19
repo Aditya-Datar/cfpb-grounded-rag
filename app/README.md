@@ -52,7 +52,7 @@ For frontend work, run `npm run dev` in `app/frontend` (port 5173, proxies `/api
 | `NVIDIA_API_KEY` | none | Without it, live drafting is off; seeded drafts still work |
 | `CFPB_GENERATOR_MODEL` | `nvidia/nemotron-3.5-super-vl-120b-a12b` | Drafting model. The project's original model was retired by NVIDIA on 2026-10-03 |
 | `CFPB_NLI_CUTOFF` | 0.99658203125 | Atharva's cutoff T |
-| `CFPB_RETRIEVER` | `bm25` | Set `hybrid` and `CFPB_HYBRID_ALPHA` once H1 names a winner |
+| `CFPB_RETRIEVER` | `hybrid` (alpha 0.8) | The H1 winner: mpnet + BM25. `bm25` or `dense` also work |
 
 ## Data in the demo
 

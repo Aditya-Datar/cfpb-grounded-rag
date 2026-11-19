@@ -1,0 +1,1627 @@
+{
+  "project": "CSCI 544 Group 36: Regulation-Grounded Triage and Response Drafting for CFPB Consumer Complaints",
+  "built": "2026-11-18",
+  "git_commit": "6a2ccff",
+  "builder": "scripts/build_final_results.py",
+  "data": {
+    "gold_complaints": 198,
+    "in_scope": 127,
+    "by_regulation": {
+      "NONE": 71,
+      "FCRA": 36,
+      "F": 30,
+      "V": 5,
+      "Z": 27,
+      "E": 29
+    },
+    "split": "metrics.half(complaint_id): 0 = dev (tuning), 1 = report",
+    "labels": "silver gold labels from adjudicated LLM annotation (annotation/ANNOTATION_GUIDE.md)"
+  },
+  "caveats": [
+    "Generator changed: the frozen Nemotron model was retired on 2026-10-03; all final drafts use nvidia/nemotron-3.5-super-vl-120b-a12b. Midterm pilot numbers are not comparable.",
+    "Checker set 2 labels are AI-adjudicated and not human-validated.",
+    "T was tuned on checker set 1 (drafts from the retired model); set 2 is the transfer test.",
+    "Report-half samples are small (65 in-scope retrieval items, 91 for H5, 100 checker pairs); most differences between strong systems are within noise."
+  ],
+  "classifier": {
+    "source": "results/classifier_test_metrics.json",
+    "model": "DistilBERT",
+    "test_n": 13905,
+    "product": {
+      "macro_f1": 0.8077,
+      "accuracy": 0.8429
+    },
+    "issue": {
+      "accuracy": 0.5809,
+      "macro_f1_all_issues": 0.3248,
+      "n_issues": 84,
+      "macro_f1_issues_with_100_plus_test_examples": 0.5376
+    }
+  },
+  "H1_retrieval": {
+    "source": [
+      "results/retrieval_bm25.json",
+      "results/retrieval_mpnet.json",
+      "results/retrieval_bge.json",
+      "results/retrieval_e5.json"
+    ],
+    "split": "report half (metrics.half == 1), in-scope complaints",
+    "alpha": "tuned on the dev half by MRR",
+    "with_fcra": {
+      "n_chunks": 2954,
+      "retrievers": {
+        "bm25": {
+          "hit@1": {
+            "estimate": 0.0615,
+            "ci95": [
+              0.0154,
+              0.1231
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.2462,
+            "ci95": [
+              0.1385,
+              0.3538
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.3385,
+            "ci95": [
+              0.2308,
+              0.4615
+            ]
+          },
+          "mrr": {
+            "estimate": 0.1639,
+            "ci95": [
+              0.1077,
+              0.2281
+            ]
+          },
+          "n": 65
+        },
+        "dense_mpnet": {
+          "hit@1": {
+            "estimate": 0.2,
+            "ci95": [
+              0.1077,
+              0.3077
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.6154,
+            "ci95": [
+              0.4923,
+              0.7385
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.8308,
+            "ci95": [
+              0.7385,
+              0.9231
+            ]
+          },
+          "mrr": {
+            "estimate": 0.3928,
+            "ci95": [
+              0.3151,
+              0.4796
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.3692,
+            "ci95": [
+              0.2308,
+              0.5077
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.2288,
+            "ci95": [
+              0.145,
+              0.3149
+            ]
+          }
+        },
+        "hybrid_mpnet": {
+          "hit@1": {
+            "estimate": 0.2,
+            "ci95": [
+              0.1077,
+              0.3077
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.6615,
+            "ci95": [
+              0.5385,
+              0.7692
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.8,
+            "ci95": [
+              0.7077,
+              0.8923
+            ]
+          },
+          "mrr": {
+            "estimate": 0.4023,
+            "ci95": [
+              0.326,
+              0.4881
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.4154,
+            "ci95": [
+              0.2923,
+              0.5385
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.2384,
+            "ci95": [
+              0.1569,
+              0.324
+            ]
+          },
+          "alpha": 0.8
+        },
+        "dense_bge": {
+          "hit@1": {
+            "estimate": 0.1692,
+            "ci95": [
+              0.0769,
+              0.2615
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.5692,
+            "ci95": [
+              0.4462,
+              0.6923
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.7077,
+            "ci95": [
+              0.6,
+              0.8154
+            ]
+          },
+          "mrr": {
+            "estimate": 0.3333,
+            "ci95": [
+              0.2563,
+              0.4155
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.3231,
+            "ci95": [
+              0.1846,
+              0.4615
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.1694,
+            "ci95": [
+              0.0804,
+              0.2593
+            ]
+          }
+        },
+        "hybrid_bge": {
+          "hit@1": {
+            "estimate": 0.1692,
+            "ci95": [
+              0.0769,
+              0.2615
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.5385,
+            "ci95": [
+              0.4154,
+              0.6615
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.7077,
+            "ci95": [
+              0.6,
+              0.8154
+            ]
+          },
+          "mrr": {
+            "estimate": 0.3286,
+            "ci95": [
+              0.251,
+              0.4117
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.2923,
+            "ci95": [
+              0.1538,
+              0.4308
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.1647,
+            "ci95": [
+              0.0765,
+              0.2542
+            ]
+          },
+          "alpha": 0.9
+        },
+        "dense_e5": {
+          "hit@1": {
+            "estimate": 0.1231,
+            "ci95": [
+              0.0462,
+              0.2
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.4308,
+            "ci95": [
+              0.3077,
+              0.5538
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.6462,
+            "ci95": [
+              0.5231,
+              0.7538
+            ]
+          },
+          "mrr": {
+            "estimate": 0.2721,
+            "ci95": [
+              0.2017,
+              0.3484
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.1846,
+            "ci95": [
+              0.0308,
+              0.3385
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.1082,
+            "ci95": [
+              0.0162,
+              0.1972
+            ]
+          }
+        },
+        "hybrid_e5": {
+          "hit@1": {
+            "estimate": 0.1231,
+            "ci95": [
+              0.0462,
+              0.2
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.4923,
+            "ci95": [
+              0.3692,
+              0.6154
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.6923,
+            "ci95": [
+              0.5846,
+              0.8
+            ]
+          },
+          "mrr": {
+            "estimate": 0.2858,
+            "ci95": [
+              0.2153,
+              0.3622
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.2462,
+            "ci95": [
+              0.1077,
+              0.3846
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.1218,
+            "ci95": [
+              0.0374,
+              0.2071
+            ]
+          },
+          "alpha": 0.8
+        }
+      }
+    },
+    "without_fcra": {
+      "n_chunks": 2629,
+      "retrievers": {
+        "bm25": {
+          "hit@1": {
+            "estimate": 0.0615,
+            "ci95": [
+              0.0154,
+              0.1231
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.1846,
+            "ci95": [
+              0.0923,
+              0.2769
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.2769,
+            "ci95": [
+              0.1692,
+              0.3846
+            ]
+          },
+          "mrr": {
+            "estimate": 0.1301,
+            "ci95": [
+              0.0747,
+              0.1944
+            ]
+          },
+          "n": 65
+        },
+        "dense_mpnet": {
+          "hit@1": {
+            "estimate": 0.2308,
+            "ci95": [
+              0.1385,
+              0.3385
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.5846,
+            "ci95": [
+              0.4615,
+              0.7077
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.6615,
+            "ci95": [
+              0.5538,
+              0.7692
+            ]
+          },
+          "mrr": {
+            "estimate": 0.3747,
+            "ci95": [
+              0.2843,
+              0.468
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.4,
+            "ci95": [
+              0.2769,
+              0.5231
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.2447,
+            "ci95": [
+              0.1624,
+              0.334
+            ]
+          }
+        },
+        "hybrid_mpnet": {
+          "hit@1": {
+            "estimate": 0.2308,
+            "ci95": [
+              0.1385,
+              0.3385
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.5846,
+            "ci95": [
+              0.4615,
+              0.7077
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.6615,
+            "ci95": [
+              0.5538,
+              0.7692
+            ]
+          },
+          "mrr": {
+            "estimate": 0.3747,
+            "ci95": [
+              0.2843,
+              0.468
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.4,
+            "ci95": [
+              0.2769,
+              0.5231
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.2447,
+            "ci95": [
+              0.1624,
+              0.334
+            ]
+          },
+          "alpha": 1.0
+        },
+        "dense_bge": {
+          "hit@1": {
+            "estimate": 0.1385,
+            "ci95": [
+              0.0615,
+              0.2308
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.4,
+            "ci95": [
+              0.2769,
+              0.5231
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.5231,
+            "ci95": [
+              0.4,
+              0.6462
+            ]
+          },
+          "mrr": {
+            "estimate": 0.2495,
+            "ci95": [
+              0.1734,
+              0.3305
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.2154,
+            "ci95": [
+              0.0923,
+              0.3538
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.1194,
+            "ci95": [
+              0.0368,
+              0.2072
+            ]
+          }
+        },
+        "hybrid_bge": {
+          "hit@1": {
+            "estimate": 0.1231,
+            "ci95": [
+              0.0462,
+              0.2
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.3538,
+            "ci95": [
+              0.2462,
+              0.4769
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.5231,
+            "ci95": [
+              0.4,
+              0.6462
+            ]
+          },
+          "mrr": {
+            "estimate": 0.2421,
+            "ci95": [
+              0.168,
+              0.322
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.1692,
+            "ci95": [
+              0.0615,
+              0.2769
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.112,
+            "ci95": [
+              0.0516,
+              0.1788
+            ]
+          },
+          "alpha": 0.7
+        },
+        "dense_e5": {
+          "hit@1": {
+            "estimate": 0.0923,
+            "ci95": [
+              0.0308,
+              0.1692
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.2923,
+            "ci95": [
+              0.1846,
+              0.4
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.4615,
+            "ci95": [
+              0.3385,
+              0.5846
+            ]
+          },
+          "mrr": {
+            "estimate": 0.2016,
+            "ci95": [
+              0.1348,
+              0.2751
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.1077,
+            "ci95": [
+              -0.0154,
+              0.2308
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.0716,
+            "ci95": [
+              -0.0094,
+              0.1532
+            ]
+          }
+        },
+        "hybrid_e5": {
+          "hit@1": {
+            "estimate": 0.0769,
+            "ci95": [
+              0.0154,
+              0.1538
+            ]
+          },
+          "hit@5": {
+            "estimate": 0.3231,
+            "ci95": [
+              0.2154,
+              0.4462
+            ]
+          },
+          "hit@10": {
+            "estimate": 0.5077,
+            "ci95": [
+              0.3846,
+              0.6308
+            ]
+          },
+          "mrr": {
+            "estimate": 0.2061,
+            "ci95": [
+              0.1426,
+              0.2761
+            ]
+          },
+          "n": 65,
+          "hit@5_gain_vs_bm25": {
+            "estimate": 0.1385,
+            "ci95": [
+              0.0154,
+              0.2615
+            ]
+          },
+          "mrr_gain_vs_bm25": {
+            "estimate": 0.076,
+            "ci95": [
+              0.0064,
+              0.1495
+            ]
+          },
+          "alpha": 0.8
+        }
+      }
+    },
+    "best_retriever": {
+      "name": "hybrid_mpnet",
+      "rule": "report-half hit@5 with FCRA, ties by MRR (docs/tasks/ishani.md)",
+      "note": "picked on the numbers it is reported on, so its lead is optimistic; hybrid mpnet minus dense mpnet hit@5 +0.046 [-0.031, +0.123] (docs/tasks/results/ishani_supplement/h1_supplement.json)"
+    },
+    "verdict": {
+      "hypothesis": "Dense or hybrid retrieval puts the gold section in the top 5 more often than BM25.",
+      "supported": true,
+      "detail": "with FCRA, all 6 dense/hybrid hit@5 gains over BM25 have CIs above 0; best hybrid_mpnet hit@5 0.6615 vs BM25 0.2462"
+    }
+  },
+  "H2_H3_attribution": {
+    "source": "results/attribution_full_{bm25,hybrid_mpnet}[_tau0.9966].json",
+    "generator": "nvidia/nemotron-3.5-super-vl-120b-a12b (the frozen nemotron-3-super-120b-a12b was retired by NVIDIA on 2026-10-03); temperature 0, prompt v1-9d0f038c, k = 5",
+    "n_complaints": 127,
+    "conditions": {
+      "bm25@0.5": {
+        "failed_generations": 0,
+        "gold_section_in_retrieved_top5": 0.2598,
+        "retrieved": {
+          "n_sentences": 326,
+          "share_supported_micro": 0.8988,
+          "share_supported_macro": 0.814,
+          "share_supported_and_gold_section_micro": 0.184,
+          "share_supported_and_gold_section_macro": 0.1451
+        },
+        "oracle": {
+          "n_sentences": 511,
+          "share_supported_micro": 0.8708,
+          "share_supported_macro": 0.849,
+          "share_supported_and_gold_section_micro": 0.8708,
+          "share_supported_and_gold_section_macro": 0.849
+        },
+        "gap_supported": {
+          "estimate": 0.0349,
+          "ci95": [
+            -0.0394,
+            0.1114
+          ]
+        },
+        "gap_supported_and_gold_section": {
+          "estimate": 0.7038,
+          "ci95": [
+            0.6391,
+            0.766
+          ]
+        },
+        "gap_supported_by_retrieval_hit": {
+          "hit": {
+            "n": 33,
+            "mean_gap": -0.04393939393939394
+          },
+          "miss": {
+            "n": 94,
+            "mean_gap": 0.06258865248226951
+          }
+        }
+      },
+      "bm25@T": {
+        "failed_generations": 0,
+        "gold_section_in_retrieved_top5": 0.2598,
+        "retrieved": {
+          "n_sentences": 326,
+          "share_supported_micro": 0.4877,
+          "share_supported_macro": 0.3478,
+          "share_supported_and_gold_section_micro": 0.0951,
+          "share_supported_and_gold_section_macro": 0.0735
+        },
+        "oracle": {
+          "n_sentences": 511,
+          "share_supported_micro": 0.5421,
+          "share_supported_macro": 0.5157,
+          "share_supported_and_gold_section_micro": 0.5421,
+          "share_supported_and_gold_section_macro": 0.5157
+        },
+        "gap_supported": {
+          "estimate": 0.168,
+          "ci95": [
+            0.0793,
+            0.2534
+          ]
+        },
+        "gap_supported_and_gold_section": {
+          "estimate": 0.4423,
+          "ci95": [
+            0.3804,
+            0.503
+          ]
+        },
+        "gap_supported_by_retrieval_hit": {
+          "hit": {
+            "n": 33,
+            "mean_gap": -0.03232323232323233
+          },
+          "miss": {
+            "n": 94,
+            "mean_gap": 0.23829787234042552
+          }
+        }
+      },
+      "hybrid_mpnet@0.5": {
+        "failed_generations": 0,
+        "gold_section_in_retrieved_top5": 0.5512,
+        "retrieved": {
+          "n_sentences": 421,
+          "share_supported_micro": 0.924,
+          "share_supported_macro": 0.918,
+          "share_supported_and_gold_section_micro": 0.3207,
+          "share_supported_and_gold_section_macro": 0.3014
+        },
+        "oracle": {
+          "n_sentences": 511,
+          "share_supported_micro": 0.8708,
+          "share_supported_macro": 0.849,
+          "share_supported_and_gold_section_micro": 0.8708,
+          "share_supported_and_gold_section_macro": 0.849
+        },
+        "gap_supported": {
+          "estimate": -0.069,
+          "ci95": [
+            -0.1231,
+            -0.0161
+          ]
+        },
+        "gap_supported_and_gold_section": {
+          "estimate": 0.5475,
+          "ci95": [
+            0.4656,
+            0.6286
+          ]
+        },
+        "gap_supported_by_retrieval_hit": {
+          "hit": {
+            "n": 70,
+            "mean_gap": -0.029761904761904764
+          },
+          "miss": {
+            "n": 57,
+            "mean_gap": -0.11725146198830408
+          }
+        }
+      },
+      "hybrid_mpnet@T": {
+        "failed_generations": 0,
+        "gold_section_in_retrieved_top5": 0.5512,
+        "retrieved": {
+          "n_sentences": 421,
+          "share_supported_micro": 0.5131,
+          "share_supported_macro": 0.4575,
+          "share_supported_and_gold_section_micro": 0.1663,
+          "share_supported_and_gold_section_macro": 0.1437
+        },
+        "oracle": {
+          "n_sentences": 511,
+          "share_supported_micro": 0.5421,
+          "share_supported_macro": 0.5157,
+          "share_supported_and_gold_section_micro": 0.5421,
+          "share_supported_and_gold_section_macro": 0.5157
+        },
+        "gap_supported": {
+          "estimate": 0.0583,
+          "ci95": [
+            -0.018,
+            0.1323
+          ]
+        },
+        "gap_supported_and_gold_section": {
+          "estimate": 0.372,
+          "ci95": [
+            0.302,
+            0.4377
+          ]
+        },
+        "gap_supported_by_retrieval_hit": {
+          "hit": {
+            "n": 70,
+            "mean_gap": 0.05261904761904762
+          },
+          "miss": {
+            "n": 57,
+            "mean_gap": 0.0652046783625731
+          }
+        }
+      }
+    },
+    "verdicts": {
+      "H2": {
+        "hypothesis": "Drafts from the oracle section are more often supported and about the right section than drafts from retrieved passages.",
+        "supported": true,
+        "detail": "gap in supported-and-gold-section positive with CI above 0 for both retrievers at both cutoffs; partly by construction (oracle passages are all gold-section)"
+      },
+      "H3": {
+        "hypothesis": "Even with the oracle section, a measurable share of sentences is unsupported.",
+        "supported": true,
+        "unsupported_share_oracle": {
+          "at_0.5": 0.1292,
+          "at_T": 0.4579
+        },
+        "detail": "share depends strongly on the cutoff; no CI on the share itself"
+      }
+    }
+  },
+  "H4_checker": {
+    "source": [
+      "results/checker_h4_set1_fixed_tau_audit.json",
+      "results/checker_benchmark_v2.json",
+      "results/llm_judge_mistral-large-4-1t-a52b_v2.json",
+      "results/checker_h4_v2_final_uncertainty.json",
+      "results/checker_annotation_agreement_v2.json"
+    ],
+    "frozen_cutoff_T": 0.99658203125,
+    "set1": {
+      "n": 50,
+      "labels": "adjudicated by the team (2026-10-20)",
+      "note": "T was chosen on set 1, so NLI@T here is optimistic",
+      "nli@0.5": {
+        "balanced_accuracy": {
+          "estimate": 0.625,
+          "ci95": [
+            0.5417,
+            0.7143
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.2574,
+          "ci95": [
+            0.0864,
+            0.4538
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.25,
+          "ci95": [
+            0.0833,
+            0.4286
+          ]
+        },
+        "auroc": {
+          "estimate": 0.8429,
+          "ci95": [
+            0.715,
+            0.9483
+          ]
+        }
+      },
+      "nli@T": {
+        "balanced_accuracy": {
+          "estimate": 0.7981,
+          "ci95": [
+            0.68,
+            0.901
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.5981,
+          "ci95": [
+            0.3589,
+            0.8
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.75,
+          "ci95": [
+            0.5652,
+            0.913
+          ]
+        },
+        "auroc": {
+          "estimate": 0.8429,
+          "ci95": [
+            0.715,
+            0.9483
+          ]
+        }
+      },
+      "nli@T_exact_source_decoding": {
+        "balanced_accuracy": {
+          "estimate": 0.8173,
+          "ci95": [
+            0.7013,
+            0.9188
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.6377,
+          "ci95": [
+            0.4019,
+            0.8379
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.75,
+          "ci95": [
+            0.5652,
+            0.913
+          ]
+        },
+        "auroc": {
+          "estimate": 0.8429,
+          "ci95": [
+            0.715,
+            0.9483
+          ]
+        }
+      },
+      "judge_deepseek_v4.1_flash": {
+        "balanced_accuracy": {
+          "estimate": 0.7131,
+          "ci95": [
+            0.5885,
+            0.8279
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.4318,
+          "ci95": [
+            0.1791,
+            0.6656
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.5417,
+          "ci95": [
+            0.3333,
+            0.7391
+          ]
+        },
+        "auroc": {
+          "estimate": 0.8381,
+          "ci95": [
+            0.7232,
+            0.9283
+          ]
+        }
+      }
+    },
+    "set2": {
+      "n": 100,
+      "held_out": "no sentence shared with set 1; 50 BM25-retrieved and 50 oracle pairs",
+      "labels": "AI-adjudicated (Claude worksheet), not human-validated; accepted by Atharva",
+      "annotator_agreement": {
+        "agreement": 0.83,
+        "cohen_kappa": 0.6564
+      },
+      "nli@0.5": {
+        "balanced_accuracy": {
+          "estimate": 0.6074,
+          "ci95": [
+            0.5478,
+            0.6726
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.2117,
+          "ci95": [
+            0.0921,
+            0.3433
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.2353,
+          "ci95": [
+            0.125,
+            0.3571
+          ]
+        },
+        "auroc": {
+          "estimate": 0.7339,
+          "ci95": [
+            0.6322,
+            0.8289
+          ]
+        }
+      },
+      "nli@T": {
+        "balanced_accuracy": {
+          "estimate": 0.6787,
+          "ci95": [
+            0.5855,
+            0.7679
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.3582,
+          "ci95": [
+            0.17,
+            0.5333
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.7451,
+          "ci95": [
+            0.619,
+            0.86
+          ]
+        },
+        "auroc": {
+          "estimate": 0.7339,
+          "ci95": [
+            0.6322,
+            0.8289
+          ]
+        }
+      },
+      "judge_mistral_large_4": {
+        "balanced_accuracy": {
+          "estimate": 0.6737,
+          "ci95": [
+            0.5889,
+            0.7571
+          ]
+        },
+        "kappa_vs_gold": {
+          "estimate": 0.3447,
+          "ci95": [
+            0.1732,
+            0.5112
+          ]
+        },
+        "flagged_unsupported_recall": {
+          "estimate": 0.4902,
+          "ci95": [
+            0.3542,
+            0.625
+          ]
+        },
+        "auroc": {
+          "estimate": 0.6947,
+          "ci95": [
+            0.6047,
+            0.7823
+          ]
+        }
+      },
+      "judge_minus_nli@T_balanced_accuracy": {
+        "estimate": -0.005,
+        "ci95": [
+          -0.1144,
+          0.11
+        ]
+      },
+      "note": "DeepSeek V4.1 Flash returned HTTP 410 (retired) for set 2"
+    },
+    "verdict": {
+      "hypothesis": "The NLI checker agrees with the reference labels well enough to flag unsupported sentences; if not, an LLM judge does better.",
+      "supported": "partly",
+      "detail": "held-out set 2: NLI@T balanced accuracy 0.679, catches 74.5% of unsupported sentences; the LLM judge is not better (difference CI includes 0). Moderate agreement, not reliable enough to replace review: the checker is a screening aid."
+    }
+  },
+  "H5_scope_detection": {
+    "source": [
+      "results/abstention_mpnet.json",
+      "results/abstention_mpnet_no_fcra.json"
+    ],
+    "positive_class": "gold_regulation == NONE",
+    "baseline_midterm_bm25_top_auroc": 0.43,
+    "with_fcra": {
+      "n": 198,
+      "n_none": 71,
+      "n_report_half": 91,
+      "single_signal_auroc_report_half": {
+        "bm25_top": {
+          "estimate": 0.3763,
+          "ci95": [
+            0.2436,
+            0.5156
+          ]
+        },
+        "bm25_margin": {
+          "estimate": 0.4645,
+          "ci95": [
+            0.3254,
+            0.5927
+          ]
+        },
+        "bm25_top_z": {
+          "estimate": 0.5941,
+          "ci95": [
+            0.4597,
+            0.7177
+          ]
+        },
+        "bm25_top5_mean": {
+          "estimate": 0.3722,
+          "ci95": [
+            0.2442,
+            0.5118
+          ]
+        },
+        "dense_top": {
+          "estimate": 0.6604,
+          "ci95": [
+            0.5391,
+            0.7857
+          ]
+        },
+        "dense_margin": {
+          "estimate": 0.4568,
+          "ci95": [
+            0.3354,
+            0.5835
+          ]
+        },
+        "dense_top_z": {
+          "estimate": 0.5438,
+          "ci95": [
+            0.4002,
+            0.6887
+          ]
+        },
+        "dense_top5_mean": {
+          "estimate": 0.6663,
+          "ci95": [
+            0.5448,
+            0.7929
+          ]
+        },
+        "n_words (longer = NONE)": {
+          "estimate": 0.6231,
+          "ci95": [
+            0.4861,
+            0.7552
+          ]
+        },
+        "n_words (shorter = NONE)": {
+          "estimate": 0.3769,
+          "ci95": [
+            0.2448,
+            0.5139
+          ]
+        }
+      },
+      "logistic_regression": {
+        "auroc_report_half": {
+          "estimate": 0.7402,
+          "ci95": [
+            0.6254,
+            0.8509
+          ]
+        },
+        "cv_5fold_x20_auroc": {
+          "mean": 0.7317,
+          "sd": 0.0761
+        },
+        "threshold_dev": 0.3863,
+        "precision": 0.44,
+        "recall": 0.8462,
+        "f1": 0.5789,
+        "true_flags": 22,
+        "false_flags": 28,
+        "false_per_true_flag": 1.27
+      }
+    },
+    "without_fcra": {
+      "n": 198,
+      "n_none": 71,
+      "n_report_half": 91,
+      "single_signal_auroc_report_half": {
+        "bm25_top": {
+          "estimate": 0.3698,
+          "ci95": [
+            0.2402,
+            0.505
+          ]
+        },
+        "bm25_margin": {
+          "estimate": 0.5012,
+          "ci95": [
+            0.3542,
+            0.6473
+          ]
+        },
+        "bm25_top_z": {
+          "estimate": 0.5556,
+          "ci95": [
+            0.4213,
+            0.6803
+          ]
+        },
+        "bm25_top5_mean": {
+          "estimate": 0.368,
+          "ci95": [
+            0.2404,
+            0.5039
+          ]
+        },
+        "dense_top": {
+          "estimate": 0.6172,
+          "ci95": [
+            0.4875,
+            0.7426
+          ]
+        },
+        "dense_margin": {
+          "estimate": 0.4627,
+          "ci95": [
+            0.3442,
+            0.5911
+          ]
+        },
+        "dense_top_z": {
+          "estimate": 0.5627,
+          "ci95": [
+            0.4275,
+            0.6944
+          ]
+        },
+        "dense_top5_mean": {
+          "estimate": 0.6237,
+          "ci95": [
+            0.4999,
+            0.7506
+          ]
+        },
+        "n_words (longer = NONE)": {
+          "estimate": 0.6231,
+          "ci95": [
+            0.4861,
+            0.7552
+          ]
+        },
+        "n_words (shorter = NONE)": {
+          "estimate": 0.3769,
+          "ci95": [
+            0.2448,
+            0.5139
+          ]
+        }
+      },
+      "logistic_regression": {
+        "auroc_report_half": {
+          "estimate": 0.632,
+          "ci95": [
+            0.5103,
+            0.755
+          ]
+        },
+        "cv_5fold_x20_auroc": {
+          "mean": 0.6859,
+          "sd": 0.0803
+        },
+        "threshold_dev": 0.2717,
+        "precision": 0.3281,
+        "recall": 0.8077,
+        "f1": 0.4667,
+        "true_flags": 21,
+        "false_flags": 43,
+        "false_per_true_flag": 2.05
+      }
+    },
+    "exploratory_rechecks": {
+      "status": "post hoc, after seeing report-half results (docs/tasks/results/gagan.md Secs. 4-7)",
+      "logreg_minus_best_single_signal_auroc": {
+        "estimate": 0.074,
+        "ci95": [
+          -0.005,
+          0.167
+        ]
+      },
+      "bm25_top_vs_n_words_spearman": 0.986,
+      "with_minus_without_fcra_auroc": {
+        "all_91": {
+          "estimate": 0.108,
+          "ci95": [
+            0.018,
+            0.202
+          ]
+        },
+        "excluding_fcra_gold": {
+          "estimate": 0.085,
+          "ci95": [
+            -0.012,
+            0.189
+          ]
+        }
+      }
+    },
+    "verdict": {
+      "hypothesis": "Retrieval confidence flags complaints no regulation covers, better than the BM25 top score (AUROC 0.43).",
+      "supported": true,
+      "detail": "logistic regression AUROC 0.7402 [0.6254, 0.8509], CI above 0.5 and 0.43; but 1.27 wrong referrals per correct one, so useful as a prompt, not for automatic abstention"
+    }
+  },
+  "ablations": {
+    "source": [
+      "results/ablation_chunking.json",
+      "results/retrieval_{struct700,struct1400,struct2800,fixed200,section}.json"
+    ],
+    "chunking": {
+      "baseline": "struct1400",
+      "corpus": "regulations only (no FCRA)",
+      "n": 65,
+      "paired_difference_alternative_minus_baseline": {
+        "struct700": {
+          "bm25": {
+            "hit@5": {
+              "estimate": -0.0615,
+              "ci95": [
+                -0.1385,
+                0.0
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0223,
+              "ci95": [
+                -0.0611,
+                0.0096
+              ]
+            }
+          },
+          "dense": {
+            "hit@5": {
+              "estimate": -0.1077,
+              "ci95": [
+                -0.2,
+                -0.0154
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0446,
+              "ci95": [
+                -0.1042,
+                0.0148
+              ]
+            }
+          },
+          "hybrid": {
+            "hit@5": {
+              "estimate": -0.1077,
+              "ci95": [
+                -0.2,
+                -0.0154
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0446,
+              "ci95": [
+                -0.1042,
+                0.0148
+              ]
+            }
+          }
+        },
+        "struct2800": {
+          "bm25": {
+            "hit@5": {
+              "estimate": 0.0154,
+              "ci95": [
+                -0.0769,
+                0.1077
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0217,
+              "ci95": [
+                -0.0657,
+                0.0164
+              ]
+            }
+          },
+          "dense": {
+            "hit@5": {
+              "estimate": -0.0308,
+              "ci95": [
+                -0.1231,
+                0.0615
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0574,
+              "ci95": [
+                -0.1074,
+                -0.0173
+              ]
+            }
+          },
+          "hybrid": {
+            "hit@5": {
+              "estimate": -0.0308,
+              "ci95": [
+                -0.1231,
+                0.0615
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0574,
+              "ci95": [
+                -0.1074,
+                -0.0173
+              ]
+            }
+          }
+        },
+        "fixed200": {
+          "bm25": {
+            "hit@5": {
+              "estimate": -0.0769,
+              "ci95": [
+                -0.1538,
+                0.0
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0136,
+              "ci95": [
+                -0.0496,
+                0.0241
+              ]
+            }
+          },
+          "dense": {
+            "hit@5": {
+              "estimate": -0.1692,
+              "ci95": [
+                -0.2615,
+                -0.0769
+              ]
+            },
+            "mrr": {
+              "estimate": -0.1008,
+              "ci95": [
+                -0.1747,
+                -0.0326
+              ]
+            }
+          },
+          "hybrid": {
+            "hit@5": {
+              "estimate": -0.1538,
+              "ci95": [
+                -0.2462,
+                -0.0769
+              ]
+            },
+            "mrr": {
+              "estimate": -0.1026,
+              "ci95": [
+                -0.1648,
+                -0.045
+              ]
+            }
+          }
+        },
+        "section": {
+          "bm25": {
+            "hit@5": {
+              "estimate": -0.0615,
+              "ci95": [
+                -0.1538,
+                0.0308
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0246,
+              "ci95": [
+                -0.0874,
+                0.0373
+              ]
+            }
+          },
+          "dense": {
+            "hit@5": {
+              "estimate": -0.0769,
+              "ci95": [
+                -0.2,
+                0.0308
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0693,
+              "ci95": [
+                -0.1459,
+                0.0019
+              ]
+            }
+          },
+          "hybrid": {
+            "hit@5": {
+              "estimate": 0.0,
+              "ci95": [
+                -0.1077,
+                0.1077
+              ]
+            },
+            "mrr": {
+              "estimate": -0.0004,
+              "ci95": [
+                -0.0814,
+                0.0796
+              ]
+            }
+          }
+        }
+      },
+      "finding": "structure-aware struct1400 beats fixed 200-word windows for dense and hybrid (CIs below 0); whole sections are indistinguishable for hybrid"
+    },
+    "fcra_distraction": {
+      "population": "gold_regulation not in {NONE, FCRA} and dev_half == False",
+      "n": 47,
+      "with_minus_without_fcra": {
+        "bm25": {
+          "hit@5": {
+            "estimate": -0.0638,
+            "ci95": [
+              -0.1489,
+              0.0
+            ]
+          },
+          "mrr": {
+            "estimate": -0.046,
+            "ci95": [
+              -0.0796,
+              -0.0189
+            ]
+          }
+        },
+        "dense": {
+          "hit@5": {
+            "estimate": -0.1702,
+            "ci95": [
+              -0.2979,
+              -0.0638
+            ]
+          },
+          "mrr": {
+            "estimate": -0.14,
+            "ci95": [
+              -0.1954,
+              -0.0886
+            ]
+          }
+        },
+        "hybrid": {
+          "hit@5": {
+            "estimate": -0.1702,
+            "ci95": [
+              -0.2766,
+              -0.0638
+            ]
+          },
+          "mrr": {
+            "estimate": -0.1142,
+            "ci95": [
+              -0.1788,
+              -0.0561
+            ]
+          }
+        }
+      },
+      "finding": "adding FCRA chunks lowers dense and hybrid hit@5 on non-FCRA complaints"
+    }
+  },
+  "summary": {
+    "H1": true,
+    "H2": true,
+    "H3": true,
+    "H4": "partly",
+    "H5": true
+  }
+}

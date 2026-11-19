@@ -62,13 +62,16 @@ export interface Stats {
   overdue: number; due_soon: number; scope_flags: number; drafts: number; sentences: number; flagged_sentences: number;
 }
 
+export interface Est { estimate: number; ci95: [number, number] }
+
 export interface About {
   health: Health;
   scope_model: { name: string; threshold: number; source: string;
     report_half: { n: number; n_none: number; auroc: number; true_flags: number; false_flags: number } } | null;
-  checker: { n: number; auroc: number; at_0_5: Record<string, number>; at_cutoff: Record<string, number>;
-    cv: Record<string, number | number[] | string> } | null;
-  retrieval_bm25: Record<string, number> | null;
+  retrieval: { name: string; n: number; "hit@1": Est; "hit@5": Est; "bm25_hit@5": Est } | null;
+  checker: { n: number; labels: string; at_T: Record<string, Est>; at_0_5: Record<string, Est> } | null;
+  classifier: { test_n: number; product: { macro_f1: number; accuracy: number };
+    issue: { accuracy: number; macro_f1_all_issues: number } } | null;
 }
 
 export class ApiError extends Error {}

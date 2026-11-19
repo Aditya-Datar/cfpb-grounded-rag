@@ -311,15 +311,20 @@ def about():
         p = config.ROOT / "results" / name
         return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
     scope = eng.MODELS.scope.spec if eng.MODELS.scope else None
-    bench = read("checker_benchmark.json")
-    retr = read("retrieval_bm25.json")
-    return {"health": health(),
-            "scope_model": scope and {"name": scope["name"], "threshold": scope["threshold"],
-                                      "report_half": scope["report_half"], "source": scope["source"]},
-            "checker": bench and {"n": bench["n"], "auroc": bench["auroc"],
-                                  "at_0_5": bench["at_run_threshold"], "at_cutoff": bench["best_threshold_in_sample"],
-                                  "cv": bench["tuned_threshold_5fold_cv"]},
-            "retrieval_bm25": retr and retr.get("with_fcra", {}).get("in_scope_all")}
+    final = read("final_results.json")  # scripts/build_final_results.py
+    out = {"health": health(),
+           "scope_model": scope and {"name": scope["name"], "threshold": scope["threshold"],
+                                     "report_half": scope["report_half"], "source": scope["source"]},
+           "retrieval": None, "checker": None, "classifier": None}
+    if final:
+        w = final["H1_retrieval"]["with_fcra"]["retrievers"]
+        best = final["H1_retrieval"]["best_retriever"]["name"]
+        s2 = final["H4_checker"]["set2"]
+        out["retrieval"] = {"name": best, "n": w[best]["n"], "hit@1": w[best]["hit@1"], "hit@5": w[best]["hit@5"],
+                            "bm25_hit@5": w["bm25"]["hit@5"]}
+        out["checker"] = {"n": s2["n"], "labels": s2["labels"], "at_T": s2["nli@T"], "at_0_5": s2["nli@0.5"]}
+        out["classifier"] = final["classifier"]
+    return out
 
 
 # ------------------------------------------------------------------ frontend

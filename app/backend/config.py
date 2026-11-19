@@ -9,7 +9,8 @@
     CFPB_GENERATOR_MAX_TOKENS, CFPB_GENERATOR_TIMEOUT   as in those runs (16384, 600 s).
     CFPB_NLI_CUTOFF        entailment cutoff for "supported"; default Atharva's T, frozen
                            on checker set 1 (docs/tasks/results/atharva.md).
-    CFPB_RETRIEVER         bm25 (default), dense or hybrid; CFPB_HYBRID_ALPHA for hybrid.
+    CFPB_RETRIEVER         hybrid (default: H1 winner, mpnet with alpha 0.8), dense or bm25;
+                           CFPB_HYBRID_ALPHA sets alpha (docs/tasks/results/ishani.md).
     CFPB_LOAD_NLI          0 to skip loading the NLI model (sentence checks then unavailable).
 """
 import os
@@ -45,8 +46,8 @@ GENERATOR_MODEL = setting("CFPB_GENERATOR_MODEL", "nvidia/nemotron-3.5-super-vl-
 GENERATOR_MAX_TOKENS = int(setting("CFPB_GENERATOR_MAX_TOKENS", "16384"))
 GENERATOR_TIMEOUT = int(setting("CFPB_GENERATOR_TIMEOUT", "600"))
 NLI_CUTOFF = float(setting("CFPB_NLI_CUTOFF", "0.99658203125"))
-RETRIEVER = setting("CFPB_RETRIEVER", "bm25")
-HYBRID_ALPHA = float(setting("CFPB_HYBRID_ALPHA", "0.5"))
+RETRIEVER = setting("CFPB_RETRIEVER", "hybrid")
+HYBRID_ALPHA = float(setting("CFPB_HYBRID_ALPHA", "0.8"))
 LOAD_NLI = setting("CFPB_LOAD_NLI", "1") != "0"
 HAS_NVIDIA_KEY = bool(setting("NVIDIA_API_KEY"))
 
