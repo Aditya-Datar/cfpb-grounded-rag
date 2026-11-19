@@ -1,3 +1,5 @@
+> **Superseded by the completed AI-adjudicated analysis in [atharva.md](atharva.md).** This file preserves the earlier provisional/incomplete-run report; its pending statements describe that historical stage. Do not regenerate it with the old helper.
+
 # Atharva H4 v2 — provisional AI-reference analysis
 
 **Status: not human-validated and not the final H4 submission.** Atharva delegated review of the 17 disagreements to the assistant. The assistant recorded a rationale for every decision, but no human approval is claimed. All 17 decisions match GPT-6-Astra, making this provisional 100-label reference identical to that annotator's labels. Same-family adjudication bias is possible. This file reports that GPT-family adjudication, called **AI reference A** in [atharva.md](atharva.md). A second, separate AI adjudication by Claude Opus 5.5 (**AI reference B**, also not human-validated) was recorded on 2026-11-18. It is now entered in the worksheet with explicit AI tags, and its results are in [atharva.md](atharva.md) and `results/checker_benchmark_v2_claude_adjudicated.json`. The canonical human gold `annotation/checker_gold_v2.jsonl` has not been created.

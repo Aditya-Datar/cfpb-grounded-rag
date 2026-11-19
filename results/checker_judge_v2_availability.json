@@ -78,7 +78,7 @@
     "ended_utc": "2026-11-18T03:43:15.170114+00:00"
   },
   "streaming_run_status_path": "outputs/h4_v2/streaming/full_status.json",
-  "transport_note": "SSE recovered readable responses without changing inference settings. The run and one completed retry ended with 87/100 cached responses; 13 token-limit failures remain. No full-cache metrics were produced.",
+  "transport_note": "The original SSE configuration at 4096 tokens ended87/100. The separately declared failure-only adaptive-budget configuration completed all100; original cache is preserved, and all13 missing replies completed at16384 tokens. Model, prompt and temperature remain unchanged.",
   "streaming_final_status": {
     "state": "incomplete",
     "readable": 87,
@@ -86,5 +86,16 @@
     "failed": 13,
     "ended_utc": "2026-11-18T18:59:43.050281+00:00",
     "audit": "results/checker_judge_v2_completion_audit.json"
+  },
+  "adaptive_completion": {
+    "state": "complete",
+    "readable": 100,
+    "total": 100,
+    "unreadable": 0,
+    "original_4096_token_replies": 87,
+    "recovered_16384_token_replies": 13,
+    "ended_utc": "2026-11-19T02:24:22.408317+00:00",
+    "protocol": "results/checker_h4_completion_protocol.json",
+    "manifest": "results/checker_judge_v2_adaptive_manifest.json"
   }
 }

@@ -1,0 +1,639 @@
+{
+  "judge_model": "mistralai/mistral-large-4-1t-a52b",
+  "prompt_version": "judge-v1-5ead5110",
+  "label_set": "checker_set_v2",
+  "n": 100,
+  "n_supported_gold": 49,
+  "unreadable_replies": 0,
+  "judge": {
+    "balanced_accuracy": 0.6736694677871148,
+    "kappa_vs_gold": 0.34471803018268465,
+    "accuracy": 0.67,
+    "flagged_unsupported_recall": 0.49019607843137253,
+    "auroc_confidence": 0.6946778711484594
+  },
+  "nli": {
+    "balanced_accuracy": 0.678671468587435,
+    "kappa_vs_gold": 0.3582029683112715,
+    "accuracy": 0.68,
+    "flagged_unsupported_recall": 0.7450980392156863,
+    "tau": 0.99658203125,
+    "auroc": 0.7338935574229692
+  },
+  "judge_minus_nli_balanced_accuracy": {
+    "mean": -0.0050020008003202054,
+    "ci95": [
+      -0.11444805194805185,
+      0.10999999999999988
+    ]
+  },
+  "per_pair": [
+    {
+      "pair_id": "Kv2-001",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-002",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-003",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-004",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-005",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-006",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-007",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-008",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-009",
+      "gold": "unsupported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-010",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-011",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-012",
+      "gold": "supported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-013",
+      "gold": "supported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-014",
+      "gold": "unsupported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-015",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-016",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-017",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-018",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-019",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-020",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-021",
+      "gold": "supported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-022",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-023",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-024",
+      "gold": "supported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-025",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-026",
+      "gold": "supported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-027",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-028",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-029",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-030",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-031",
+      "gold": "unsupported",
+      "judge_prob": 0.3,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-032",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-033",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-034",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-035",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-036",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-037",
+      "gold": "unsupported",
+      "judge_prob": 0.25,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-038",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-039",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-040",
+      "gold": "supported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-041",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-042",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-043",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-044",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-045",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-046",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-047",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-048",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-049",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-050",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-051",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-052",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-053",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-054",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-055",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-056",
+      "gold": "unsupported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-057",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-058",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-059",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-060",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-061",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-062",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-063",
+      "gold": "supported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-064",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-065",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-066",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-067",
+      "gold": "unsupported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-068",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-069",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-070",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-071",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-072",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-073",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-074",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-075",
+      "gold": "unsupported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-076",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-077",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-078",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-079",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-080",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-081",
+      "gold": "unsupported",
+      "judge_prob": 0.95,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-082",
+      "gold": "unsupported",
+      "judge_prob": 0.2,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-083",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-084",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-085",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-086",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-087",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-088",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-089",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-090",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-091",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-092",
+      "gold": "supported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-093",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-094",
+      "gold": "unsupported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-095",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-096",
+      "gold": "unsupported",
+      "judge_prob": 0.15,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-097",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-098",
+      "gold": "unsupported",
+      "judge_prob": 1.0,
+      "judge_label": "supported"
+    },
+    {
+      "pair_id": "Kv2-099",
+      "gold": "unsupported",
+      "judge_prob": 0.0,
+      "judge_label": "unsupported"
+    },
+    {
+      "pair_id": "Kv2-100",
+      "gold": "supported",
+      "judge_prob": 0.1,
+      "judge_label": "unsupported"
+    }
+  ],
+  "reference_kind": "primary_claude",
+  "human_validated": false,
+  "reference_status": "User-accepted AI adjudication; no human validation claimed",
+  "reference_sha256": "6ea0891a6f466375951dfe82be0ee4faa1577bab9f48dc4c4b2c7e2236db7428",
+  "judge_configuration": "Adaptive output budget: 4096 initially, 16384/32768 only for missing answers",
+  "protocol": "results/checker_h4_completion_protocol.json",
+  "precision_policy": "Unchanged team JSON reader; exact-source sensitivity reported separately"
+}

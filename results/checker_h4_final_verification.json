@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "checks": [
+    "100 unique frozen pairs and no set-1 sentence overlap",
+    "100 labels per independent annotator",
+    "100 complete judge responses match hashes, raw predictions and reference labels",
+    "NLI/judge BA, kappa, accuracy, unsupported recall and AUROC independently reproduced for both AI references",
+    "Original 87 response hashes and original set-1 artifacts unchanged",
+    "No human-validation claim in canonical AI reference"
+  ],
+  "results": {
+    "results/llm_judge_mistral-large-4-1t-a52b_v2.json": {
+      "n": 100,
+      "unreadable": 0,
+      "judge_ba": 0.6736694677871148,
+      "nli_ba": 0.678671468587435
+    },
+    "results/llm_judge_mistral-large-4-1t-a52b_v2_gpt_sensitivity.json": {
+      "n": 100,
+      "unreadable": 0,
+      "judge_ba": 0.6730769230769231,
+      "nli_ba": 0.6730769230769231
+    }
+  }
+}
