@@ -1,0 +1,100 @@
+{"pair_id": "Kv2-001", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-002", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-003", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-004", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-005", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-006", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-007", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-008", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-009", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-010", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-011", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-012", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-013", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-014", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-015", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-016", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-017", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-018", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-019", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-020", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-021", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-022", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-023", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-024", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-025", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-026", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-027", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-028", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-029", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-030", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-031", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-032", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-033", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-034", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-035", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-036", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-037", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-038", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-039", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-040", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-041", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-042", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-043", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-044", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-045", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-046", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-047", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-048", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-049", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-050", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-051", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-052", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-053", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-054", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-055", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-056", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-057", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-058", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-059", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-060", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-061", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-062", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-063", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-064", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-065", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-066", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-067", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-068", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-069", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-070", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-071", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-072", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-073", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-074", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-075", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-076", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-077", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-078", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-079", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-080", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-081", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-082", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-083", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-084", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-085", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-086", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-087", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-088", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-089", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-090", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-091", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-092", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-093", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-094", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-095", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-096", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-097", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-098", "gold_label": "unsupported", "source": "adjudicated", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18", "adjudicator": "Claude Opus 5.5"}
+{"pair_id": "Kv2-099", "gold_label": "unsupported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
+{"pair_id": "Kv2-100", "gold_label": "supported", "source": "agreed", "human_validated": false, "reference_status": "AI-adjudicated; accepted by Atharva on 2026-11-18"}
