@@ -1,0 +1,29 @@
+{
+  "provisional_analysis_complete": true,
+  "original_human_validated_task_complete": false,
+  "human_review_required": false,
+  "shared_scorer_precision_review_required": true,
+  "frozen_tau": 0.99658203125,
+  "judge_full_results_present": true,
+  "judge_run_state": "complete_adaptive_budget",
+  "judge_readable_responses": 100,
+  "judge_total_pairs": 100,
+  "judge_failed_pairs": 0,
+  "ai_references": {
+    "A_gpt_family_adjudicator": {
+      "gold": "annotation/checker_gold_v2_ai_provisional.jsonl",
+      "human_validated": false
+    },
+    "B_claude_adjudicator": {
+      "gold": "annotation/checker_gold_v2_claude_adjudicated.jsonl",
+      "human_validated": false
+    }
+  },
+  "canonical_human_gold_created": false,
+  "worksheet_filled_by": "AI (Claude Opus 5.5), delegated; tagged not human-validated",
+  "user_accepted_ai_analysis_complete": true,
+  "human_review_required_for_original_protocol": true,
+  "precision_sensitivity_reported": true,
+  "canonical_ai_reference_created": true,
+  "status_note": "Complete under the user-accepted AI protocol; not human-validated. Shared-loader sensitivity is documented for team integration."
+}

@@ -1,0 +1,71 @@
+{
+  "n": 100,
+  "n_supported_gold": 49,
+  "verifier": {
+    "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+    "threshold": 0.5
+  },
+  "auroc": 0.7338935574229692,
+  "at_run_threshold": {
+    "threshold": 0.5,
+    "balanced_accuracy": 0.6074429771908764,
+    "accuracy": 0.6,
+    "kappa_vs_gold": 0.21166732361056362,
+    "flagged_unsupported_recall": 0.23529411764705882
+  },
+  "at_fixed_tau": {
+    "threshold": 0.99658203125,
+    "balanced_accuracy": 0.678671468587435,
+    "accuracy": 0.68,
+    "kappa_vs_gold": 0.3582029683112715,
+    "flagged_unsupported_recall": 0.7450980392156863,
+    "note": "cutoff fixed before seeing this set"
+  },
+  "best_threshold_in_sample": {
+    "threshold": 0.99609375,
+    "balanced_accuracy": 0.7002801120448179,
+    "accuracy": 0.7,
+    "kappa_vs_gold": 0.4002399040383847,
+    "flagged_unsupported_recall": 0.6862745098039216,
+    "note": "tuned on the same 50 pairs; optimistic"
+  },
+  "tuned_threshold_5fold_cv": {
+    "balanced_accuracy": 0.6768227290916369,
+    "kappa_vs_gold": 0.3535588095622994,
+    "flagged_unsupported_recall": 0.675686274509804,
+    "balanced_accuracy_p5_p95": [
+      0.6410564225690276,
+      0.6900760304121649
+    ],
+    "note": "cutoff chosen on 4 folds, scored on the 5th; 50 repeats"
+  },
+  "score_quantiles": {
+    "supported_p10_p50": [
+      0.9834960937499999,
+      0.9975585937499999
+    ],
+    "unsupported_p50_p90": [
+      0.9931640625,
+      0.9985351562499999
+    ]
+  },
+  "by_condition": {
+    "oracle": {
+      "n": 50,
+      "gold_supported": 29,
+      "gold_supported_and_gold_section": 29,
+      "accuracy": 0.68
+    },
+    "retrieved": {
+      "n": 50,
+      "gold_supported": 20,
+      "gold_supported_and_gold_section": 6,
+      "accuracy": 0.52
+    }
+  },
+  "reference_status": "PROVISIONAL: AI-adjudicated (Claude Opus 5.5, delegated by Atharva); not human-validated gold",
+  "reference_kind": "claude_adjudicated",
+  "human_validated": false,
+  "frozen_sample_sha256": "ecdab5f9427f2df59d6ac666aa4e57bc406f429760d51d2793221d90026b473d",
+  "reference_note": "Agreed labels plus 17 delegated AI decisions (all unsupported); differs from the GPT-family AI reference on Kv2-016, Kv2-061, Kv2-076."
+}

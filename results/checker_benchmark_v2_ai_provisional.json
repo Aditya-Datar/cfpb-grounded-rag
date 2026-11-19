@@ -1,0 +1,71 @@
+{
+  "n": 100,
+  "n_supported_gold": 52,
+  "verifier": {
+    "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+    "threshold": 0.5
+  },
+  "auroc": 0.7449919871794871,
+  "at_run_threshold": {
+    "threshold": 0.5,
+    "balanced_accuracy": 0.6153846153846154,
+    "accuracy": 0.63,
+    "kappa_vs_gold": 0.23742786479802136,
+    "flagged_unsupported_recall": 0.25
+  },
+  "at_fixed_tau": {
+    "threshold": 0.99658203125,
+    "balanced_accuracy": 0.6730769230769231,
+    "accuracy": 0.67,
+    "kappa_vs_gold": 0.3436754176610979,
+    "flagged_unsupported_recall": 0.75,
+    "note": "cutoff fixed before seeing this set"
+  },
+  "best_threshold_in_sample": {
+    "threshold": 0.99609375,
+    "balanced_accuracy": 0.7099358974358975,
+    "accuracy": 0.71,
+    "kappa_vs_gold": 0.41953562850280224,
+    "flagged_unsupported_recall": 0.7083333333333334,
+    "note": "tuned on the same 50 pairs; optimistic"
+  },
+  "tuned_threshold_5fold_cv": {
+    "balanced_accuracy": 0.6857211538461537,
+    "kappa_vs_gold": 0.3713579293400099,
+    "flagged_unsupported_recall": 0.67375,
+    "balanced_accuracy_p5_p95": [
+      0.6323317307692308,
+      0.7099358974358975
+    ],
+    "note": "cutoff chosen on 4 folds, scored on the 5th; 50 repeats"
+  },
+  "score_quantiles": {
+    "supported_p10_p50": [
+      0.9841796874999998,
+      0.9975585937499999
+    ],
+    "unsupported_p50_p90": [
+      0.991943359375,
+      0.998681640625
+    ]
+  },
+  "by_condition": {
+    "oracle": {
+      "n": 50,
+      "gold_supported": 30,
+      "gold_supported_and_gold_section": 30,
+      "accuracy": 0.7
+    },
+    "retrieved": {
+      "n": 50,
+      "gold_supported": 22,
+      "gold_supported_and_gold_section": 6,
+      "accuracy": 0.56
+    }
+  },
+  "reference_status": "PROVISIONAL \u2014 AI reference, not human-adjudicated gold",
+  "reference_kind": "ai_provisional",
+  "human_validated": false,
+  "frozen_sample_sha256": "ecdab5f9427f2df59d6ac666aa4e57bc406f429760d51d2793221d90026b473d",
+  "reference_note": "AI decisions equal GPT-6-Astra labels on all 100 pairs."
+}

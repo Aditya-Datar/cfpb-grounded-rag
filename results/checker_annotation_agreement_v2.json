@@ -1,0 +1,35 @@
+{
+  "n": 100,
+  "n_agreed": 83,
+  "agreement": 0.83,
+  "cohen_kappa": 0.6564268391269199,
+  "n_disagreements": 17,
+  "disagreement_pair_ids": [
+    "Kv2-011",
+    "Kv2-014",
+    "Kv2-016",
+    "Kv2-020",
+    "Kv2-023",
+    "Kv2-028",
+    "Kv2-037",
+    "Kv2-039",
+    "Kv2-047",
+    "Kv2-060",
+    "Kv2-061",
+    "Kv2-075",
+    "Kv2-076",
+    "Kv2-078",
+    "Kv2-096",
+    "Kv2-097",
+    "Kv2-098"
+  ],
+  "annotators": {
+    "claude": "claude-opus-5-5",
+    "chatgpt": "gpt-6-astra"
+  },
+  "human_adjudication": "pending; all decision fields blank",
+  "label_hashes": {
+    "annotation/checker_labels_claude_v2.jsonl": "dbddd5aa1c176a59a03191016f894ce01429ccba413826c0c7b015d699c07efb",
+    "annotation/checker_labels_chatgpt_v2.jsonl": "bc01710e2ca16e8db3c7ca98454755a81927133a510f77658b7f80670831d8b6"
+  }
+}

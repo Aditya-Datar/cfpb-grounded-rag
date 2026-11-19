@@ -1,0 +1,51 @@
+{
+  "recorded_utc": "2026-11-19T01:40:11.151221+00:00",
+  "user_authorization": "Atharva explicitly accepts AI adjudication and requests completion of the original H4 task.",
+  "reference_policy": {
+    "primary": "annotation/checker_gold_v2_claude_adjudicated.jsonl",
+    "sensitivity": "annotation/checker_gold_v2_ai_provisional.jsonl",
+    "human_validated": false,
+    "selection_reason": "Latest completed worksheet supplied by the user; retain earlier reference as sensitivity, not select labels for better metrics.",
+    "primary_sha256": "b437c8cbcb0be7812bd6bf7d1ea170d4ed98d986d8b3753d9df679e2106d4177",
+    "sensitivity_sha256": "ebf5fd9b6c2a23beecbc230613cb0bf51093998f159982025317d6aa20af7bec"
+  },
+  "frozen_tau": 0.99658203125,
+  "judge_recovery_policy": {
+    "model": "mistralai/mistral-large-4-1t-a52b",
+    "prompt_version": "judge-v1-5ead5110",
+    "temperature": 0,
+    "initial_max_tokens": 4096,
+    "failure_only_budget_ladder": [
+      16384,
+      32768
+    ],
+    "eligible_ids_source": "results/checker_judge_v2_completion_audit.json missing_pair_ids",
+    "triggers": "Missing readable response only; never agreement, probability, label, or performance.",
+    "cache_directory": "outputs/h4_v2/adaptive/cache",
+    "original_cache_immutable": true,
+    "per_budget_transient_retry_limit": 2,
+    "score_rule": "Include all 100 pairs. Require a complete final response, or explicitly count a remaining failure using the unchanged team unreadable policy. Do not silently exclude any pair.",
+    "label": "Mistral adaptive output budget: 4096, then 16384/32768 only after missing output"
+  },
+  "precision_policy": {
+    "primary": "Reproduce unchanged team scorer and its default JSON loader.",
+    "sensitivity": "Also report exact source-value decoding; do not retune T or patch shared code."
+  },
+  "completion_scope": "AI-adjudicated H4 analysis and reviewable branch/PR; not a claim of human validation or team approval.",
+  "canonical_reference": {
+    "path": "annotation/checker_gold_v2.jsonl",
+    "sha256": "6ea0891a6f466375951dfe82be0ee4faa1577bab9f48dc4c4b2c7e2236db7428",
+    "rows": 100,
+    "supported": 49,
+    "human_validated": false,
+    "note": "Created by unchanged build-gold from worksheet, then explicitly annotated as user-accepted AI adjudication. Labels exactly match reference B."
+  },
+  "recovery_probe": {
+    "pair_id": "Kv2-014",
+    "max_tokens": 16384,
+    "seconds": 583.02,
+    "outcome": "complete readable response",
+    "selection": "First originally missing pair in frozen sample order; no label/performance used to choose it."
+  },
+  "amendment_timing_note": "AI-reference acceptance and recovery policy are a retrospective completion amendment after preliminary v2 NLI results. Recovery budget ladder was recorded before recovery predictions; no claim that the entire study was preregistered."
+}
