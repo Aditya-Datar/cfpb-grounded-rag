@@ -4,6 +4,13 @@ Target LLM (team decision 2026-10-19, Aditya): NVIDIA Nemotron through the
 NVIDIA API catalog (OpenAI-compatible chat completions). Keep the model fixed
 for every reported number; changing it invalidates collected results.
 
+Model change (2026-11-14, Anirudh; pending team adoption): the original
+`nvidia/nemotron-3-super-120b-a12b` reached end of life on 2026-10-03 (HTTP
+410), so the full attribution runs use `nvidia/nemotron-3.5-super-vl-120b-a12b`.
+It reasons longer, so max_tokens is 16384 (4096 left 1 of 6 smoke drafts
+empty) and the request timeout is 600 s. Midterm pilot numbers used the old
+model and are not comparable.
+
 The API key is read from the environment variable NVIDIA_API_KEY, or from a
 git-ignored `.env` file at the repo root (line `NVIDIA_API_KEY=...`).
 
@@ -25,7 +32,7 @@ from cfpb.pipeline.schema import Draft, RetrievedChunk
 from cfpb.pipeline.stages import citation
 
 API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
+DEFAULT_MODEL = "nvidia/nemotron-3.5-super-vl-120b-a12b"
 DEFAULT_CACHE = OUTPUT_DIR / "generation" / "cache"
 MAX_COMPLAINT_WORDS = 1200  # long narratives are cut; the passages matter more
 
@@ -89,8 +96,8 @@ def split_sentences(response: str, context: list[RetrievedChunk]) -> tuple[list[
 class NemotronGenerator:
     is_stub = False
 
-    def __init__(self, model: str = DEFAULT_MODEL, temperature: float = 0.0, max_tokens: int = 4096,
-                 cache_dir: Path = DEFAULT_CACHE, timeout: int = 180, retries: int = 5):
+    def __init__(self, model: str = DEFAULT_MODEL, temperature: float = 0.0, max_tokens: int = 16384,
+                 cache_dir: Path = DEFAULT_CACHE, timeout: int = 600, retries: int = 5):
         self.model, self.temperature, self.max_tokens = model, temperature, max_tokens
         self.cache_dir, self.timeout, self.retries = Path(cache_dir), timeout, retries
 
