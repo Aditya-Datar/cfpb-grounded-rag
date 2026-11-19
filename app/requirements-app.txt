@@ -1,0 +1,8 @@
+# Officer app backend, on top of requirements.txt and the classifier stack:
+#   pip install -r requirements.txt -r requirements-classifier.txt -r app/requirements-app.txt
+# Tested 2026-11-16 on Windows (CPU), Python 3.12.2.
+fastapi==0.163.1
+uvicorn[standard]==0.54.0
+sqlalchemy==2.1.9
+psycopg[binary]==3.3.9
+httpx==0.28.1   # FastAPI TestClient, for tests only
