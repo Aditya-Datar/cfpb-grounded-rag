@@ -1,0 +1,22 @@
+<section id="takeaways" class="dark">
+<p class="kicker">Takeaways and limitations</p>
+<h2>Fix retrieval first, then let a validated checker gate the draft</h2>
+<div class="row">
+<div class="col">
+<div class="card" style="background:#1f2b4a;border-color:#3a4766"><span class="tag" style="color:#8fb6e8">1 · Where to invest</span><p>Retrieval was the bottleneck (gap +70 points). After reranking it is +11; most remaining errors happen with the correct passage, in generation.</p></div>
+<div class="card" style="background:#1f2b4a;border-color:#3a4766"><span class="tag" style="color:#8fb6e8">2 · The checker is the lever</span><p>Checking and rewriting flagged sentences adds 25 points. Prompt changes add nothing once it is on.</p></div>
+<div class="card" style="background:#1f2b4a;border-color:#3a4766"><span class="tag" style="color:#8fb6e8">3 · Where this lands</span><p>75% acceptable drafts. Magesh et al. report 65% accuracy for Lexis+ AI on a different task with lawyer judges: same range, not a head-to-head.</p></div>
+</div>
+<div class="col">
+<h3 style="color:#f0a868">Limitations</h3>
+<ul>
+<li>The same checker drives the rewrites and scores them; a human check of 24 rewritten sentences is in progress.</li>
+<li>Rewriting makes drafts address the complaint less often (48% → 34%).</li>
+<li>65 held-out complaints: wide CIs. 100 of 150 checker labels are AI-assisted.</li>
+<li>Best reranker is a hosted GPT model.</li>
+<li>Drafts assist a compliance officer; they are not legal advice.</li>
+</ul>
+</div>
+</div>
+<aside>~45 seconds, then Q&A. Main takeaway: the attribution experiment tells practitioners where to spend effort, and the answer changed as we improved the system. First retrieval dominated; after reranking, generation dominates, so the right investment became verification gating, which gave the largest single gain. Be honest about the comparison with Magesh et al.: they graded open-ended legal research answers with lawyers; we score complaint replies with a validated checker against our gold sections. Limitations: the rewrite step and the score share a checker, so part of the gain could be rewrites tuned to the checker; we are labelling 24 rewritten sentences by hand to check. Rewriting also reduces how directly the draft responds to the complaint. Q&A prep: dev was used for every choice, held-out run once per pre-registered rule; κ 0.85–0.90 on gold; checker cutoff chosen on set 1 and tested on set 2.</aside>
+</section>

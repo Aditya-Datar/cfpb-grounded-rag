@@ -1,0 +1,32 @@
+<section id="components">
+<p class="kicker">Results 1 · each stage against its baseline (held-out)</p>
+<h2>Retrieval went from 6% to 77% top-1; the validated checker beats NLI alone</h2>
+<div class="row">
+<div class="col">
+<h3>Finding the governing section (65 complaints)</h3>
+<table>
+<tr><th>Retriever</th><th class="num">top-1</th><th class="num">hit@5</th><th class="num">MRR</th></tr>
+<tr class="base"><td>BM25 (midterm)</td><td class="num">0.06</td><td class="num">0.25</td><td class="num">0.16</td></tr>
+<tr><td>Hybrid MPNet + BM25</td><td class="num">0.20</td><td class="num">0.66</td><td class="num">0.40</td></tr>
+<tr><td>+ Nemotron embed, regulation prior</td><td class="num">0.34</td><td class="num">0.74</td><td class="num">0.51</td></tr>
+<tr><td>+ LLM rerank (Nemotron)</td><td class="num">0.54</td><td class="num">0.88</td><td class="num">0.66</td></tr>
+<tr class="win"><td>+ GPT rerank with rubric (final)</td><td class="num">0.77</td><td class="num">–</td><td class="num">–</td></tr>
+</table>
+<p class="note">GPT picks one section, so only top-1 applies. Same rubric with Nemotron Super: 0.63.</p>
+</div>
+<div class="col">
+<h3>Checking each sentence (100 held-out pairs)</h3>
+<table>
+<tr><th>Checker</th><th class="num">balanced acc.</th></tr>
+<tr class="base"><td>DeBERTa NLI, cutoff 0.5</td><td class="num">0.61</td></tr>
+<tr><td>DeBERTa NLI, tuned cutoff (SummaC-style)</td><td class="num">0.70</td></tr>
+<tr><td>LLM judge alone (Nemotron Ultra)</td><td class="num">0.75</td></tr>
+<tr><td>Best alternative: MiniCheck-7B + Ultra</td><td class="num">0.80</td></tr>
+<tr class="win"><td>DeBERTa + Ultra, averaged (final)</td><td class="num">0.83</td></tr>
+</table>
+<p class="note">+0.15 over tuned NLI, 95% CI [+0.07, +0.24]. Cutoff chosen on the other 50 pairs.</p>
+</div>
+</div>
+<p class="source">Held-out half; settings chosen on dev. HHEM and AlignScore also tested (0.74, 0.75 with Ultra). EXPERIMENT_LOG E9, E12, E15, E16.</p>
+<aside>~60 seconds. Left: retrieval, the stage that dominated failures at the midterm. BM25 found the governing section first only 6% of the time. Dense plus BM25 hybrid tripled that; adding a prior toward the regulation the classifier predicts, then an LLM reranker that reads the complaint, took top-1 to 54%, and GPT with our labelling rubric to 77%. All settings were chosen on dev, held-out run once. Right: the checker. The SummaC-style NLI checker was only 70% balanced accuracy on regulation text; it misses dropped legal qualifiers. Averaging it with an LLM judge reached 83%, a significant +15 points. We also tried HHEM, AlignScore and Bespoke-MiniCheck; none beat the pair. If asked about labels: set 1 (50) human-adjudicated, set 2 (100) silver, AI-assisted then accepted by a team member.</aside>
+</section>
