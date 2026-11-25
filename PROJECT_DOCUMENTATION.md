@@ -2,9 +2,195 @@
 
 **CSCI 544 (Applied NLP), Group 36:** Aditya Datar, Ujjwal Puri, Ishani Bhadlikar, Atharva Thorat, Anirudh Joshi, Gagan Shivanna.
 
-This document collects the project-level material for the midterm presentation and report: the goal, data, results, decisions and the reasons behind them, and what changed from the proposal. Code-level details live in the repository. Status as of **2026-10-19**.
+This document collects the project-level material: the goal, data, results, decisions and the reasons behind them, and what changed along the way. **Status as of 2026-11-24 (all final experiments done).**
+
+- **Part I (read first): final results.** These supersede every midterm number.
+- **Part II: the midterm record (2026-10-19),** kept unchanged as history. Its numbers come from an earlier pipeline and a retired generator, so do not compare them directly with Part I.
+
+**Where things live.**
+- Code, results and logs: branch `final-experiments` (commit `552432b`).
+  - `results/final_results.json`: every headline number, with its source file and 95% CI.
+  - `docs/EXPERIMENT_LOG.md`: experiments E1 to E17, each with its question, setup, result and caveats.
+  - `CLAUDE_PROGRESS.md`: narrative history.
+- Officer web app: `app/` on `final-experiments`.
+- Final presentation: `final_presentation/` on this branch (`SLIDES.md` holds the slide text and speaker notes).
 
 ---
+
+# Part I: Final results (2026-11-24)
+
+## F1. The finalized pipeline
+
+```mermaid
+flowchart TD
+    A["CFPB complaint narrative"] --> C["1. Classify: DistilBERT<br/>product macro-F1 0.808"]
+    A --> S["Scope check (H5)<br/>logistic regression, AUROC 0.74<br/>flags 'no regulation in corpus'"]
+    A --> R1["2a. Retrieve: Nemotron Embed 8B + BM25<br/>(alpha 0.8) + prior toward the<br/>classifier's regulation (0.2)"]
+    C --> R1
+    R1 --> R2["2b. Rerank: GPT-5.6 Sol with the labelling<br/>rubric picks the governing section from top 10<br/>(Nemotron Super as fallback)"]
+    R2 --> G["3. Draft: Nemotron Super (prompt v1)<br/>context = top-1 section, 5 chunks"]
+    G --> V["4. Check each sentence:<br/>mean(DeBERTa NLI, Nemotron Ultra judge) >= 0.974"]
+    V -- "flagged" --> W["Rewrite flagged sentence from the passage<br/>(2 rounds; still-flagged sentences kept and marked)"]
+    W --> V
+    V --> O["Compliance officer: draft, cited section,<br/>supported vs flagged sentences"]
+    S --> O
+```
+
+- **Model IDs:**
+  - drafter `nvidia/nemotron-3.5-super-vl-120b-a12b`, temperature 0;
+  - judge `nvidia/nemotron-3-ultra-550b-a55b`;
+  - NLI `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`;
+  - reranker `codex:gpt-5.6-sol`.
+- **Generator change:** NVIDIA retired the original `nemotron-3-super-120b-a12b` on 2026-10-03, so every final draft uses the 3.5 Super model. Midterm pilot numbers are not comparable.
+- **The app runs this exact pipeline.** The GPT reranker uses the Codex login of whichever machine runs the app, so the report must disclose that the best configuration depends on a hosted GPT model.
+
+## F2. Evaluation setup
+
+- **Gold set:** 198 complaints: 127 in scope and 71 with no governing section in the corpus (NONE). Kappa 0.904 at regulation level, 0.845 at section level, 0.898 for scope (Part II, Sec. 3).
+- **Split:**
+  - The 127 in-scope complaints are split by hash into **dev (62)** and **held-out (65)**.
+  - Every design choice was made on dev. Held-out was run once per configuration, under rules written in `EXPERIMENT_LOG.md` before the run.
+- **Checker labels:** 150 (passage, sentence) pairs, two sets:
+  - Set 1: 50 pairs, adjudicated by the team.
+  - Set 2: 100 pairs, AI-adjudicated and accepted by Atharva. This makes them **silver labels**, not human-validated.
+  - Checker cutoffs are chosen on set 1 and tested on set 2.
+- **FINAL ACCURACY** (the headline metric): the share of draft sentences that meet both conditions:
+  1. The checker says the passage supports the sentence.
+  2. The sentence cites the gold section, or a section in that complaint's frozen cluster of accepted equivalents. There are 55 clusters, LLM-built and LLM-reviewed, so they are silver labels; the protocol is in `docs/CLUSTER_SCORING_PROTOCOL.md`.
+
+  A sentence that is supported but cites the wrong law counts as a failure. This is Magesh et al.'s legal definition of a hallucination, not RAGAS faithfulness.
+- **Acceptable draft:** at least one correct cited sentence, and at least 50% of the draft's sentences OK.
+- **Statistics:** 95% bootstrap CIs; comparisons are paired over complaints.
+
+## F3. Results by stage (held-out)
+
+### Classifier (unchanged since the midterm; test set of 13,905)
+- **Product:** macro-F1 0.808, accuracy 0.843.
+- **Issue:** macro-F1 0.325 over all 84 issues, and 0.538 over the 39 issues with at least 100 test examples.
+
+### Retrieval (65 held-out complaints, section-level, with FCRA)
+
+| Retriever | top-1 | hit@5 | hit@10 | MRR |
+|---|---:|---:|---:|---:|
+| BM25 (midterm baseline) | 0.061 | 0.246 | 0.339 | 0.164 |
+| Dense MPNet | 0.200 | 0.615 | 0.831 | 0.393 |
+| Hybrid MPNet + BM25 (H1 winner) | 0.200 | 0.661 | 0.800 | 0.402 |
+| Hybrid + regulation prior | 0.354 | 0.769 | 0.785 | 0.505 |
+| Nemotron Embed 8B hybrid + prior | 0.338 | 0.738 | 0.908 | 0.515 |
+| + LLM rerank (Nemotron Lightning) | 0.538 | 0.877 | 0.908 | 0.662 |
+| **+ GPT-5.6 Sol rerank with rubric (final)** | **0.769 [0.662, 0.862]** | n/a | n/a | n/a |
+
+- **Gains:** hybrid beats BM25 on hit@5 by +0.415 [0.292, 0.538]. The LLM rerank beats the hybrid by +0.215 [0.108, 0.323].
+- The GPT reranker picks a single section, so only top-1 applies to it. With the same rubric, Nemotron Super reaches 0.631 [0.508, 0.754].
+- BGE and E5, dense and hybrid, were also tested; both are below MPNet (`results/final_results.json` → `H1_retrieval`).
+- **Chunking ablation:** structure-aware chunks (`struct1400`, the default) beat fixed 200-word windows. Hybrid hit@5 for fixed windows is −0.154 [−0.246, −0.077]; dense is −0.169 [−0.262, −0.077]. These were measured on the regulations-only corpus (`results/ablation_chunking.json`).
+
+### Checker (100 set-2 pairs; cutoff chosen on set 1)
+
+| Checker | Balanced accuracy |
+|---|---:|
+| DeBERTa NLI, cutoff 0.5 (midterm) | 0.607 |
+| DeBERTa NLI, tuned cutoff (SummaC-style) | 0.699 |
+| Nemotron Ultra judge alone | 0.753 |
+| Bespoke-MiniCheck-7B alone / + Ultra | 0.733 / 0.801 |
+| **mean(DeBERTa, Ultra), cutoff 0.974 (final)** | **0.829** |
+
+- **Final checker vs tuned NLI: +0.151 [0.068, 0.237].**
+- **Negative results** (none of these grounding checkers beats DeBERTa + Ultra on regulation text):
+  - FactCG-DeBERTa-L, 0.665
+  - MiniCheck-Flan-T5-L, 0.661
+  - HHEM-2.1, 0.585
+  - AlignScore-L, 0.634
+- The GPT-5.6 Sol judge reaches 0.756, but it helped create the labels, so it is used for evaluation only.
+- Sources: E12, E15.
+
+### Scope detection (H5: "does any corpus regulation apply?")
+- The midterm BM25 score had AUROC 0.43, at or below chance.
+- A logistic regression over retrieval-confidence and length features reaches **AUROC 0.740 [0.625, 0.851]** on the 91 report-half complaints.
+- At the threshold chosen on dev it gives 22 correct flags and 28 false ones (1.27 false per correct). That is useful as a prompt to the officer, not for abstaining automatically.
+
+## F4. The attribution experiment (core contribution)
+
+Each held-out complaint is drafted twice: once with the passages our retriever found, once with the correct ("oracle") passages. Both runs use the same drafter, checker and rewriting step. Source: E17, `results/final_results.json` → `finalized_pipeline`.
+
+| FINAL ACCURACY | Retrieved | Oracle | Gap (oracle − retrieved), 95% CI |
+|---|---:|---:|---|
+| Midterm: BM25, DeBERTa at 0.5, all 127 complaints | 0.18 | 0.87 | +0.704 [0.639, 0.766] |
+| Final pipeline, no rewriting | 0.444 [0.364, 0.522] | 0.519 [0.446, 0.587] | +0.075 [−0.033, +0.183] |
+| **Final pipeline, rewriting flagged sentences** | **0.694 [0.599, 0.782]** | **0.808 [0.745, 0.864]** | **+0.114 [+0.002, +0.228]** |
+| Acceptable drafts, with rewriting | 0.754 | 0.892 | |
+
+**Reading.**
+- **At the midterm, retrieval caused most of the error (a 70-point gap).** After reranking the gap is 11 points.
+- **Generation is now the larger source of error.** With rewriting, about 0.31 of retrieved-run sentences fail. Roughly 0.11 of that is due to retrieval; the other 0.19 remains even with the correct passage, so it is due to generation.
+- **Error analysis: which section each retrieved-run sentence cites:**
+  - 77% the gold section (tier 1)
+  - 4% an accepted equivalent (tier 2)
+  - 7% another section of the right law (tier 3)
+  - 12% another law (tier 4)
+
+**Ablations.**
+- **Rewriting flagged sentences: +0.25** (0.444 → 0.694), the largest single gain.
+- **Rewriting driven by DeBERTa flags alone** (E16) reaches only 0.556 [0.471, 0.639]. So the validated checker is what makes rewriting work.
+- **Drafter prompt** (E13, E17, dev):
+  - Quote-anchored sentences ("restate one provision, keep every condition") add +0.25 with the oracle passage and +0.165 in the full pipeline without rewriting.
+  - With rewriting the change is −0.005, so the two fixes overlap.
+  - The anchored prompt also makes drafts address the complaint less often, so prompt v1 was kept.
+- **A stronger drafter model doesn't help.** GPT-5.6 Sol as drafter scores −0.038 [−0.121, +0.045] against Super (E13). The failure lies in how the prompt anchors sentences to the passage, not in the model.
+- **Strictness check (E14).** The ensemble calls 46% of labelled sentences supported, against 49% by the labels, so the metric is not overly harsh. The old 0.5 cutoff passed 3 of every 4 unsupported sentences.
+
+## F5. Limitations (state these in the report)
+1. **The same checker drives the rewrites and scores them.** Some of the +0.25 may come from rewrites tuned to satisfy the checker rather than the regulation. Evidence so far:
+   - An independent GPT judge agreed that rewrites improved support in an earlier gating run, E10: +0.174 [0.065, 0.283].
+   - A human spot-check of 24 rewritten held-out sentences is **pending**. The sheet is `annotation/spotcheck_rewritten_heldout.csv` on `final-experiments`; the key is in `_key.csv` — do not open it before labelling.
+2. **Rewriting makes drafts address the complaint less often:** retrieved runs go from 0.477 to 0.338, measured by the Ultra relevance guard.
+3. **Small samples:** 65 held-out complaints, so the CIs are wide. Dev numbers ran higher than held-out (for example 0.794 against 0.694).
+4. **Silver labels:** 100 of the 150 checker labels are AI-adjudicated, and the equivalence clusters are LLM-built.
+5. **The best reranker is a hosted GPT model.**
+6. **No head-to-head with professional tools.** Magesh et al. report 65% accuracy for Lexis+ AI on a different task, graded by lawyers. Our 75% acceptable drafts is in the same range, but it is not a comparison. Never claim we beat the professional tools.
+7. The drafts assist a compliance officer; they are not legal advice.
+
+## F6. Officer web app
+React + FastAPI. The data is in Postgres on Neon, schema `cfpb_app`, or in local SQLite when no database is configured. The app provides:
+- an inbox with the 15-day CFPB deadline countdown;
+- triage, the scope check and the retrieved passages, linked to the official text;
+- the draft, with each sentence marked supported or flagged;
+- officer editing that re-checks every sentence;
+- approve or refer, where approving a draft with flagged sentences needs a written justification;
+- a full audit history.
+
+See `app/README.md` on `final-experiments`. This replaced the planned Streamlit demo.
+
+## F7. Midterm plan vs what was done
+
+| Midterm next step (Part II, Sec. 8) | Final status |
+|---|---|
+| Dense (SBERT + FAISS) and hybrid retrieval vs BM25 | ✅ MPNet, BGE and E5, dense and hybrid; then a regulation prior, Nemotron Embed 8B and an LLM rerank (F3) |
+| A better "does any regulation apply?" signal | ✅ AUROC 0.74, up from 0.43 (F3) |
+| Full attribution experiment with the validated checker | ✅ All 127 complaints, then the matched held-out run (F4) |
+| Ablations: chunking and retriever type | ✅ Chunking (F3), retriever type (F3), plus checker, prompt, model and rewriting ablations (F4) |
+| Error analysis with Barnett et al.'s categories | 🔄 Replaced by a section-tier analysis (F4) and the E13 causal ablation of drafter failures |
+| Streamlit demo | 🔄 Replaced by the officer web app (F6) |
+| Final report | ⏳ In progress (`docs/main.tex` on `final-experiments`) |
+
+## F8. Decisions since the midterm, and why
+
+| # | Decision | Why |
+|---|---|---|
+| D15 | Generator moved to `nemotron-3.5-super-vl-120b-a12b` | NVIDIA retired the frozen model on 2026-10-03. Every final number uses the new model. |
+| D16 | Checker replaced: mean(DeBERTa, Ultra) at 0.974 | Tuned NLI alone reached 0.70 balanced accuracy on held-out labels. The ensemble reached 0.83, a significant +0.15, and beat every other checker and combination tested (E12, E15). This is the proposal's risk plan: switch to an LLM judge if NLI fails. |
+| D17 | Cluster-based scoring for FINAL ACCURACY | Several sections can govern one complaint, so single-gold scoring was too strict. The clusters were frozen (SHA-256 recorded) before the final runs. |
+| D18 | Regulation prior and LLM reranker | The hybrid got the right section into the top 5 but rarely ranked it first. Reranking took top-1 from 0.20 to 0.54. |
+| D19 | GPT-5.6 Sol as the final reranker (Aditya's call) | Chosen on dev (0.839 vs 0.774 for Super); held-out confirms it (0.769 vs 0.631). |
+| D20 | Rewrite flagged sentences (2 rounds, keep and mark the rest) | Once retrieval improved, generation dominated the error. Rewriting gave the largest gain, and the ensemble drives it in both the app and the evaluation. |
+| D21 | Prompt v1 kept | The anchored prompts fail the relevance guard and add nothing once rewriting is on (E17's pre-registered rule did not fire). |
+| D22 | Pre-registered held-out rules | Each held-out run was gated by a rule written in the log before the run, so the results can't be tuned on the test set. |
+
+---
+
+# Part II: Midterm record (2026-10-19)
+
+The sections below are unchanged from the midterm version. Numbers there use BM25, the retired generator and the DeBERTa checker at a lenient cutoff; Part I supersedes them.
 
 ## 1. Goal
 
