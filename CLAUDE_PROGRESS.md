@@ -1069,3 +1069,11 @@ Dev gating (bh8crhi20) was paused overnight by sleep, now resumed. Queue (task b
 - Without gating B1 is +0.165 [+0.091, +0.241] over B0, but gating already closes that gap. B2's openers get flagged by the checker (0.278 before gating). Details in EXPERIMENT_LOG E17.
 - 2026-11-24 E17 follow-up: held-out (65) app-exact pipeline (ensemble-driven gating) FINAL 0.694 [0.599, 0.782], acceptable drafts 0.754; before gating 0.444. Replaces 0.556 as the pipeline's held-out figure, with the caveat that gating and scoring share a checker (human spot-check pending). Relevance drops 0.48 -> 0.34 after rewriting.
 - 2026-11-24 matched attribution on held-out (ensemble gating both sides): retrieved 0.694, oracle 0.808, gap +0.114 [+0.002, +0.228]; before gating 0.444 vs 0.519 (+0.075 n.s.). Generation now the larger error share. `results/final_results.json` rebuilt with a `finalized_pipeline` block.
+
+## 2026-11-24: deck rubric pass; deck pushed to `documents`
+- Checked the 5-slide deck against the final-presentation rubric. Fixes (artifact version 1795587029-b421, files in docs/final_presentation/):
+  - Slide 1 "Since the midterm" card is now "Midterm plan → done", ticking off each item from the midterm next-steps list: dense+hybrid, full attribution, chunking ablation (fixed200 vs struct1400 hybrid hit@5 −0.154 [−0.246, −0.077]), out-of-scope detector (LR AUROC 0.74 [0.63, 0.85]), demo → web app. It also gives a reason for each change (checker, rewriting, FCRA).
+  - Slide 5: "Half the checker labels" corrected to "100 of 150".
+  - Slide 3: explains the dashes on the GPT rerank row (it returns top-1 only).
+- Pushed the deck source plus final_presentation/SLIDES.md (slide text and notes) to origin/documents as 6ccf9e5.
+- The edits to docs/final_presentation on final-experiments are not committed yet.
