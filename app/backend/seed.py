@@ -104,10 +104,12 @@ def main() -> None:
                 chunks = [lookup.get(str(c)).ranked(i + 1, float(sc)) for i, (c, sc) in enumerate(zip(g["chunk_id"], g["score"]))]
                 clean = row.narrative_clean
                 sc_rows = sentences[sentences["complaint_id"] == cid].sort_values("sentence_idx")
+                ens = len(sc_rows) and str(sc_rows["verifier"].iloc[0]).startswith("mean(")
+                cut = config.ENSEMBLE_CUTOFF if ens else config.NLI_CUTOFF  # a replayed run keeps its own checker
                 checks = [{"sentence_idx": int(x.sentence_idx), "sentence": x.sentence,
                            "premise_chunk_ids": list(x.premise_chunk_ids), "entail_prob": float(x.entail_prob),
                            "contradict_prob": float(x.contradict_prob),
-                           "label": "supported" if x.entail_prob >= config.NLI_CUTOFF else "unsupported"}
+                           "label": "supported" if x.entail_prob >= cut else "unsupported"}
                           for x in sc_rows.itertuples()]
                 sents, cited = list(r["sentences"]), [list(c) for c in r["cited_chunk_ids"]]
                 a = Analysis(case_id=case.id, origin=f"replay:{run.name}", stage="done", narrative_clean=clean,
@@ -119,7 +121,7 @@ def main() -> None:
                                     "prompt_version": r["prompt_version"], "is_referral": bool(r["is_referral"])},
                              checks=checks, generator_model=str(r["model"]),
                              verifier=str(sc_rows["verifier"].iloc[0]) if len(sc_rows) else None,
-                             nli_cutoff=config.NLI_CUTOFF, timings_ms={}, finished_at=now())
+                             nli_cutoff=cut, timings_ms={}, finished_at=now())
                 s.add(a)
                 s.flush()
                 s.add(DraftVersion(case_id=case.id, analysis_id=a.id, version=1, author="AI draft",

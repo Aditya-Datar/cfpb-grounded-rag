@@ -63,7 +63,8 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None, help="first N items only (smoke runs)")
     ap.add_argument("--run-name", default=None)
     ap.add_argument("--require-models", action="store_true")
-    ap.add_argument("--generator", choices=["stub", "nemotron"], default="stub")
+    ap.add_argument("--generator", choices=["stub", "nemotron", "codex"], default="stub",
+                    help="codex = GPT via the Codex CLI on Aditya's ChatGPT login (evaluation only)")
     ap.add_argument("--verifier", choices=["stub", "nli", "judge"], default="stub")
     ap.add_argument("--threshold", type=float, default=0.5, help="verifier cutoff (supported iff score >= it)")
     ap.add_argument("--judge-model", default=None, help="--verifier judge: model id (default in cfpb.verify.llm_judge)")
@@ -88,6 +89,10 @@ def main() -> None:
     if args.generator == "nemotron":
         from cfpb.generate.nemotron import PROMPT_VERSION, NemotronGenerator
         generator = NemotronGenerator()
+    elif args.generator == "codex":
+        from cfpb.generate.codex import CodexGenerator
+        from cfpb.generate.nemotron import PROMPT_VERSION
+        generator = CodexGenerator()
     if args.verifier == "nli":
         from cfpb.verify.nli import NLIVerifier
         verifier = NLIVerifier(threshold=args.threshold)

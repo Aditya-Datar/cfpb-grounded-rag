@@ -1,0 +1,49 @@
+{
+ "split": "heldout",
+ "cut": 0.9737792968749999,
+ "base_retrieval": "outputs\\pipeline_runs\\full-gpt_rubric_top1",
+ "arms": {
+  "B0-nogate": {
+   "run": "fix-B0-heldout-nogate",
+   "n_sentences": 268,
+   "sentences_per_draft": 4.123076923076923,
+   "supported": 0.5447761194029851,
+   "addresses_complaint": 0.47692307692307695,
+   "rewritten": 0,
+   "FINAL_ACCURACY": 0.44402985074626866,
+   "ci95": [
+    0.3639843221771467,
+    0.5222222222222223
+   ],
+   "strict_accuracy": 0.4141791044776119,
+   "acceptable_drafts": 0.5076923076923077,
+   "tier_share": {
+    "1": 0.7686567164179104,
+    "2": 0.04477611940298507,
+    "3": 0.0708955223880597,
+    "4": 0.11567164179104478
+   }
+  },
+  "B0-gate": {
+   "run": "fix-B0-heldout-gate",
+   "n_sentences": 268,
+   "sentences_per_draft": 4.123076923076923,
+   "supported": 0.8470149253731343,
+   "addresses_complaint": 0.3384615384615385,
+   "rewritten": 103,
+   "FINAL_ACCURACY": 0.6940298507462687,
+   "ci95": [
+    0.5985401459854015,
+    0.7824468967806173
+   ],
+   "strict_accuracy": 0.6529850746268657,
+   "acceptable_drafts": 0.7538461538461538,
+   "tier_share": {
+    "1": 0.7686567164179104,
+    "2": 0.04477611940298507,
+    "3": 0.0708955223880597,
+    "4": 0.11567164179104478
+   }
+  }
+ }
+}

@@ -953,3 +953,119 @@ git checkout -b retrieval-bm25 origin/chunking     # chunking now includes the g
   - Ablations: struct1400 beats fixed 200-word windows (dense hit@5 -0.169 [-0.262, -0.077] for fixed200); adding FCRA lowers dense and hybrid hit@5 on non-FCRA complaints (-0.170 [-0.298, -0.064]).
 - **App aligned with the results:** default retriever hybrid mpnet, alpha 0.8; the models page reads `final_results.json` (H1 winner, set-2 checker numbers). Live check: hybrid put three 12 CFR 1005.11 passages in the top 5 for a Reg E test complaint (BM25 found one). 128 tests pass.
 - **Open:** Gagan's write-up Sec. 5.3 still attributes 0.688 to the no-FCRA model (it is the with-FCRA model without FCRA-gold items; no-FCRA there is 0.603). The app is still seeded from `pilot-bm25`; reseed from the Drive full runs before the demo.
+
+### 2026-11-19: Post-H1 retrieval improvement (Aditya + Claude; uncommitted)
+- **Script:** `scripts/run_retrieval_improve.py` -> `results/retrieval_improved.json`, `outputs/retrieval/improved/ranked.parquet`. Labelled post-H1: H1 stands as reported.
+- **Tried:** a regulation prior from the DistilBERT product prediction (+b to chunks of the product's usual regulation; V also admits FCRA) and cross-encoder reranking of the top 50 (`cross-encoder/ms-marco-MiniLM-L-6-v2`, `BAAI/bge-reranker-base`), grid w in {0, .25, .5, .75, 1} x b in {0, .05, .1, .2, .3, .5, 2.0}. Chosen by dev-half MRR (62 in-scope), then reported once on the report half (65).
+- **Dev choice:** prior only, b = 0.3, no reranker. Neither cross-encoder beat the prior alone on dev (best reranked dev MRR 0.500 vs 0.514). The classifier's regulation matches gold for 85.0% of in-scope complaints.
+- **Report half vs hybrid baseline:** hit@1 0.200 -> 0.354 [0.246, 0.477]; hit@5 0.662 -> 0.769 [0.662, 0.862], paired gain +0.108 [-0.015, +0.215] (CI crosses 0); MRR 0.402 -> 0.507, paired gain +0.105 [+0.040, +0.169]. hit@10 unchanged at 0.800.
+- **Retrieval v2 (`scripts/run_retrieval_llm.py` -> `results/retrieval_llm.json`):** first stage `nvidia/nemotron-3.5-embed-8b` (NVIDIA API) fused with BM25 plus the regulation prior; then LLM listwise rerank (RankGPT-style) of the top K sections by `nvidia/nemotron-3.5-lightning-30b-a3b`. Selected on dev: embedder nv-embed-8b, alpha 0.8, b 0.2; rerank with thinking on (max_tokens 32768), K = 10 (dev MRR 0.744).
+  - Report half (65): hit@1 **0.538** [0.415, 0.662], hit@5 **0.877** [0.785, 0.954], hit@10 0.908, MRR 0.662. Paired gain vs H1 hybrid: hit@5 +0.215 [+0.108, +0.323], MRR +0.260 [+0.151, +0.367]; vs prior-only: hit@5 +0.108 [+0.015, +0.215].
+  - Per regulation, report-half hit@5: E 1.00 (13), FCRA 1.00 (18), Z 0.87 (15), F 0.80 (15), V 0.25 (4). Reg F hit@1 only 0.13.
+  - Disclosure: the first run used max_tokens 8192 with thinking on, and the model returned no answer on 327 of 381 calls (budget spent reasoning). Those report-half numbers were printed before the fix; the fix was for the empty answers, and all choices stayed dev-only. Also: embedding endpoint 500s on batches and on some long inputs (one text per call, word-cut fallback 1000/400/200); HTTP 429 at 6 threads (now 3). Every API response is cached in `outputs/retrieval/llm_cache`.
+  - Local Ollama models (llama3 8b, deepseek-r1 8b/14b, gemma4 e2b, nomic-embed) checked: too slow on the 4 GB GTX 1650 (86 s for 16 tokens from llama3 8b), not used.
+
+## 2026-11-19 (later): app wired to retrieval v2; attribution rerun with it
+
+- App: `CFPB_RETRIEVER` defaults to `llm` when NVIDIA_API_KEY is set (`src/cfpb/retrieval/llm_rerank.py`, `app/backend/engine.py`); falls back to first-stage order with a note if the reranker fails. Live test on a Reg E complaint ranked 12 CFR 1005.11(d)(1) first. Fixed a pre-existing SQLite crash (naive vs aware datetimes) with a `UTCDateTime` column type in `app/backend/db.py`. 128 tests pass.
+- Attribution rerun (127 complaints, same generator/prompt/checker): `full-llm_rerank` (retrieved) vs `full-oracle-local` (oracle, rerun locally because full-oracle-nli is on Drive only). CPU NLI took ~3.6 h per run. Results: `results/attribution_full_llm_rerank.json`, `..._tau0.9966.json`; `results/final_results.json` rebuilt (`post_h1_retrieval.attribution`).
+- Gold section in the 5 passages: 0.890 (H1 hybrid run: 0.551).
+- Supported AND from the gold section, micro: 0.251 at 0.5, 0.123 at T. H1 hybrid run: 0.321 and 0.166. So end-to-end got WORSE despite better retrieval.
+- Oracle (local rerun): 0.857 at 0.5, 0.529 at T (Anirudh's full-oracle-nli: 0.871 / 0.542, close). Gap oracle minus retrieved: +0.554 [0.490, 0.615] at 0.5; +0.374 [0.319, 0.429] at T.
+- Diagnosis: the new top 5 is five DISTINCT sections (one best chunk each); the H1 run passed the top 5 chunks, which often repeat a section. The generator spreads citations over all five, so even when the gold section ranks first only 38% of sentences cite it. Drafts with at least one supported gold-section sentence: 74.8% (oracle 94.5%). The metric credits only the gold section, so citing a relevant neighbouring section counts as a miss. Post-hoc diagnostics, not pre-registered.
+- Possible fix (not run): pass the top 1-2 reranked sections with several chunks each, or ask the generator to cite the first-ranked section. Needs another ~3.5 h CPU NLI run.
+- Root-cause check (post-hoc), retrieved run, 505 sentences: 25.1% supported+gold section; 2.2% cite the gold section but unsupported; 58.2% cite another section of the SAME regulation (90% of those supported), mostly sibling duties (1681i -> 1681s-2 / 1022.43; 1005.11 -> 1005.6 / 1005.7; 1006.38 -> 1006.34); 2.2% cite the other annotator's label; 11.5% cite a different regulation. Even with the gold section ranked first (74 complaints), only 38% of sentences cite it, but every one of those drafts cites it at least once (usually sentence 1). Reconstructed the H1 hybrid top 5 (hit 0.551, matches the recorded run): 3.3 distinct sections per complaint, 1.83 gold chunks when the gold is present, against exactly 1 of 5 distinct sections now. Root cause: the prompt ("explain which obligations in the passages apply", 3-6 sentences) makes the generator survey every passage, and the metric credits one gold section only. Retrieval misses (gold absent, 14 complaints) cost about 12% of sentences.
+- Generation-context quick test (`scripts/run_generation_context_test.py`, `results/generation_context_test.json`; post-hoc; no NLI, measure = share of sentences citing the gold section). Same v2 ranking, generator and prompt. Dev / report half: current (5 distinct sections) 0.278 / 0.284 (reproduces the full run's 0.281, all cache hits); top1x5 (up to 5 chunks of the first-ranked section) 0.631 / 0.558; top2_3_2 (3 chunks of #1 + 2 of #2) 0.517 / 0.417. Dev picks top1x5. Trade-off: with top1x5, a draft has no gold-section sentence whenever the first-ranked section is wrong (46% of report-half complaints); with current, 77-86% of drafts cite the gold at least once. Not yet NLI-checked or wired into the app.
+- Metric revamp agreed with Aditya: cluster-based scoring, protocol drafted in `docs/CLUSTER_SCORING_PROTOCOL.md` (not run). One cluster per (CFPB issue, gold section), 55 keys; members must impose a duty and are sourced from CFPB exam modules, cross-references and interpretations; built by the regulation-annotator skill (Claude), cross-checked by mistralai/mistral-large-4-1t-a52b, member kept only if both accept; no further human annotation (Aditya's decision, disclosed as silver labels). Headline final accuracy = supported AND (gold section OR frozen cluster member). Strict score kept for H2/H3. Clusters are built blind to system outputs and frozen by hash before scoring.
+- Clusters built (`scripts/build_cluster_keys.py`, `scripts/build_clusters_claude.py`): 55 clusters, 175 proposed members, all 50 duty quotes verified verbatim against the corpus. Mistral review (`scripts/review_clusters.py`) rerun at reasoning_effort low after the default took ~3 min per call (protocol amendment logged). Mid-review (88/230), the reviewer rejected every definitions control and more than half of the members, mostly on test 1 (wrong respondent type) and test 2 (not triggered by the issue). Aditya decided (2026-11-19) to keep the strict rule (member kept only if both models accept), decided before any cluster score was seen. Freeze: `scripts/freeze_clusters.py`; scorer: `scripts/score_clusters.py`.
+- full-llm_top1 (drafter gets up to 5 chunks of the first-ranked section; same drafts as the quick test; NLI 2.3 h): strict supported-and-gold micro 0.557 at 0.5 (vs 0.251 for 5-distinct-section context, 0.321 for H1 hybrid), 0.360 at T (vs 0.123, 0.166). Oracle gap +0.277 [0.185, 0.372] at 0.5, +0.156 [0.081, 0.232] at T. Supported 0.926 / 0.591. `results/attribution_full_llm_top1*.json`. Context layout chosen on the dev half of the quick test.
+- Clusters FROZEN (`annotation/clusters_frozen.jsonl`, sha256 4f569aee43cf..., `results/cluster_freeze.json`; not yet committed, needs approval): Mistral accepted 74/175 proposed members (3 no answer = reject), rejected 55/55 definitions controls.
+- FINAL ACCURACY (cluster scoring, `results/final_accuracy_clusters.json`, added to `results/final_results.json` as `final_accuracy_clusters`), cutoff 0.5 / T, all 127 (dev half, report half at 0.5):
+  - full-llm_rerank (current app, 5 sections): 0.400 [0.354, 0.444] / 0.226 (dev 0.416, report 0.384)
+  - full-llm_top1 (top section only): 0.623 [0.541, 0.701] / 0.402 (dev 0.715, report 0.532). The layout was chosen on the dev half of the quick test, so the report-half 0.532 is the unbiased figure.
+  - oracle: 0.857 / 0.529 (report 0.865)
+  - Strict scores reproduce the attribution files (0.251, 0.557, 0.857). Retrieval top-5 cluster hit for the 5-section run: 0.945 (strict 0.890).
+
+## 2026-11-20: Reranker model swap (dev half only)
+
+Question from Aditya: are the free LLMs the problem? Loss analysis showed the reranker's top-1 section choice is the bottleneck (top-section run: 33% of sentences cite outside the cluster; checker drops ~5%). Drafter is fine (oracle 86%). New script `scripts/run_reranker_swap.py`: same first stage, K = 10, same RERANK_PROMPT; only the reranker model changes. Dev half, 62 in-scope complaints -> `results/reranker_swap_half0.json`.
+
+| Reranker | hit@1 | hit@3 | hit@5 | MRR | empty |
+|---|---|---|---|---|---|
+| nemotron-3.5-lightning-30b-a3b (shipped) | 0.629 | 0.839 | 0.903 | 0.744 | 1 |
+| mistral-large-4-1t-a52b (reasoning low) | 0.645 | 0.871 | 0.903 | 0.763 | 5 |
+| nemotron-3.5-super-vl-120b-a12b | 0.710 | 0.855 | 0.919 | 0.801 | 0 |
+
+Super chosen on dev (+5 of 62 at top-1). Mistral ran at low reasoning effort (default too slow), so its result may understate it. Held-out half not yet run; awaiting Aditya's go-ahead.
+
+## 2026-11-20: More reranker models; second cluster reviewer (GPT)
+
+Reranker swap, dev half (62), same prompt and K = 10 (`results/reranker_swap_half0.json`): nemotron-3-ultra-550b-a55b hit@1 0.677 (hit@5 0.919); minimax-m3.1-flash 0.629; Super with K = 20 0.661 (worse than K = 10). Super (0.710) still best. Super dev misses: 18/62, of which 5 had gold outside the top-10 candidates (first-stage ranks 12-45) and 13 were rerank errors (10 of them gold at Super's rank 2; Super prefers general dispute sections 1026.13 / 1006.38 / 1681i over the rubric's specific duty sections). Kimi K3.1 Pro, Super with 200-word passages and Super with rubric hints still running.
+
+Second cluster reviewer at Aditya's request: gpt-5.6-sol via the Codex CLI on his ChatGPT Edu login (`scripts/review_clusters.py --reviewer gpt`; same prompt, one item per call, run from an empty temp dir, cached in outputs/retrieval/codex_cache) -> `annotation/clusters_review_gpt.jsonl`. GPT accepted 101/175 members and rejected 55/55 definitions controls. Mistral vs GPT on 172 members both answered: 78.5% agreement, Cohen's kappa 0.58; GPT more lenient (31 GPT-only accepts, 6 Mistral-only).
+Final accuracy by membership rule (0.5 cutoff; top1 held-out at T in brackets): Mistral (frozen) 5-sec 0.400, top1 all 0.623, held-out 0.532 [0.309]; GPT 0.451, 0.653, 0.543 [0.321]; both 0.394, 0.623, 0.532 [0.309]; either 0.457, 0.653, 0.543 [0.321]. Reviewer choice moves the held-out headline by about 1 point. Frozen file NOT changed.
+
+## 2026-11-20: Super reranker variants; GPT as checker (H4 extension)
+
+Super reranker variants, dev (62): K = 20 hit@1 0.661; 200-word passages 0.661; **rubric hints (team section conventions in the prompt) 0.774, hit@3 0.919, MRR 0.848**. Recommended reranker: Super + rubric, K = 10, 90 words (dev-chosen; held-out untouched). Disclose: gold labels follow the same rubric.
+
+GPT checker: gpt-5.6-sol through the Codex CLI (`src/cfpb/verify/codex_client.py`, evaluation only; `LLMJudgeVerifier("codex:gpt-5.6-sol")`; `scripts/llm_judge.py --workers`), judge prompt judge-v1-5ead5110, vs NLI at T. Caveat: ChatGPT was one of the two annotators of both checker gold sets, so agreed pairs favour GPT.
+- Set 1 (50), GPT label (prob >= 0.5): BA 0.752 vs NLI 0.798; AUROC 0.901 vs 0.843. Unsupported recall 0.54 (too lenient at 0.5).
+- Set 2 (100), at 0.5: BA 0.647 vs NLI 0.679; AUROC 0.836 vs 0.734; unsupported recall 0.29.
+- Cutoff tuned on set 1 (= 1.0, i.e. only support_probability 100 counts) applied to set 2: GPT BA 0.756, unsupported recall 0.941, vs NLI 0.679; diff +0.078 [-0.037, 0.192] (not significant). Set-2 adjudicated pairs (17, all unsupported): GPT 0.882 vs NLI 0.647 accuracy.
+Results: `results/llm_judge_codex_gpt-5.6-sol.json`, `results/llm_judge_codex_gpt-5.6-sol_v2.json`.
+
+## 2026-11-20: GPT (Codex) as reranker and drafter, dev only
+
+Reranker, dev (62), K = 10, 90 words: kimi-k3.1-pro plain hit@1 0.726 (3 empty); **gpt-5.6-sol (Codex, evaluation only) plain 0.774, with rubric 0.839** (hit@3 0.919, MRR 0.883, 0 empty). Ceiling at K = 10 is 0.919 (gold in first-stage top 10). Kimi + rubric running.
+Drafter: `src/cfpb/generate/codex.py` (CodexGenerator, same prompt v1-9d0f038c and parsing; cache key model "codex:gpt-5.6-sol"); `run_pipeline_batch.py --generator codex`. Dev ids in `annotation/attribution_ids_dev.txt` (62). Run `dev-oracle-gpt` (oracle context, NLI checker) in progress; compare with full-oracle-local on the same ids.
+
+## 2026-11-20: GPT drafter result (dev, oracle context)
+dev-oracle-gpt (62, 4,983 s): supported 0.784 @0.5, 0.424 @T vs Super (full-oracle-local, same ids) 0.849 / 0.536. Paired macro diff −0.046 [−0.130, 0.044] @0.5, −0.099 [−0.185, −0.014] @T. GPT paraphrases more (word overlap with cited passage 0.731 vs 0.851); NLI favours verbatim. Keep Super as drafter. Details in docs/EXPERIMENT_LOG.md E8 (new structured log for the report).
+- Kimi + rubric (dev): hit@1 0.806, hit@3 0.919, MRR 0.862, 3 empty. Logged in EXPERIMENT_LOG E5.
+
+## 2026-11-21: Final accuracy with the strongest links (E9)
+Reran full-gpt_rubric_top1 and full-super_rubric_top1 (restarted after the 11-20 session died; drafts cached, NLI redone, ~3.7 h each). Scored all five runs with score_clusters.py (frozen clusters). Held-out FINAL ACCURACY @0.5 / @T: old top1 0.532 / 0.309; **Super + rubric 0.657 / 0.402**; GPT + rubric 0.754 / 0.466; oracle 0.865 / 0.523. All-127 @0.5: 0.623, 0.741 [0.668, 0.808], 0.800 [0.737, 0.859], 0.857. Logged as EXPERIMENT_LOG E9.
+
+## 2026-11-21: Verification gating started (E10, dev only)
+Target 92% is above the oracle ceiling (0.865 held-out @0.5), so the next lever is the drafter + checker. New `scripts/run_verification_gating.py`: from full-super_rubric_top1, sentences with NLI entail < T go back to Super (revise prompt rev1-9cf1f95b, cache outputs/generation/gating_cache) to be rewritten from the cited passages or DROPped; rewrite kept only if NLI scores it higher; 2 rounds. Writes dev-super_rubric_gate-keep (flagged stay) and -drop (flagged removed, coverage reported). `score_clusters.py` got `--out`. Smoke (3 complaints): 5/9 rewrites accepted; rewrites near-verbatim (overlap 0.96); verbatim copies often still score 0.977-0.996 < T. Caveat: the gate and the metric use the same checker. Dev run in progress (task bh8crhi20, watcher tab c5).
+
+## 2026-11-22: Unattended experiment queue (Aditya away all day, laptop on, keep-awake set)
+Dev gating (bh8crhi20) was paused overnight by sleep, now resumed. Queue (task beol0dhyg, script in scratchpad queue_day.sh, log outputs/queue_2026-11-22.log): score dev gating -> GPT judge on rewrites (scripts/judge_gating.py) -> pre-registered rule (EXPERIMENT_LOG E10) -> held-out gating Super + rubric -> gating on GPT base -> score all (results/final_accuracy_gating.json). In parallel: reranker vote E11 (scripts/run_rerank_vote.py, task bqhwd4jvx). New file annotation/attribution_ids_heldout.txt (65). Dashboard in terminal tab c6.
+- 12:02 dev gating done: keep FINAL dev @0.5 0.828->0.862, @T 0.579->0.640; drop 0.874 (73% sentences kept). GPT judge (Q3) running.
+- 12:04 GPT judge on 46 rewrites: supported 0.783 -> 0.957 (+0.174 [0.065, 0.283]); rule fired, held-out gating running. E11 vote: majority 0.790 vs single 0.774 (+1/62), Borda 0.774; not adopted.
+- 14:55 queue done. Held-out FINAL @0.5/@T: Super+rubric+gating keep 0.705/0.454 (paired gain +0.048 [0.026,0.072] / +0.052); GPT+rubric+gating keep 0.806/0.519, drop 0.827 (68% sentences). Logged E10.
+
+## 2026-11-22: App switched to Super + rubric + top section + verification gating
+- `src/cfpb/retrieval/llm_rerank.py`: RERANK_MODEL now nvidia/nemotron-3.5-super-vl-120b-a12b, USE_RUBRIC True, RUBRIC moved here from scripts/run_reranker_swap.py (same text; script imports it), `rerank(model=, rubric=)`, `top_section_chunks()` (top1x5), retrieve() also returns first_stage scores. Lightning setting kept as LIGHTNING_MODEL.
+- `src/cfpb/generate/revise.py`: gating prompt rev1-9cf1f95b and `gate_draft()`; scripts/run_verification_gating.py imports the prompt and cache from it.
+- `app/backend/engine.py`: retrieve gives the drafter the top section's chunks (retrieval also stores the section ranking); after verify, a "revise" stage runs gate_draft (CFPB_GATING_ROUNDS, default 2, in config.py); draft sentences store original_text and gating_round. Frontend: "Rewrite flagged" stage, "Rewritten" badge with the original on hover, section ranking line. README updated. Frontend rebuilt.
+- Verified end to end on a throwaway SQLite DB (not Neon) with dev complaint 15284705: same section ranking, same 5 chunks, same NLI scores and the same 2 rewrites as the dev-super_rubric_gate-keep run. Verify + gating took about 200 s on CPU.
+- Research for the checker (subagent report): FactCG-DeBERTa-L (0.4B, MIT, LLM-AggreFact 75.6 untuned), MiniCheck-Flan-T5-L (0.8B, 75.0), Granite Guardian 3.3 8B, Bespoke-MiniCheck-7B; CV thresholding over all 150 labels; lexical-containment pre-filter; HyDE / query rewriting for retrieval.
+- 2026-11-22 E12c: FactCG-DeBERTa-L (CV150 BA 0.684, set2 0.665) and MiniCheck-FT5-L (0.658 / 0.661) do not beat DeBERTa NLI (0.725 / 0.679 at T); ensemble 0.717. Negative result logged. Ultra judge (E12b) still running.
+- E12b: Ultra judge set1/set2 BA 0.716/0.753; mean(NLI, Ultra) >= 0.974 (cut on set 1): set2 BA 0.829 vs NLI@T 0.679, +0.151 [0.068, 0.237]; CV150 0.815 vs 0.725. Re-scoring held-out runs with it (task bg1z0tdm8). nemotron._call now retries dropped connections.
+- E12d: held-out FINAL under ensemble checker: oracle 0.519, Super+rubric 0.384, +gating 0.483, GPT+rubric+gating 0.556 (vs NLI@0.5 0.865/0.657/0.705/0.806). NLI@0.5 headline overstates; next: gating driven by the ensemble.
+- 2026-11-22 E13 started: one-factor drafter ablation on dev oracle (A0-A4), per Aditya's design; LLM error sorting stopped.
+
+## 2026-11-23: E13 drafter ablation, arms A0 to A4 done
+- Dev 62, oracle context, ensemble checker. A0 reproduces 0.516. A3 (quote-anchored, keep every condition) 0.767, +0.251 [+0.178, +0.326] vs A0; A2 (no facts) +0.033 n.s.; A1 (no complaint) -0.098; A4 (k 1) -0.118 [-0.196, -0.036].
+- Trade-off: A3 drafts stop addressing the grievance (Ultra guard 0.40 -> 0.15). DeBERTa@T and Ultra disagree on A3 (0.34 vs 0.88), so a human spot-check is needed.
+- Next idea: two-part draft (quote-anchored rule sentences + labelled application sentences). A5 (GPT drafter) running. Details in EXPERIMENT_LOG E13.
+- A5 (GPT drafter, prompt v1): 0.478, -0.038 [-0.121, +0.045] vs Super. Model swap does not help; the prompt (anchoring) is the lever. E13 done.
+- 2026-11-23 E14: scoring strictness check. Ensemble agrees with labels (46% vs 49% supported); @0.5 too lenient. Same-law and label-corrected readings top out about 0.6-0.67. See EXPERIMENT_LOG E14.
+
+## 2026-11-23: app checker switched to DeBERTa + Ultra ensemble (Aditya's call)
+- New `src/cfpb/verify/ensemble.py` (EnsembleVerifier: mean(DeBERTa NLI, Ultra judge-v1) >= 0.97378; Ultra calls in parallel with local NLI). Reproduces the evaluation's ensemble scores exactly (6/6 sentences checked against heldout-super_rubric_gate-keep+ens).
+- App: `CFPB_CHECKER` (ensemble default with a key, nli otherwise), `CFPB_ENSEMBLE_CUTOFF`; gating now flags and accepts rewrites by the ensemble score; per-sentence DeBERTa and Ultra parts shown in the case page tooltip; Insights step 5 shows the ensemble's set-2 figures; seed labels replayed runs at their own checker's cutoff. Frontend rebuilt.
+- End-to-end on throwaway SQLite (complaint 15284705): context matches the experiment; 6 sentences, 3 rewritten, 1 flagged; verify + gating 211 s on CPU. Neon not touched (its seeded cases keep their stored labels until reseeded).
+- 2026-11-23 E15: HHEM, AlignScore, Bespoke-MiniCheck-7B (Ollama Q4) benchmarked as DeBERTa alternatives; none beats DeBERTa + Ultra (best: Bespoke + Ultra 0.801 vs 0.829, n.s.). App unchanged. See EXPERIMENT_LOG E15.
+
+## 2026-11-23: GPT reranker is now in the finalized pipeline and the app (Aditya's call, E16)
+- Finalized pipeline: GPT-5.6 Sol reranker (Codex) + Super drafter + DeBERTa+Ultra checker + gating. Held-out final accuracy 0.556 [0.471, 0.639] (was 0.483 with Super reranker). Top section correct held-out 0.769 vs 0.631; chosen on dev (0.839 vs 0.774).
+- App: CFPB_RERANK_MODEL (default codex:gpt-5.6-sol), CFPB_RERANK_FALLBACK (Super). Verified end to end on throwaway SQLite. The "Codex is evaluation only" rule is lifted by Aditya for the reranker; deployment should use its own Codex account.
+
+## 2026-11-24: E17 drafter fix finished on dev; rule does not fire
+- Dev 62, finalized pipeline. Gated FINAL: B0 0.794, B1 0.789 (-0.005 [-0.048, +0.038]), B2 0.787 (-0.007). Both fail the relevance guard (0.21 / 0.19 vs B0 0.32). No held-out run; app keeps prompt v1.
+- Without gating B1 is +0.165 [+0.091, +0.241] over B0, but gating already closes that gap. B2's openers get flagged by the checker (0.278 before gating). Details in EXPERIMENT_LOG E17.
+- 2026-11-24 E17 follow-up: held-out (65) app-exact pipeline (ensemble-driven gating) FINAL 0.694 [0.599, 0.782], acceptable drafts 0.754; before gating 0.444. Replaces 0.556 as the pipeline's held-out figure, with the caveat that gating and scoring share a checker (human spot-check pending). Relevance drops 0.48 -> 0.34 after rewriting.
+- 2026-11-24 matched attribution on held-out (ensemble gating both sides): retrieved 0.694, oracle 0.808, gap +0.114 [+0.002, +0.228]; before gating 0.444 vs 0.519 (+0.075 n.s.). Generation now the larger error share. `results/final_results.json` rebuilt with a `finalized_pipeline` block.

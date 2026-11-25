@@ -1,0 +1,208 @@
+{
+  "protocol": "docs/CLUSTER_SCORING_PROTOCOL.md",
+  "clusters_sha256": "4f569aee43cf190e2bf22781c067d2f20d1edb81d5f50ecbb0887e8db2310056",
+  "label_status": "silver (LLM-built, LLM-reviewed); no human review by decision of Aditya, 2026-11-19",
+  "disclosure": "metric designed after the strict results were seen; strict score reported beside it",
+  "runs": {
+    "full-oracle-local+ens": {
+      "n_complaints": 65,
+      "n_sentences": 266,
+      "tier_share": {
+        "1": 1.0,
+        "2": 0.0,
+        "3": 0.0,
+        "4": 0.0
+      },
+      "retrieval_top5": {
+        "strict_hit": 1.0,
+        "cluster_hit": 1.0
+      },
+      "cutoff_0.5": {
+        "FINAL_ACCURACY": 0.518796992481203,
+        "ci95": [
+          0.44573534535319226,
+          0.5873652958789579
+        ],
+        "strict_accuracy": 0.518796992481203,
+        "supported": 0.518796992481203,
+        "acceptable_drafts": 0.6,
+        "supported_share_by_tier": {
+          "1": 0.518796992481203,
+          "2": null,
+          "3": null,
+          "4": null
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.518796992481203
+      },
+      "cutoff_T": {
+        "FINAL_ACCURACY": 0.3383458646616541,
+        "ci95": [
+          0.2783882783882784,
+          0.39855072463768115
+        ],
+        "strict_accuracy": 0.3383458646616541,
+        "supported": 0.3383458646616541,
+        "acceptable_drafts": 0.3076923076923077,
+        "supported_share_by_tier": {
+          "1": 0.3383458646616541,
+          "2": null,
+          "3": null,
+          "4": null
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.3383458646616541
+      }
+    },
+    "full-super_rubric_top1+ens": {
+      "n_complaints": 65,
+      "n_sentences": 271,
+      "tier_share": {
+        "1": 0.6273062730627307,
+        "2": 0.08118081180811808,
+        "3": 0.16605166051660517,
+        "4": 0.12546125461254612
+      },
+      "retrieval_top5": {
+        "strict_hit": 0.6307692307692307,
+        "cluster_hit": 0.7076923076923077
+      },
+      "cutoff_0.5": {
+        "FINAL_ACCURACY": 0.3837638376383764,
+        "ci95": [
+          0.30349866655008084,
+          0.4626865671641791
+        ],
+        "strict_accuracy": 0.33210332103321033,
+        "supported": 0.5350553505535055,
+        "acceptable_drafts": 0.4153846153846154,
+        "supported_share_by_tier": {
+          "1": 0.5294117647058824,
+          "2": 0.6363636363636364,
+          "3": 0.5555555555555556,
+          "4": 0.47058823529411764
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.3837638376383764
+      },
+      "cutoff_T": {
+        "FINAL_ACCURACY": 0.22878228782287824,
+        "ci95": [
+          0.1709090909090909,
+          0.2883228765138467
+        ],
+        "strict_accuracy": 0.2029520295202952,
+        "supported": 0.3173431734317343,
+        "acceptable_drafts": 0.2,
+        "supported_share_by_tier": {
+          "1": 0.3235294117647059,
+          "2": 0.3181818181818182,
+          "3": 0.3111111111111111,
+          "4": 0.29411764705882354
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.22878228782287824
+      }
+    },
+    "heldout-super_rubric_gate-keep+ens": {
+      "n_complaints": 65,
+      "n_sentences": 271,
+      "tier_share": {
+        "1": 0.6273062730627307,
+        "2": 0.08118081180811808,
+        "3": 0.16605166051660517,
+        "4": 0.12546125461254612
+      },
+      "retrieval_top5": {
+        "strict_hit": 0.6307692307692307,
+        "cluster_hit": 0.7076923076923077
+      },
+      "cutoff_0.5": {
+        "FINAL_ACCURACY": 0.4833948339483395,
+        "ci95": [
+          0.39338235294117646,
+          0.5729547107566824
+        ],
+        "strict_accuracy": 0.41697416974169743,
+        "supported": 0.6605166051660517,
+        "acceptable_drafts": 0.5538461538461539,
+        "supported_share_by_tier": {
+          "1": 0.6647058823529411,
+          "2": 0.8181818181818182,
+          "3": 0.6222222222222222,
+          "4": 0.5882352941176471
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.4833948339483395
+      },
+      "cutoff_T": {
+        "FINAL_ACCURACY": 0.3173431734317343,
+        "ci95": [
+          0.2518248175182482,
+          0.3854176136363636
+        ],
+        "strict_accuracy": 0.2767527675276753,
+        "supported": 0.4280442804428044,
+        "acceptable_drafts": 0.27692307692307694,
+        "supported_share_by_tier": {
+          "1": 0.4411764705882353,
+          "2": 0.5,
+          "3": 0.4,
+          "4": 0.35294117647058826
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.3173431734317343
+      }
+    },
+    "full-gpt_rubric_gate-keep+ens": {
+      "n_complaints": 65,
+      "n_sentences": 268,
+      "tier_share": {
+        "1": 0.7686567164179104,
+        "2": 0.04477611940298507,
+        "3": 0.0708955223880597,
+        "4": 0.11567164179104478
+      },
+      "retrieval_top5": {
+        "strict_hit": 0.7692307692307693,
+        "cluster_hit": 0.8153846153846154
+      },
+      "cutoff_0.5": {
+        "FINAL_ACCURACY": 0.5559701492537313,
+        "ci95": [
+          0.4712230215827338,
+          0.6385964912280702
+        ],
+        "strict_accuracy": 0.5186567164179104,
+        "supported": 0.6716417910447762,
+        "acceptable_drafts": 0.6461538461538462,
+        "supported_share_by_tier": {
+          "1": 0.6747572815533981,
+          "2": 0.8333333333333334,
+          "3": 0.5789473684210527,
+          "4": 0.6451612903225806
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.5559701492537313
+      },
+      "cutoff_T": {
+        "FINAL_ACCURACY": 0.3880597014925373,
+        "ci95": [
+          0.31985294117647056,
+          0.45878136200716846
+        ],
+        "strict_accuracy": 0.3582089552238806,
+        "supported": 0.4664179104477612,
+        "acceptable_drafts": 0.36923076923076925,
+        "supported_share_by_tier": {
+          "1": 0.46601941747572817,
+          "2": 0.6666666666666666,
+          "3": 0.42105263157894735,
+          "4": 0.41935483870967744
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.3880597014925373
+      }
+    }
+  }
+}

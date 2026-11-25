@@ -1,0 +1,108 @@
+{
+  "protocol": "docs/CLUSTER_SCORING_PROTOCOL.md",
+  "clusters_sha256": "4f569aee43cf190e2bf22781c067d2f20d1edb81d5f50ecbb0887e8db2310056",
+  "label_status": "silver (LLM-built, LLM-reviewed); no human review by decision of Aditya, 2026-11-19",
+  "disclosure": "metric designed after the strict results were seen; strict score reported beside it",
+  "runs": {
+    "fix-oracle-B0-heldout-nogate": {
+      "n_complaints": 65,
+      "n_sentences": 266,
+      "tier_share": {
+        "1": 1.0,
+        "2": 0.0,
+        "3": 0.0,
+        "4": 0.0
+      },
+      "retrieval_top5": {
+        "strict_hit": 1.0,
+        "cluster_hit": 1.0
+      },
+      "cutoff_0.5": {
+        "FINAL_ACCURACY": 0.518796992481203,
+        "ci95": [
+          0.44573534535319226,
+          0.5873652958789579
+        ],
+        "strict_accuracy": 0.518796992481203,
+        "supported": 0.518796992481203,
+        "acceptable_drafts": 0.6,
+        "supported_share_by_tier": {
+          "1": 0.518796992481203,
+          "2": null,
+          "3": null,
+          "4": null
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.518796992481203
+      },
+      "cutoff_T": {
+        "FINAL_ACCURACY": 0.3383458646616541,
+        "ci95": [
+          0.2783882783882784,
+          0.39855072463768115
+        ],
+        "strict_accuracy": 0.3383458646616541,
+        "supported": 0.3383458646616541,
+        "acceptable_drafts": 0.3076923076923077,
+        "supported_share_by_tier": {
+          "1": 0.3383458646616541,
+          "2": null,
+          "3": null,
+          "4": null
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.3383458646616541
+      }
+    },
+    "fix-oracle-B0-heldout-gate": {
+      "n_complaints": 65,
+      "n_sentences": 266,
+      "tier_share": {
+        "1": 1.0,
+        "2": 0.0,
+        "3": 0.0,
+        "4": 0.0
+      },
+      "retrieval_top5": {
+        "strict_hit": 1.0,
+        "cluster_hit": 1.0
+      },
+      "cutoff_0.5": {
+        "FINAL_ACCURACY": 0.8082706766917294,
+        "ci95": [
+          0.7451737451737451,
+          0.8639705882352942
+        ],
+        "strict_accuracy": 0.8082706766917294,
+        "supported": 0.8082706766917294,
+        "acceptable_drafts": 0.8923076923076924,
+        "supported_share_by_tier": {
+          "1": 0.8082706766917294,
+          "2": null,
+          "3": null,
+          "4": null
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.8082706766917294
+      },
+      "cutoff_T": {
+        "FINAL_ACCURACY": 0.5413533834586466,
+        "ci95": [
+          0.4740740740740741,
+          0.6088560885608856
+        ],
+        "strict_accuracy": 0.5413533834586466,
+        "supported": 0.5413533834586466,
+        "acceptable_drafts": 0.6,
+        "supported_share_by_tier": {
+          "1": 0.5413533834586466,
+          "2": null,
+          "3": null,
+          "4": null
+        },
+        "FINAL_ACCURACY_dev_half": NaN,
+        "FINAL_ACCURACY_report_half": 0.5413533834586466
+      }
+    }
+  }
+}

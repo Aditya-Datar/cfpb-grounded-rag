@@ -1,0 +1,18 @@
+<section id="recap">
+<p class="kicker">CSCI 544 · Group 36 · Final presentation</p>
+<h2>Drafting regulation-cited replies to CFPB complaints, and measuring which stage fails</h2>
+<div class="flow">
+<div class="step"><span class="sname">Complaint</span><span class="sdesc">consumer narrative (input)</span></div>
+<div class="step"><span class="sname">Classify</span><span class="sdesc">DistilBERT: product, issue</span></div>
+<div class="step"><span class="sname">Retrieve</span><span class="sdesc">embed + BM25, GPT reranks</span></div>
+<div class="step"><span class="sname">Draft</span><span class="sdesc">Nemotron Super cites the section</span></div>
+<div class="step"><span class="sname">Check + rewrite</span><span class="sdesc">each sentence vs the cited text</span></div>
+<div class="step officer"><span class="sname">Officer</span><span class="sdesc">draft + flagged sentences (output)</span></div>
+</div>
+<div class="row">
+<div class="card"><span class="tag">Prior work</span><p><b>Magesh et al. 2024:</b> commercial legal RAG tools hallucinate 17–33%, but are scored end to end, so nobody can say which stage failed.</p><p><b>RAGAS (Es et al. 2024):</b> "faithful" = matches whatever was retrieved, which is not legal correctness. <b>SummaC:</b> our sentence-level checker method.</p></div>
+<div class="card"><span class="tag">What we add</span><p><b>Attribution:</b> run every complaint with the retrieved passage and with the correct (oracle) passage; the gap is retrieval's fault, what remains is generation's.</p><p>We found no published work linking complaints to specific regulation sections.</p></div>
+<div class="card"><span class="tag">Since the midterm</span><p>Midterm: BM25 only, 1 pilot, unvalidated checker.</p><p><span class="new">Now:</span> 5 retrievers + LLM reranker, checker validated on 150 labelled pairs, rewrite-on-flag, held-out evaluation, officer web app.</p></div>
+</div>
+<aside>~60 seconds. Input: a consumer complaint filed with the CFPB. Output: product/issue, the federal regulation section that governs it, a draft reply citing that section, and a per-sentence report that flags unsupported sentences for a compliance officer. The tool assists an officer; it never replaces one. Prior work: Magesh et al. show commercial legal tools (Lexis+ AI, Westlaw) still hallucinate, but they score the whole system, so they cannot say whether retrieval or generation failed. RAGAS defines faithfulness relative to the retrieved text, which Magesh et al. reject for law. Our contribution is the attribution experiment: same complaint, retrieved vs correct passage. Since the midterm: the midterm had only BM25 and a pilot with an unvalidated checker at a lenient 0.5 cutoff. We added dense, hybrid, regulation-prior and LLM-reranked retrieval, validated and replaced the checker, added rewrite-on-flag, and evaluated once on a held-out half.</aside>
+</section>

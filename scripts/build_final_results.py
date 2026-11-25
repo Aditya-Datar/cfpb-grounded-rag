@@ -208,6 +208,108 @@ def classifier() -> dict:
                           c["issue"]["macro_f1_by_min_support"]["min_test_support_100"]["macro_f1"]}}
 
 
+def final_accuracy_clusters() -> dict | None:
+    """Cluster-based final accuracy (docs/CLUSTER_SCORING_PROTOCOL.md), if scored."""
+    f, z = R / "final_accuracy_clusters.json", R / "cluster_freeze.json"
+    if not f.exists() or not z.exists():
+        return None
+    d, fr = json.loads(f.read_text(encoding="utf-8")), json.loads(z.read_text(encoding="utf-8"))
+    keep = ("FINAL_ACCURACY", "ci95", "FINAL_ACCURACY_dev_half", "FINAL_ACCURACY_report_half", "strict_accuracy",
+            "supported", "acceptable_drafts")
+    return {"source": ["results/final_accuracy_clusters.json", "results/cluster_freeze.json"],
+            "definition": "share of drafted sentences that the checker supports AND that cite the gold section or a frozen cluster member",
+            "clusters": {k: fr[k] for k in ("sha256", "n_clusters", "proposed_members", "accepted_members", "controls", "label_status")},
+            "disclosure": d["disclosure"],
+            "selection_note": "full-llm_top1's context layout was chosen on the dev half; its report-half value is the unbiased one",
+            "runs": {r: {"tier_share": v["tier_share"], "retrieval_top5": v["retrieval_top5"],
+                         **{c: {k: v[c][k] for k in keep} for c in ("cutoff_0.5", "cutoff_T")}}
+                     for r, v in d["runs"].items()}}
+
+
+def post_h1_retrieval() -> dict | None:
+    """Retrieval improvements after H1 (2026-11-19), chosen on the dev half, reported once on the report half."""
+    if not (R / "retrieval_llm.json").exists():
+        return None
+    d = load("retrieval_llm.json")
+    rh = d["report_half"]
+
+    def gains(b):
+        return {f"{m}_gain_vs_{ref}": est(b[f"gain_vs_{key}"][m]["mean"], b[f"gain_vs_{key}"][m]["ci95"])
+                for ref, key in (("h1_hybrid", "h1_hybrid"), ("prior_only", "prior_only")) for m in ("hit@5", "mrr")}
+
+    out = {"source": ["results/retrieval_improved.json", "results/retrieval_llm.json"],
+           "note": "post-H1 experiments; H1 stands as reported. Settings chosen by dev-half MRR only.",
+           "split": "report half (metrics.half == 1), in-scope complaints, with FCRA",
+           "retrievers": {
+               "h1_hybrid_mpnet": metric_block(rh["h1_hybrid_mpnet"]),
+               "regulation_prior": metric_block(rh["prior_only_2026_11_19"]) | {
+                   "what": "H1 hybrid + 0.3 for chunks of the classifier's regulation (dev choice; cross-encoder "
+                           "rerankers ms-marco-MiniLM-L-6-v2 and bge-reranker-base did not beat it on dev)"},
+               "nv_embed_hybrid_prior": metric_block(rh["stage1_chosen"]) | gains(rh["stage1_chosen"]) | {
+                   "what": f"{d['embedder']} + BM25 (alpha {d['stage1_chosen']['alpha']}) + prior {d['stage1_chosen']['b']}"},
+               "llm_rerank": metric_block(rh["final"]) | gains(rh["final"]) | {
+                   "what": f"the above, then {d['reranker']} ({d['rerank_chosen']['mode']}) picks 5 sections from "
+                           f"the top {d['rerank_chosen']['K']}"}},
+           "per_regulation_llm_rerank": d["per_regulation_report_half"],
+           "caveats": ["The first LLM-rerank run returned no answer on 327 of 381 calls (reasoning budget 8192 "
+                       "tokens); its report-half numbers were printed before the fix. The fix addressed only the "
+                       "empty answers, and every choice stayed on the dev half.",
+                       "Reg V has 4 report-half complaints."]}
+    if (R / "attribution_full_llm_rerank.json").exists():
+        out["attribution"] = {}
+        for cut, sfx in (("0.5", ""), ("T", "_tau0.9966")):
+            a = load(f"attribution_full_llm_rerank{sfx}.json")
+            g = a["gap_supported_and_gold_oracle_minus_retrieved"]
+            out["attribution"][cut] = {
+                "runs": [a["retrieved_run"], a["oracle_run"]], "n_complaints": a["n_complaints"],
+                "gold_section_in_retrieved_top5": a["gold_section_in_retrieved_topk"],
+                **{f"{cond}_{m}": a[cond][m] for cond in ("retrieved", "oracle")
+                   for m in ("pct_supported_micro", "pct_supported_macro",
+                             "pct_supported_and_gold_section_micro", "pct_supported_and_gold_section_macro")},
+                "gap_supported_and_gold_section": g}
+    return out
+
+
+def finalized_pipeline() -> dict | None:
+    """The finalized pipeline as the app runs it (EXPERIMENT_LOG E16, E17): GPT reranker, Super drafter,
+    mean(DeBERTa, Ultra) checker, gating driven by that checker. Held-out, retrieved vs oracle context."""
+    import numpy as np
+    import pandas as pd
+    need = [R / "drafter_fix_heldout.json", R / "drafter_fix_oracle-heldout.json", R / "reranker_top1_section.json"]
+    if not all(f.exists() for f in need):
+        return None
+    ret, orc, rr = (json.loads(f.read_text(encoding="utf-8")) for f in need)
+    rows = ROOT / "outputs" / "drafter_fix" / "rows"
+    keep = ("FINAL_ACCURACY", "ci95", "strict_accuracy", "supported", "acceptable_drafts", "addresses_complaint",
+            "sentences_per_draft", "tier_share")
+    out = {"source": [str(f.relative_to(ROOT)) for f in need],
+           "pipeline": "Nemotron Embed 8B + BM25 + regulation prior -> GPT-5.6 Sol reranker (rubric hints, K 10) -> "
+                       "top1x5 context -> Nemotron Super drafter (prompt v1) -> mean(DeBERTa NLI, Ultra judge) >= "
+                       f"{ret['cut']} -> gating (2 rounds, keep), flags and rewrites judged by the same checker",
+           "split": "held-out (metrics.half == 1), 65 complaints",
+           "reranker_top1_section_correct": rr["rerankers"]["gpt"]["heldout"],
+           "conditions": {}, "oracle_minus_retrieved": {},
+           "caveats": ["Gating and scoring use the same checker; a human spot-check of rewritten sentences is pending "
+                       "(annotation/spotcheck_rewritten_heldout.csv).",
+                       "Rewriting lowers the share of drafts that address the complaint (Ultra guard).",
+                       "Checker set-2 labels are silver (AI-assisted)."]}
+    for cond, src in (("retrieved", ret), ("oracle", orc)):
+        for tag in ("nogate", "gate"):
+            m = src["arms"][f"B0-{tag}"]
+            out["conditions"][f"{cond}_{tag}"] = {"run": m["run"], **{k: m[k] for k in keep}}
+    rng = np.random.default_rng(0)
+    for tag in ("nogate", "gate"):
+        a = pd.read_parquet(rows / f"fix-oracle-B0-heldout-{tag}.parquet").groupby("complaint_id").ok_cut.agg(["sum", "size"])
+        b = pd.read_parquet(rows / f"fix-B0-heldout-{tag}.parquet").groupby("complaint_id").ok_cut.agg(["sum", "size"])
+        j = a.join(b, lsuffix="_o", rsuffix="_r", how="inner")
+        no, do, nr, dr = (j[c].to_numpy(float) for c in ("sum_o", "size_o", "sum_r", "size_r"))
+        i = rng.integers(0, len(j), (10000, len(j)))
+        d = no[i].sum(1) / do[i].sum(1) - nr[i].sum(1) / dr[i].sum(1)
+        out["oracle_minus_retrieved"][tag] = {"n": len(j), "diff": float(no.sum() / do.sum() - nr.sum() / dr.sum()),
+                                              "ci95": [float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5))]}
+    return out
+
+
 def main() -> None:
     commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     gold = [json.loads(line) for line in (ROOT / "annotation" / "gold_final.jsonl").read_text(encoding="utf-8").splitlines()]
@@ -234,6 +336,9 @@ def main() -> None:
         "H4_checker": h4(),
         "H5_scope_detection": h5(),
         "ablations": ablations(),
+        "post_h1_retrieval": post_h1_retrieval(),
+        "final_accuracy_clusters": final_accuracy_clusters(),
+        "finalized_pipeline": finalized_pipeline(),
     }
     out["summary"] = {k: v for k, v in {
         "H1": out["H1_retrieval"]["verdict"]["supported"],

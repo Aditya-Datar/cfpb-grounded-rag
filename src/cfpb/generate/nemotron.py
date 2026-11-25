@@ -19,6 +19,7 @@ decoding settings, complaint text, context chunk ids and texts), so reruns
 and the retrieved/oracle conditions never pay twice for the same input.
 """
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -125,7 +126,7 @@ class NemotronGenerator:
             except urllib.error.HTTPError as e:
                 if e.code not in (429, 500, 502, 503, 504) or attempt == self.retries - 1:
                     raise RuntimeError(f"NVIDIA API HTTP {e.code}: {e.read()[:300]!r}") from None
-            except (urllib.error.URLError, TimeoutError):
+            except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException):
                 if attempt == self.retries - 1:
                     raise
             time.sleep(2 ** attempt * 5)

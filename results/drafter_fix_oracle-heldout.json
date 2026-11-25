@@ -1,0 +1,50 @@
+{
+ "split": "heldout",
+ "cut": 0.9737792968749999,
+ "context": "oracle",
+ "base_retrieval": "outputs\\pipeline_runs\\full-oracle-local",
+ "arms": {
+  "B0-nogate": {
+   "run": "fix-oracle-B0-heldout-nogate",
+   "n_sentences": 266,
+   "sentences_per_draft": 4.092307692307692,
+   "supported": 0.518796992481203,
+   "addresses_complaint": 0.38461538461538464,
+   "rewritten": 0,
+   "FINAL_ACCURACY": 0.518796992481203,
+   "ci95": [
+    0.44573534535319226,
+    0.5873652958789579
+   ],
+   "strict_accuracy": 0.518796992481203,
+   "acceptable_drafts": 0.6,
+   "tier_share": {
+    "1": 1.0,
+    "2": 0.0,
+    "3": 0.0,
+    "4": 0.0
+   }
+  },
+  "B0-gate": {
+   "run": "fix-oracle-B0-heldout-gate",
+   "n_sentences": 266,
+   "sentences_per_draft": 4.092307692307692,
+   "supported": 0.8082706766917294,
+   "addresses_complaint": 0.27692307692307694,
+   "rewritten": 95,
+   "FINAL_ACCURACY": 0.8082706766917294,
+   "ci95": [
+    0.7451737451737451,
+    0.8639705882352942
+   ],
+   "strict_accuracy": 0.8082706766917294,
+   "acceptable_drafts": 0.8923076923076924,
+   "tier_share": {
+    "1": 1.0,
+    "2": 0.0,
+    "3": 0.0,
+    "4": 0.0
+   }
+  }
+ }
+}

@@ -15,6 +15,7 @@ from sqlalchemy import (JSON, Boolean, DateTime, Float, ForeignKey, Integer, Str
                         event, text)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
+from sqlalchemy.types import TypeDecorator
 
 from app.backend.config import DATABASE_URL, SCHEMA
 
@@ -46,6 +47,19 @@ def now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class UTCDateTime(TypeDecorator):
+    """Timezone-aware UTC datetimes on every backend. SQLite drops the offset on the way in, so naive
+    values read back are UTC; without this, deadline arithmetic against now() fails on SQLite."""
+    impl = DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        return value.astimezone(timezone.utc) if value is not None and value.tzinfo else value
+
+    def process_result_value(self, value, dialect):
+        return value.replace(tzinfo=timezone.utc) if value is not None and value.tzinfo is None else value
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -62,15 +76,15 @@ class Case(Base):
     issue: Mapped[str | None] = mapped_column(String(300))
     state: Mapped[str | None] = mapped_column(String(8))
     cfpb_date_received: Mapped[str | None] = mapped_column(String(16))
-    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    received_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
     # new -> analyzing -> in_review | scope_review -> approved | referred ; failed on errors
     status: Mapped[str] = mapped_column(String(24), default="new", index=True)
     assigned_to: Mapped[str | None] = mapped_column(String(80))
     decision_note: Mapped[str | None] = mapped_column(Text)
     decided_by: Mapped[str | None] = mapped_column(String(80))
-    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    decided_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now, onupdate=now)
 
     analyses: Mapped[list["Analysis"]] = relationship(back_populates="case", order_by="Analysis.id",
                                                       cascade="all, delete-orphan")
@@ -98,8 +112,8 @@ class Analysis(Base):
     verifier: Mapped[str | None] = mapped_column(String(160))
     nli_cutoff: Mapped[float | None] = mapped_column(Float)
     timings_ms: Mapped[dict | None] = mapped_column(JSONType)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
     case: Mapped[Case] = relationship(back_populates="analyses")
 
@@ -113,7 +127,7 @@ class DraftVersion(Base):
     sentences: Mapped[list] = mapped_column(JSONType)  # [{text, cited_chunk_ids, entail_prob, label}]
     author: Mapped[str] = mapped_column(String(80))
     note: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
 
     case: Mapped[Case] = relationship(back_populates="drafts")
 
@@ -122,7 +136,7 @@ class Event(Base):
     __tablename__ = "events"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     case_id: Mapped[int] = mapped_column(ForeignKey("cases.id", ondelete="CASCADE"), index=True)
-    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    at: Mapped[datetime] = mapped_column(UTCDateTime(), default=now)
     actor: Mapped[str] = mapped_column(String(80))
     kind: Mapped[str] = mapped_column(String(32))
     detail: Mapped[str | None] = mapped_column(Text)

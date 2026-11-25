@@ -34,6 +34,7 @@ def main() -> None:
     ap.add_argument("--tag", default="")
     ap.add_argument("--nli-tau", type=float, default=0.5, help="NLI cutoff to compare against")
     ap.add_argument("--n-boot", type=int, default=10000)
+    ap.add_argument("--workers", type=int, default=1, help="parallel judge calls (codex: models)")
     args = ap.parse_args()
     sfx = f"_{args.tag}" if args.tag else ""
 
@@ -44,11 +45,14 @@ def main() -> None:
     corpus = load_corpus(CORPUS)
     judge = LLMJudgeVerifier(args.model)
 
-    probs, labels = [], []
-    for r in df.itertuples():  # same premise text the pipeline verifier would see
-        p, lab = judge.score([corpus.get(c).text for c in r.premise_chunk_ids], r.sentence)
-        probs.append(p)
-        labels.append(lab)
+    from concurrent.futures import ThreadPoolExecutor
+
+    def one(r):  # same premise text the pipeline verifier would see
+        return judge.score([corpus.get(c).text for c in r.premise_chunk_ids], r.sentence)
+
+    with ThreadPoolExecutor(args.workers) as ex:
+        res = list(ex.map(one, df.itertuples()))
+    probs, labels = [p for p, _ in res], [lab for _, lab in res]
     y = (df["gold_label"] == "supported").to_numpy()
     pj = np.array(probs) >= 0.5
     pn = df["checker_entail"].to_numpy() >= args.nli_tau
@@ -72,9 +76,20 @@ def main() -> None:
            "nli": {**stats(pn), "tau": args.nli_tau, "auroc": float(roc_auc_score(y, df["checker_entail"]))},
            "judge_minus_nli_balanced_accuracy": {"mean": float(balanced_accuracy_score(y, pj) - balanced_accuracy_score(y, pn)),
                                                  "ci95": [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]},
+           "adjudicated_only": None,
            "per_pair": [{"pair_id": p, "gold": g, "judge_prob": float(q), "judge_label": lab}
                         for p, g, q, lab in zip(df["pair_id"], df["gold_label"], probs, labels)]}
-    path = ROOT / "results" / f"llm_judge_{args.model.split('/')[-1]}{sfx}.json"
+    # Pairs whose gold came from adjudication, not from the two annotators agreeing. When the judge's family
+    # was one of the annotators (ChatGPT for GPT), these are the pairs its own earlier label did not settle.
+    if "source" in df:
+        a = (df["source"] == "adjudicated").to_numpy()
+        if a.any() and 0 < y[a].sum() < a.sum():
+            out["adjudicated_only"] = {"n": int(a.sum()),
+                                       "judge_balanced_accuracy": float(balanced_accuracy_score(y[a], pj[a])),
+                                       "nli_balanced_accuracy": float(balanced_accuracy_score(y[a], pn[a])),
+                                       "judge_accuracy": float((pj[a] == y[a]).mean()),
+                                       "nli_accuracy": float((pn[a] == y[a]).mean())}
+    path = ROOT / "results" / f"llm_judge_{args.model.split('/')[-1].replace(':', '_')}{sfx}.json"
     path.write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in out.items() if k != "per_pair"}, indent=2))
     print("wrote", path)

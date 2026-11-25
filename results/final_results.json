@@ -1,7 +1,7 @@
 {
   "project": "CSCI 544 Group 36: Regulation-Grounded Triage and Response Drafting for CFPB Consumer Complaints",
-  "built": "2026-11-18",
-  "git_commit": "6a2ccff",
+  "built": "2026-11-24",
+  "git_commit": "ae2547b",
   "builder": "scripts/build_final_results.py",
   "data": {
     "gold_complaints": 198,
@@ -1616,6 +1616,604 @@
       },
       "finding": "adding FCRA chunks lowers dense and hybrid hit@5 on non-FCRA complaints"
     }
+  },
+  "post_h1_retrieval": {
+    "source": [
+      "results/retrieval_improved.json",
+      "results/retrieval_llm.json"
+    ],
+    "note": "post-H1 experiments; H1 stands as reported. Settings chosen by dev-half MRR only.",
+    "split": "report half (metrics.half == 1), in-scope complaints, with FCRA",
+    "retrievers": {
+      "h1_hybrid_mpnet": {
+        "hit@1": {
+          "estimate": 0.2,
+          "ci95": [
+            0.1077,
+            0.3077
+          ]
+        },
+        "hit@5": {
+          "estimate": 0.6615,
+          "ci95": [
+            0.5385,
+            0.7692
+          ]
+        },
+        "hit@10": {
+          "estimate": 0.8,
+          "ci95": [
+            0.7077,
+            0.8923
+          ]
+        },
+        "mrr": {
+          "estimate": 0.4023,
+          "ci95": [
+            0.326,
+            0.4881
+          ]
+        },
+        "n": 65
+      },
+      "regulation_prior": {
+        "hit@1": {
+          "estimate": 0.3538,
+          "ci95": [
+            0.2462,
+            0.4769
+          ]
+        },
+        "hit@5": {
+          "estimate": 0.7692,
+          "ci95": [
+            0.6615,
+            0.8615
+          ]
+        },
+        "hit@10": {
+          "estimate": 0.7846,
+          "ci95": [
+            0.6769,
+            0.8769
+          ]
+        },
+        "mrr": {
+          "estimate": 0.5048,
+          "ci95": [
+            0.4134,
+            0.5988
+          ]
+        },
+        "n": 65,
+        "what": "H1 hybrid + 0.3 for chunks of the classifier's regulation (dev choice; cross-encoder rerankers ms-marco-MiniLM-L-6-v2 and bge-reranker-base did not beat it on dev)"
+      },
+      "nv_embed_hybrid_prior": {
+        "hit@1": {
+          "estimate": 0.3385,
+          "ci95": [
+            0.2308,
+            0.4615
+          ]
+        },
+        "hit@5": {
+          "estimate": 0.7385,
+          "ci95": [
+            0.6308,
+            0.8462
+          ]
+        },
+        "hit@10": {
+          "estimate": 0.9077,
+          "ci95": [
+            0.8308,
+            0.9692
+          ]
+        },
+        "mrr": {
+          "estimate": 0.5146,
+          "ci95": [
+            0.4251,
+            0.6052
+          ]
+        },
+        "n": 65,
+        "hit@5_gain_vs_h1_hybrid": {
+          "estimate": 0.0769,
+          "ci95": [
+            -0.0462,
+            0.2
+          ]
+        },
+        "mrr_gain_vs_h1_hybrid": {
+          "estimate": 0.1122,
+          "ci95": [
+            0.024,
+            0.1994
+          ]
+        },
+        "hit@5_gain_vs_prior_only": {
+          "estimate": -0.0308,
+          "ci95": [
+            -0.1231,
+            0.0615
+          ]
+        },
+        "mrr_gain_vs_prior_only": {
+          "estimate": 0.0098,
+          "ci95": [
+            -0.0801,
+            0.0996
+          ]
+        },
+        "what": "nvidia/nemotron-3.5-embed-8b + BM25 (alpha 0.8) + prior 0.2"
+      },
+      "llm_rerank": {
+        "hit@1": {
+          "estimate": 0.5385,
+          "ci95": [
+            0.4154,
+            0.6615
+          ]
+        },
+        "hit@5": {
+          "estimate": 0.8769,
+          "ci95": [
+            0.7846,
+            0.9538
+          ]
+        },
+        "hit@10": {
+          "estimate": 0.9077,
+          "ci95": [
+            0.8308,
+            0.9692
+          ]
+        },
+        "mrr": {
+          "estimate": 0.6623,
+          "ci95": [
+            0.567,
+            0.7543
+          ]
+        },
+        "n": 65,
+        "hit@5_gain_vs_h1_hybrid": {
+          "estimate": 0.2154,
+          "ci95": [
+            0.1077,
+            0.3231
+          ]
+        },
+        "mrr_gain_vs_h1_hybrid": {
+          "estimate": 0.2599,
+          "ci95": [
+            0.1509,
+            0.3667
+          ]
+        },
+        "hit@5_gain_vs_prior_only": {
+          "estimate": 0.1077,
+          "ci95": [
+            0.0154,
+            0.2154
+          ]
+        },
+        "mrr_gain_vs_prior_only": {
+          "estimate": 0.1575,
+          "ci95": [
+            0.0388,
+            0.2729
+          ]
+        },
+        "what": "the above, then nvidia/nemotron-3.5-lightning-30b-a3b (think32k) picks 5 sections from the top 10"
+      }
+    },
+    "per_regulation_llm_rerank": {
+      "E": {
+        "n": 13,
+        "h1_hybrid_hit@5": 0.6923076923076923,
+        "final_hit@1": 0.8461538461538461,
+        "final_hit@5": 1.0
+      },
+      "F": {
+        "n": 15,
+        "h1_hybrid_hit@5": 0.5333333333333333,
+        "final_hit@1": 0.13333333333333333,
+        "final_hit@5": 0.8
+      },
+      "FCRA": {
+        "n": 18,
+        "h1_hybrid_hit@5": 0.7222222222222222,
+        "final_hit@1": 0.7222222222222222,
+        "final_hit@5": 1.0
+      },
+      "V": {
+        "n": 4,
+        "h1_hybrid_hit@5": 0.25,
+        "final_hit@1": 0.25,
+        "final_hit@5": 0.25
+      },
+      "Z": {
+        "n": 15,
+        "h1_hybrid_hit@5": 0.8,
+        "final_hit@1": 0.5333333333333333,
+        "final_hit@5": 0.8666666666666667
+      }
+    },
+    "caveats": [
+      "The first LLM-rerank run returned no answer on 327 of 381 calls (reasoning budget 8192 tokens); its report-half numbers were printed before the fix. The fix addressed only the empty answers, and every choice stayed on the dev half.",
+      "Reg V has 4 report-half complaints."
+    ],
+    "attribution": {
+      "0.5": {
+        "runs": [
+          "full-llm_rerank",
+          "full-oracle-local"
+        ],
+        "n_complaints": 127,
+        "gold_section_in_retrieved_top5": 0.889763779527559,
+        "retrieved_pct_supported_micro": 0.9108910891089109,
+        "retrieved_pct_supported_macro": 0.8964566929133858,
+        "retrieved_pct_supported_and_gold_section_micro": 0.2514851485148515,
+        "retrieved_pct_supported_and_gold_section_macro": 0.27296587926509186,
+        "oracle_pct_supported_micro": 0.8571428571428571,
+        "oracle_pct_supported_macro": 0.826509186351706,
+        "oracle_pct_supported_and_gold_section_micro": 0.8571428571428571,
+        "oracle_pct_supported_and_gold_section_macro": 0.826509186351706,
+        "gap_supported_and_gold_section": {
+          "mean": 0.553543307086614,
+          "ci95": [
+            0.48976377952755906,
+            0.6149606299212597
+          ]
+        }
+      },
+      "T": {
+        "runs": [
+          "full-llm_rerank",
+          "full-oracle-local"
+        ],
+        "n_complaints": 127,
+        "gold_section_in_retrieved_top5": 0.889763779527559,
+        "retrieved_pct_supported_micro": 0.5663366336633663,
+        "retrieved_pct_supported_macro": 0.5461942257217849,
+        "retrieved_pct_supported_and_gold_section_micro": 0.12277227722772277,
+        "retrieved_pct_supported_and_gold_section_macro": 0.12480314960629921,
+        "oracle_pct_supported_micro": 0.528957528957529,
+        "oracle_pct_supported_macro": 0.49908136482939625,
+        "oracle_pct_supported_and_gold_section_micro": 0.528957528957529,
+        "oracle_pct_supported_and_gold_section_macro": 0.49908136482939625,
+        "gap_supported_and_gold_section": {
+          "mean": 0.3742782152230971,
+          "ci95": [
+            0.31916010498687664,
+            0.42887467191601053
+          ]
+        }
+      }
+    }
+  },
+  "final_accuracy_clusters": {
+    "source": [
+      "results/final_accuracy_clusters.json",
+      "results/cluster_freeze.json"
+    ],
+    "definition": "share of drafted sentences that the checker supports AND that cite the gold section or a frozen cluster member",
+    "clusters": {
+      "sha256": "4f569aee43cf190e2bf22781c067d2f20d1edb81d5f50ecbb0887e8db2310056",
+      "n_clusters": 55,
+      "proposed_members": 175,
+      "accepted_members": 74,
+      "controls": {
+        "n": 55,
+        "rejected": 55,
+        "accepted": 0
+      },
+      "label_status": "silver (LLM-built, LLM-reviewed); no human review by decision of Aditya, 2026-11-19"
+    },
+    "disclosure": "metric designed after the strict results were seen; strict score reported beside it",
+    "selection_note": "full-llm_top1's context layout was chosen on the dev half; its report-half value is the unbiased one",
+    "runs": {
+      "full-llm_rerank": {
+        "tier_share": {
+          "1": 0.2811881188118812,
+          "2": 0.15841584158415842,
+          "3": 0.4514851485148515,
+          "4": 0.10891089108910891
+        },
+        "retrieval_top5": {
+          "strict_hit": 0.889763779527559,
+          "cluster_hit": 0.9448818897637795
+        },
+        "cutoff_0.5": {
+          "FINAL_ACCURACY": 0.4,
+          "ci95": [
+            0.35375494071146246,
+            0.44400019646365424
+          ],
+          "FINAL_ACCURACY_dev_half": 0.41568627450980394,
+          "FINAL_ACCURACY_report_half": 0.384,
+          "strict_accuracy": 0.2514851485148515,
+          "supported": 0.9108910891089109,
+          "acceptable_drafts": 0.41732283464566927
+        },
+        "cutoff_T": {
+          "FINAL_ACCURACY": 0.22574257425742575,
+          "ci95": [
+            0.18660745583804328,
+            0.26522793793352306
+          ],
+          "FINAL_ACCURACY_dev_half": 0.2627450980392157,
+          "FINAL_ACCURACY_report_half": 0.188,
+          "strict_accuracy": 0.12277227722772277,
+          "supported": 0.5663366336633663,
+          "acceptable_drafts": 0.1732283464566929
+        }
+      },
+      "full-llm_top1": {
+        "tier_share": {
+          "1": 0.5946969696969697,
+          "2": 0.07575757575757576,
+          "3": 0.21212121212121213,
+          "4": 0.11742424242424243
+        },
+        "retrieval_top5": {
+          "strict_hit": 0.5826771653543307,
+          "cluster_hit": 0.6692913385826772
+        },
+        "cutoff_0.5": {
+          "FINAL_ACCURACY": 0.6231060606060606,
+          "ci95": [
+            0.5406976744186046,
+            0.7014932466942853
+          ],
+          "FINAL_ACCURACY_dev_half": 0.714828897338403,
+          "FINAL_ACCURACY_report_half": 0.5320754716981132,
+          "strict_accuracy": 0.5568181818181818,
+          "supported": 0.9261363636363636,
+          "acceptable_drafts": 0.6141732283464567
+        },
+        "cutoff_T": {
+          "FINAL_ACCURACY": 0.4015151515151515,
+          "ci95": [
+            0.33661369169607225,
+            0.4660405642129849
+          ],
+          "FINAL_ACCURACY_dev_half": 0.49429657794676807,
+          "FINAL_ACCURACY_report_half": 0.30943396226415093,
+          "strict_accuracy": 0.35984848484848486,
+          "supported": 0.5909090909090909,
+          "acceptable_drafts": 0.4015748031496063
+        }
+      },
+      "full-oracle-local": {
+        "tier_share": {
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0
+        },
+        "retrieval_top5": {
+          "strict_hit": 1.0,
+          "cluster_hit": 1.0
+        },
+        "cutoff_0.5": {
+          "FINAL_ACCURACY": 0.8571428571428571,
+          "ci95": [
+            0.8178217821782178,
+            0.8934579439252337
+          ],
+          "FINAL_ACCURACY_dev_half": 0.8492063492063492,
+          "FINAL_ACCURACY_report_half": 0.8646616541353384,
+          "strict_accuracy": 0.8571428571428571,
+          "supported": 0.8571428571428571,
+          "acceptable_drafts": 0.889763779527559
+        },
+        "cutoff_T": {
+          "FINAL_ACCURACY": 0.528957528957529,
+          "ci95": [
+            0.4814071757292415,
+            0.5739299610894941
+          ],
+          "FINAL_ACCURACY_dev_half": 0.5357142857142857,
+          "FINAL_ACCURACY_report_half": 0.5225563909774437,
+          "strict_accuracy": 0.528957528957529,
+          "supported": 0.528957528957529,
+          "acceptable_drafts": 0.6220472440944882
+        }
+      },
+      "full-super_rubric_top1": {
+        "tier_share": {
+          "1": 0.6917293233082706,
+          "2": 0.09962406015037593,
+          "3": 0.12218045112781954,
+          "4": 0.08646616541353383
+        },
+        "retrieval_top5": {
+          "strict_hit": 0.7007874015748031,
+          "cluster_hit": 0.7952755905511811
+        },
+        "cutoff_0.5": {
+          "FINAL_ACCURACY": 0.7406015037593985,
+          "ci95": [
+            0.6678832116788321,
+            0.8079114841786428
+          ],
+          "FINAL_ACCURACY_dev_half": 0.8275862068965517,
+          "FINAL_ACCURACY_report_half": 0.6568265682656826,
+          "strict_accuracy": 0.6447368421052632,
+          "supported": 0.9323308270676691,
+          "acceptable_drafts": 0.7401574803149606
+        },
+        "cutoff_T": {
+          "FINAL_ACCURACY": 0.48872180451127817,
+          "ci95": [
+            0.4261674277824979,
+            0.5509433962264151
+          ],
+          "FINAL_ACCURACY_dev_half": 0.578544061302682,
+          "FINAL_ACCURACY_report_half": 0.4022140221402214,
+          "strict_accuracy": 0.4323308270676692,
+          "supported": 0.6221804511278195,
+          "acceptable_drafts": 0.5039370078740157
+        }
+      },
+      "full-gpt_rubric_top1": {
+        "tier_share": {
+          "1": 0.8019047619047619,
+          "2": 0.05523809523809524,
+          "3": 0.06857142857142857,
+          "4": 0.07428571428571429
+        },
+        "retrieval_top5": {
+          "strict_hit": 0.8031496062992126,
+          "cluster_hit": 0.8582677165354331
+        },
+        "cutoff_0.5": {
+          "FINAL_ACCURACY": 0.8,
+          "ci95": [
+            0.7368370831659301,
+            0.8590225563909775
+          ],
+          "FINAL_ACCURACY_dev_half": 0.8482490272373541,
+          "FINAL_ACCURACY_report_half": 0.753731343283582,
+          "strict_accuracy": 0.7466666666666667,
+          "supported": 0.9333333333333333,
+          "acceptable_drafts": 0.8188976377952756
+        },
+        "cutoff_T": {
+          "FINAL_ACCURACY": 0.5257142857142857,
+          "ci95": [
+            0.4670539898392677,
+            0.5831847958561851
+          ],
+          "FINAL_ACCURACY_dev_half": 0.5875486381322957,
+          "FINAL_ACCURACY_report_half": 0.4664179104477612,
+          "strict_accuracy": 0.49523809523809526,
+          "supported": 0.6133333333333333,
+          "acceptable_drafts": 0.5748031496062992
+        }
+      }
+    }
+  },
+  "finalized_pipeline": {
+    "source": [
+      "results\\drafter_fix_heldout.json",
+      "results\\drafter_fix_oracle-heldout.json",
+      "results\\reranker_top1_section.json"
+    ],
+    "pipeline": "Nemotron Embed 8B + BM25 + regulation prior -> GPT-5.6 Sol reranker (rubric hints, K 10) -> top1x5 context -> Nemotron Super drafter (prompt v1) -> mean(DeBERTa NLI, Ultra judge) >= 0.9737792968749999 -> gating (2 rounds, keep), flags and rewrites judged by the same checker",
+    "split": "held-out (metrics.half == 1), 65 complaints",
+    "reranker_top1_section_correct": {
+      "n": 65,
+      "top1_correct": 0.7692307692307693,
+      "ci95": [
+        0.6615384615384615,
+        0.8615384615384616
+      ]
+    },
+    "conditions": {
+      "retrieved_nogate": {
+        "run": "fix-B0-heldout-nogate",
+        "FINAL_ACCURACY": 0.44402985074626866,
+        "ci95": [
+          0.3639843221771467,
+          0.5222222222222223
+        ],
+        "strict_accuracy": 0.4141791044776119,
+        "supported": 0.5447761194029851,
+        "acceptable_drafts": 0.5076923076923077,
+        "addresses_complaint": 0.47692307692307695,
+        "sentences_per_draft": 4.123076923076923,
+        "tier_share": {
+          "1": 0.7686567164179104,
+          "2": 0.04477611940298507,
+          "3": 0.0708955223880597,
+          "4": 0.11567164179104478
+        }
+      },
+      "retrieved_gate": {
+        "run": "fix-B0-heldout-gate",
+        "FINAL_ACCURACY": 0.6940298507462687,
+        "ci95": [
+          0.5985401459854015,
+          0.7824468967806173
+        ],
+        "strict_accuracy": 0.6529850746268657,
+        "supported": 0.8470149253731343,
+        "acceptable_drafts": 0.7538461538461538,
+        "addresses_complaint": 0.3384615384615385,
+        "sentences_per_draft": 4.123076923076923,
+        "tier_share": {
+          "1": 0.7686567164179104,
+          "2": 0.04477611940298507,
+          "3": 0.0708955223880597,
+          "4": 0.11567164179104478
+        }
+      },
+      "oracle_nogate": {
+        "run": "fix-oracle-B0-heldout-nogate",
+        "FINAL_ACCURACY": 0.518796992481203,
+        "ci95": [
+          0.44573534535319226,
+          0.5873652958789579
+        ],
+        "strict_accuracy": 0.518796992481203,
+        "supported": 0.518796992481203,
+        "acceptable_drafts": 0.6,
+        "addresses_complaint": 0.38461538461538464,
+        "sentences_per_draft": 4.092307692307692,
+        "tier_share": {
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0
+        }
+      },
+      "oracle_gate": {
+        "run": "fix-oracle-B0-heldout-gate",
+        "FINAL_ACCURACY": 0.8082706766917294,
+        "ci95": [
+          0.7451737451737451,
+          0.8639705882352942
+        ],
+        "strict_accuracy": 0.8082706766917294,
+        "supported": 0.8082706766917294,
+        "acceptable_drafts": 0.8923076923076924,
+        "addresses_complaint": 0.27692307692307694,
+        "sentences_per_draft": 4.092307692307692,
+        "tier_share": {
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0
+        }
+      }
+    },
+    "oracle_minus_retrieved": {
+      "nogate": {
+        "n": 65,
+        "diff": 0.07476714173493437,
+        "ci95": [
+          -0.03257707080614371,
+          0.18268114527950982
+        ]
+      },
+      "gate": {
+        "n": 65,
+        "diff": 0.1142408259454607,
+        "ci95": [
+          0.002018228364553632,
+          0.22773779199334088
+        ]
+      }
+    },
+    "caveats": [
+      "Gating and scoring use the same checker; a human spot-check of rewritten sentences is pending (annotation/spotcheck_rewritten_heldout.csv).",
+      "Rewriting lowers the share of drafts that address the complaint (Ultra guard).",
+      "Checker set-2 labels are silver (AI-assisted)."
+    ]
   },
   "summary": {
     "H1": true,

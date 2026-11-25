@@ -1,0 +1,29 @@
+<section id="endtoend" class="alt">
+<p class="kicker">Results 2 · attribution experiment, end to end (65 held-out complaints)</p>
+<h2>Retrieval's share of the error fell from 70 points to 11; generation is now the bigger part</h2>
+<div class="row">
+<div class="col" style="flex:1.45">
+<table>
+<tr><th>Final accuracy (supported + correct section)</th><th class="num">Retrieved</th><th class="num">Oracle</th><th class="num">Gap, 95% CI</th></tr>
+<tr class="base"><td>Midterm: BM25, lenient checker</td><td class="num">0.18</td><td class="num">0.87</td><td class="num">+0.70 [0.64, 0.77]</td></tr>
+<tr><td>Final pipeline, no rewriting</td><td class="num">0.44</td><td class="num">0.52</td><td class="num">+0.07 [−0.03, 0.18]</td></tr>
+<tr class="win"><td>Final pipeline + rewrite flagged sentences</td><td class="num">0.69</td><td class="num">0.81</td><td class="num">+0.11 [0.00, 0.23]</td></tr>
+<tr><td>Acceptable drafts, with rewriting</td><td class="num">0.75</td><td class="num">0.89</td><td class="num"></td></tr>
+</table>
+<table>
+<tr><th>Ablation</th><th class="num">Effect on final accuracy</th></tr>
+<tr><td>Rewrite flagged sentences, judged by DeBERTa + Ultra</td><td class="num">+0.25 (0.44 → 0.69)</td></tr>
+<tr><td>Same rewriting judged by DeBERTa alone</td><td class="num">0.56 instead of 0.69</td></tr>
+<tr><td>Drafter prompt: quote the provision (dev)</td><td class="num">+0.17 alone, −0.01 with rewriting</td></tr>
+</table>
+</div>
+<div class="col" style="flex:0.75">
+<h3>Error analysis: which section each sentence cites</h3>
+<div class="card"><span class="big">77%</span><span class="bigcap">gold section</span></div>
+<div class="card"><span class="big" style="font-size:64px">4%</span><span class="bigcap">accepted equivalent section</span></div>
+<div class="card"><span class="big orange" style="font-size:64px">7% · 12%</span><span class="bigcap">wrong section of the right law · wrong law</span></div>
+</div>
+</div>
+<p class="source">Midterm row: BM25, DeBERTa at 0.5, all 127 complaints. Paired bootstrap over complaints. Same drafter (Nemotron Super), checker and rewriting on both sides. EXPERIMENT_LOG H2, E17.</p>
+<aside>~75 seconds, the main slide. Each complaint is drafted twice: once with what our retriever found, once with the correct passage. The gap is what retrieval costs; what is still missing with the correct passage is generation's fault. At the midterm, with BM25, the gap was 70 points: retrieval was the problem. With the final retriever it is 7 points before rewriting (not significant) and 11 with rewriting. So with the correct passage, about 19% of sentences still fail; generation is now the larger error source, and that is why the rewrite step matters: checking each sentence and rewriting flagged ones added 25 points. Rewriting judged by NLI alone only reached 0.56, so the validated checker is what makes it work. Prompt tweaks help only without rewriting. Error analysis on the right: 77% of sentences cite the gold section, 4% an accepted equivalent, 7% a wrong section of the right law and 12% another law. If asked why oracle is not 100%: even with the correct passage, the checker still finds sentences the passage does not support after two rewrite rounds.</aside>
+</section>

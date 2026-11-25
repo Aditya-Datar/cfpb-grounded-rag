@@ -8,11 +8,17 @@ NVIDIA API) runs.
 
 Stages for a live analysis:
     classify   DistilBERT product and issue (stub if the weights are missing)
-    retrieve   BM25 (or the configured retriever) over the regulation corpus, top 5
+    retrieve   the configured retriever over the regulation corpus. Default "llm" (since 2026-11-22):
+               Nemotron embeddings + BM25 + the classifier's regulation prior, then Nemotron Super with
+               the rubric hints ranks the top 10 sections; the drafter gets up to 5 chunks of the
+               top-ranked section (src/cfpb/retrieval/llm_rerank.py; docs/EXPERIMENT_LOG.md E1, E5, E9)
     scope      H5 logistic regression on BM25 + mpnet confidence (app/backend/scope.py);
                a flag stops here (status scope_review) unless the officer asked to draft anyway
     generate   Nemotron draft citing the retrieved passages (needs NVIDIA_API_KEY)
-    verify     DeBERTa NLI, one score per sentence against the passages it cites
+    verify     DeBERTa NLI + Nemotron Ultra judge (mean; CFPB_CHECKER), one score per sentence against the passages it cites, then verification
+               gating: sentences below the cutoff go back to the drafter to be rewritten from the
+               passage wording, and a rewrite is kept only if it scores higher (CFPB_GATING_ROUNDS,
+               default 2; src/cfpb/generate/revise.py; EXPERIMENT_LOG E10)
 """
 import logging
 import threading
@@ -37,7 +43,7 @@ class Models:
         self.status: dict[str, str] = {"state": "loading"}
         self.error: str | None = None
         self.classifier = self.corpus = self.chunks = self.bm25 = self.dense = None
-        self.scope = self.verifier = self.generator = None
+        self.scope = self.verifier = self.generator = self.llm_retriever = None
 
     def load(self, light: bool = False) -> None:
         """light=True skips the NLI model and the generator (used by the seeding script)."""
@@ -57,6 +63,14 @@ class Models:
             self.status["dense"] = "loading"
             self.dense = DenseRetriever(self.chunks)
             self.status["dense"] = self.dense.model_name
+            if config.RETRIEVER == "llm" and not light:
+                from cfpb.retrieval.llm_rerank import EMBED_MODEL, LLMRerankRetriever
+                self.status["retriever"] = "loading Nemotron passage embeddings"
+                self.llm_retriever = LLMRerankRetriever(self.chunks, self.bm25, model=config.RERANK_MODEL,
+                                                        fallback=config.RERANK_FALLBACK)
+                self.status["retriever"] = (f"{EMBED_MODEL} + BM25 + regulation prior, reranked by {config.RERANK_MODEL} "
+                                            f"(fallback {config.RERANK_FALLBACK}) "
+                                            f"over {len(self.chunks)} chunks")
             self.scope = ScopeModel.load()
             self.status["scope"] = self.scope.spec["name"] if self.scope else "missing (run app.backend.train_scope)"
             if light:
@@ -65,9 +79,14 @@ class Models:
             if config.LOAD_NLI:
                 from cfpb.verify.nli import NLIVerifier
                 self.status["verifier"] = "loading"
-                self.verifier = NLIVerifier(threshold=config.NLI_CUTOFF)
+                if config.CHECKER == "ensemble":
+                    from cfpb.verify.ensemble import EnsembleVerifier
+                    self.verifier = EnsembleVerifier(NLIVerifier(), threshold=config.ENSEMBLE_CUTOFF)
+                else:
+                    self.verifier = NLIVerifier(threshold=config.NLI_CUTOFF)
                 _ = self.verifier._model  # load weights now, not on the first request
-                self.status["verifier"] = f"nli:{self.verifier.model_name}"
+                self.status["verifier"] = (self.verifier.model_name if config.CHECKER == "ensemble"
+                                           else f"nli:{self.verifier.model_name}")
             else:
                 self.status["verifier"] = "disabled (CFPB_LOAD_NLI=0)"
             if config.HAS_NVIDIA_KEY:
@@ -115,7 +134,16 @@ class Models:
         draft = Draft(response=" ".join(sentences), sentences=sentences, cited_chunk_ids=cited,
                       context_chunk_ids=[c.chunk_id for c in context], model="officer", prompt_version="edit",
                       is_referral=False)
-        return [asdict(c) for c in self.verifier.verify(draft, context).checks]
+        return self.with_parts([asdict(c) for c in self.verifier.verify(draft, context).checks])
+
+    def with_parts(self, checks: list[dict]) -> list[dict]:
+        """Add the two ensemble components (DeBERTa, Ultra) to each check, for display."""
+        parts = getattr(self.verifier, "last_parts", None)
+        if parts:
+            for c in checks:
+                if c["sentence"] in parts:
+                    c["nli_prob"], c["ultra_prob"] = parts[c["sentence"]]
+        return checks
 
 
 MODELS = Models()
@@ -148,14 +176,21 @@ def context_from(retrieval: dict) -> list:
     return [RetrievedChunk(**{k: v for k, v in c.items() if k in fields}) for c in retrieval["chunks"]]
 
 
-def draft_sentences(texts: list[str], cited: list[list[str]], checks: list[dict] | None) -> list[dict]:
+def draft_sentences(texts: list[str], cited: list[list[str]], checks: list[dict] | None,
+                    gating: list[dict] | None = None) -> list[dict]:
     by_idx = {c["sentence_idx"]: c for c in checks or []}
     out = []
     for i, (t, c) in enumerate(zip(texts, cited)):
         chk = by_idx.get(i, {})
-        out.append({"text": t, "cited_chunk_ids": list(c), "premise_chunk_ids": chk.get("premise_chunk_ids", list(c)),
-                    "entail_prob": chk.get("entail_prob"), "contradict_prob": chk.get("contradict_prob"),
-                    "label": chk.get("label", "unchecked")})
+        row = {"text": t, "cited_chunk_ids": list(c), "premise_chunk_ids": chk.get("premise_chunk_ids", list(c)),
+               "entail_prob": chk.get("entail_prob"), "contradict_prob": chk.get("contradict_prob"),
+               "label": chk.get("label", "unchecked")}
+        if chk.get("ultra_prob") is not None:
+            row |= {"nli_prob": chk["nli_prob"], "ultra_prob": chk["ultra_prob"]}
+        g = gating[i] if gating else None
+        if g and g.get("original"):
+            row |= {"original_text": g["original"], "gating_round": g["round"]}
+        out.append(row)
     return out
 
 
@@ -192,8 +227,19 @@ def run_analysis(analysis_id: int) -> None:
 
             stage("retrieve")
             bm25_row, dense_row = MODELS.score_rows(clean)
-            chunks = MODELS.top_chunks(MODELS.ranking(bm25_row, dense_row))
-            a.retrieval = {"retriever": config.RETRIEVER, "corpus": MODELS.corpus.name, "chunks": chunk_dicts(chunks)}
+            if MODELS.llm_retriever is not None:
+                from cfpb.retrieval.llm_rerank import top_section_chunks
+                r = MODELS.llm_retriever.retrieve(clean, a.classification.get("candidate_regulation"))
+                pos = {c["chunk_id"]: i for i, c in enumerate(MODELS.chunks)}
+                fs = r["first_stage"]
+                chunks = [c.ranked(n + 1, float(fs[pos[c.chunk_id]]) if c.chunk_id in pos else 0.0) for n, c in
+                          enumerate(top_section_chunks(r["sections"][0], fs, MODELS.corpus, MODELS.chunks))]
+                a.retrieval = {"retriever": "llm-rerank-top-section" if r["reranked"] else "llm-first-stage-top-section",
+                               "corpus": MODELS.corpus.name, "chunks": chunk_dicts(chunks), "note": r["note"],
+                               "sections": r["sections"], "reranker": r.get("reranker")}
+            else:
+                chunks = MODELS.top_chunks(MODELS.ranking(bm25_row, dense_row))
+                a.retrieval = {"retriever": config.RETRIEVER, "corpus": MODELS.corpus.name, "chunks": chunk_dicts(chunks)}
             lap("retrieve")
 
             stage("scope")
@@ -217,21 +263,33 @@ def run_analysis(analysis_id: int) -> None:
             lap("generate")
 
             stage("verify")
-            checks = []
+            checks, gating = [], None
+            texts, cited = draft.sentences, draft.cited_chunk_ids
             if MODELS.verifier is not None:
-                checks = [asdict(c) for c in MODELS.verifier.verify(draft, chunks).checks]
-                a.verifier, a.nli_cutoff = f"nli:{MODELS.verifier.model_name}", config.NLI_CUTOFF
+                a.verifier, a.nli_cutoff = MODELS.status["verifier"], config.CHECK_CUTOFF
+                if config.GATING_ROUNDS > 0:
+                    from cfpb.generate.revise import REVISE_VERSION, gate_draft
+                    stage("revise")
+                    texts, cited, chk, gating = gate_draft(clean, draft, chunks, MODELS.generator, MODELS.verifier,
+                                                           config.CHECK_CUTOFF, config.GATING_ROUNDS)
+                    checks = MODELS.with_parts([asdict(c) for c in chk])
+                    a.draft = a.draft | {"gating": {"rounds": config.GATING_ROUNDS, "prompt": REVISE_VERSION,
+                                                    "per_sentence": gating}}
+                else:
+                    checks = MODELS.with_parts([asdict(c) for c in MODELS.verifier.verify(draft, chunks).checks])
             a.checks = checks
             lap("verify")
 
             version = len(case.drafts) + 1
             s.add(DraftVersion(case_id=case.id, analysis_id=a.id, version=version, author="AI draft",
-                               sentences=draft_sentences(draft.sentences, draft.cited_chunk_ids, checks)))
+                               sentences=draft_sentences(texts, cited, checks, gating)))
             a.timings_ms, a.finished_at = timings, now()
             case.status = "in_review"
             n_flag = sum(c["label"] == "unsupported" for c in checks)
+            n_rev = sum(bool(g.get("original")) for g in gating or [])
             log_event(s, case, SYSTEM, "analysis_done",
-                      f"Draft v{version}: {len(draft.sentences)} sentences, {n_flag} flagged.")
+                      f"Draft v{version}: {len(texts)} sentences, {n_flag} flagged"
+                      + (f", {n_rev} rewritten by the checker loop." if gating is not None else "."))
             stage("done")
         except Exception as e:
             log.exception("analysis %s failed", analysis_id)

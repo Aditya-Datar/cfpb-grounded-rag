@@ -1,0 +1,1131 @@
+{
+ "run": "dev-super_rubric_gate-keep",
+ "judge": "codex:gpt-5.6-sol",
+ "summary": {
+  "before": {
+   "n": 46,
+   "gpt_supported@0.5": 0.782608695652174,
+   "gpt_supported@1.0": 0.17391304347826086,
+   "nli_supported@0.5": 0.7391304347826086
+  },
+  "after": {
+   "n": 46,
+   "gpt_supported@0.5": 0.9565217391304348,
+   "gpt_supported@1.0": 0.8260869565217391,
+   "nli_supported@0.5": 0.9565217391304348
+  },
+  "control": {
+   "n": 30,
+   "gpt_supported@0.5": 0.8,
+   "gpt_supported@1.0": 0.3333333333333333,
+   "nli_supported@0.5": 1.0
+  },
+  "after_minus_before_gpt@0.5": {
+   "diff": 0.17391304347826086,
+   "ci95": [
+    0.06521739130434782,
+    0.2826086956521739
+   ]
+  }
+ },
+ "rows": [
+  {
+   "kind": "before",
+   "complaint_id": "15284705",
+   "sentence_idx": 1,
+   "sentence": "That 30-day period may be extended for not more than 15 additional days if the company receives information from the consumer during that period that is relevant to the reinvestigation.",
+   "nli": 0.720703125,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15284705",
+   "sentence_idx": 1,
+   "sentence": "Except as provided in subparagraph (C), the 30-day period may be extended for not more than 15 additional days if the consumer reporting agency receives information from the consumer during that 30-day period that is relevant to the reinvestigation.",
+   "nli": 0.7578125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15284705",
+   "sentence_idx": 4,
+   "sentence": "The company must maintain reasonable procedures designed to prevent the reappearance in the consumer's file and consumer reports of information that is deleted, except for information reinserted in accordance with the certification requirement.",
+   "nli": 0.00829315185546875,
+   "gpt_prob": 0.18,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15284705",
+   "sentence_idx": 4,
+   "sentence": "A consumer reporting agency shall maintain reasonable procedures designed to prevent the reappearance in a consumer's file, and in consumer reports on the consumer, of information that is deleted pursuant to this paragraph (other than information that is reinserted in accordance with subparagraph (B)(i)).",
+   "nli": 0.98486328125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15335226",
+   "sentence_idx": 1,
+   "sentence": "The company must promptly notify the furnisher that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested, and of the effective dates of the block.",
+   "nli": 0.98876953125,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15335226",
+   "sentence_idx": 1,
+   "sentence": "A consumer reporting agency shall promptly notify the furnisher of information identified by the consumer under subsection (a) that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested under this section, and of the effective dates of the block.",
+   "nli": 0.99609375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15335226",
+   "sentence_idx": 3,
+   "sentence": "The company may decline or rescind a block only if it reasonably determines that the information was blocked in error, the block was requested based on a material misrepresentation of fact, or the consumer obtained goods, services, or money as a result of the blocked transaction.",
+   "nli": 0.98681640625,
+   "gpt_prob": 0.98,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15335226",
+   "sentence_idx": 3,
+   "sentence": "A consumer reporting agency may decline to block, or may rescind any block, of information relating to a consumer under this section, if the consumer reporting agency reasonably determines that the information was blocked in error or a block was requested by the consumer in error, the information was blocked or a block was requested by the consumer on the basis of a material misrepresentation of fact by the consumer relevant to the request to block, or the consumer obtained possession of goods, services, or money as a result of the blocked transaction or transactions.",
+   "nli": 0.99560546875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15466859",
+   "sentence_idx": 2,
+   "sentence": "The agency shall maintain reasonable procedures designed to prevent the reappearance in the consumer's file and reports of information deleted pursuant to this section.",
+   "nli": 0.96728515625,
+   "gpt_prob": 0.03,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15466859",
+   "sentence_idx": 2,
+   "sentence": "A consumer reporting agency shall maintain reasonable procedures designed to prevent the reappearance in a consumer's file, and in consumer reports on the consumer, of information that is deleted pursuant to this paragraph (other than information that is reinserted in accordance with subparagraph (B)(i)).",
+   "nli": 0.98486328125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15865429",
+   "sentence_idx": 1,
+   "sentence": "The agency must promptly notify the furnisher that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested, and of the effective dates of the block.",
+   "nli": 0.99462890625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15865429",
+   "sentence_idx": 1,
+   "sentence": "A consumer reporting agency shall promptly notify the furnisher of information identified by the consumer under subsection (a) that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested under this section, and of the effective dates of the block.",
+   "nli": 0.99609375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15901005",
+   "sentence_idx": 0,
+   "sentence": "This complaint concerns an unauthorized electronic fund transfer involving an access device, so the consumer may be held liable only if the required disclosures were provided and the device was an accepted access device with a means to identify the consumer.",
+   "nli": 0.06646728515625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15901005",
+   "sentence_idx": 0,
+   "sentence": "A consumer may be held liable, within the limitations described in paragraph (b) of this section, for an unauthorized electronic fund transfer involving the consumer's account only if the financial institution has provided the disclosures required by \u00a7 1005.7(b)(1), (2), and (3), and if the unauthorized transfer involved an access device, it must be an accepted access device and the financial institution must have provided a means to identify the consumer to whom it was issued.",
+   "nli": 0.98095703125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "15929936",
+   "sentence_idx": 0,
+   "sentence": "When a consumer notifies the company directly or indirectly through a reseller of a dispute concerning the completeness or accuracy of information in the consumer's file, the company must conduct a reasonable reinvestigation free of charge before the end of the 30-day period beginning on the date it receives the notice.",
+   "nli": 0.96435546875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "15929936",
+   "sentence_idx": 0,
+   "sentence": "If the completeness or accuracy of any item of information contained in a consumer's file at a consumer reporting agency is disputed by the consumer and the consumer notifies the agency directly, or indirectly through a reseller, of such dispute, the agency shall, free of charge, conduct a reasonable reinvestigation before the end of the 30-day period beginning on the date on which the agency receives the notice of the dispute from the consumer or reseller.",
+   "nli": 0.97900390625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16096238",
+   "sentence_idx": 0,
+   "sentence": "The company must ensure that it does not use any false, deceptive, or misleading representation or means in connection with the collection of any debt.",
+   "nli": 0.97314453125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16096238",
+   "sentence_idx": 0,
+   "sentence": "A debt collector must not use any false, deceptive, or misleading representation or means in connection with the collection of any debt.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16096238",
+   "sentence_idx": 1,
+   "sentence": "The company must ensure that it does not use any business, company, or organization name other than the true name of the debt collector's business, company, or organization.",
+   "nli": 0.97900390625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16096238",
+   "sentence_idx": 1,
+   "sentence": "A debt collector must not use any business, company, or organization name other than the true name of the debt collector's business, company, or organization.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16096238",
+   "sentence_idx": 2,
+   "sentence": "The company must ensure that it does not use any false representation or deceptive means to collect or attempt to collect any debt or to obtain information concerning a consumer.",
+   "nli": 0.97314453125,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16096238",
+   "sentence_idx": 2,
+   "sentence": "A debt collector must not use any false representation or deceptive means to collect or attempt to collect any debt or to obtain information concerning a consumer.",
+   "nli": 0.9990234375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16433099",
+   "sentence_idx": 0,
+   "sentence": "If the consumer disputes the completeness or accuracy of the collection accounts and notifies the agency directly or through a reseller, the agency must conduct a free, reasonable reinvestigation before the end of the 30-day period beginning when it receives the dispute.",
+   "nli": 0.01503753662109375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16433099",
+   "sentence_idx": 0,
+   "sentence": "If the completeness or accuracy of any item of information contained in a consumer's file at a consumer reporting agency is disputed by the consumer and the consumer notifies the agency directly, or indirectly through a reseller, of such dispute, the agency shall, free of charge, conduct a reasonable reinvestigation before the end of the 30-day period beginning on the date on which the agency receives the notice of the dispute from the consumer or reseller.",
+   "nli": 0.97900390625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16433099",
+   "sentence_idx": 1,
+   "sentence": "The 30-day period may be extended by no more than 15 additional days if the agency receives relevant information from the consumer during that period.",
+   "nli": 0.56494140625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16433099",
+   "sentence_idx": 1,
+   "sentence": "Except as provided in subparagraph (C), the 30-day period may be extended for not more than 15 additional days if the agency receives information from the consumer during that 30-day period that is relevant to the reinvestigation.",
+   "nli": 0.76953125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16433099",
+   "sentence_idx": 4,
+   "sentence": "The agency must maintain reasonable procedures to prevent the deleted information from reappearing in the consumer's file or reports, except as allowed for certified reinsertion.",
+   "nli": 0.982421875,
+   "gpt_prob": 0.98,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16433099",
+   "sentence_idx": 4,
+   "sentence": "A consumer reporting agency shall maintain reasonable procedures designed to prevent the reappearance in a consumer's file, and in consumer reports on the consumer, of information that is deleted pursuant to this paragraph (other than information that is reinserted in accordance with subparagraph (B)(i)).",
+   "nli": 0.98486328125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16602239",
+   "sentence_idx": 0,
+   "sentence": "An estimated closing cost is in good faith only if the charge paid does not exceed the amount originally disclosed, except as provided in paragraphs (e)(3)(ii) through (iv).",
+   "nli": 0.974609375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16602239",
+   "sentence_idx": 0,
+   "sentence": "An estimated closing cost disclosed pursuant to paragraph (e) of this section is in good faith if the charge paid by or imposed on the consumer does not exceed the amount originally disclosed under paragraph (e)(1)(i) of this section, except as otherwise provided in paragraphs (e)(3)(ii) through (iv) of this section.",
+   "nli": 0.99755859375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16790330",
+   "sentence_idx": 1,
+   "sentence": "The company shall promptly notify the furnisher that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested, and of the effective dates of the block.",
+   "nli": 0.94970703125,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16790330",
+   "sentence_idx": 1,
+   "sentence": "A consumer reporting agency shall promptly notify the furnisher of information identified by the consumer under subsection (a) that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested under this section, and of the effective dates of the block.",
+   "nli": 0.99609375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16790330",
+   "sentence_idx": 3,
+   "sentence": "If the company is a reseller with a file, its sole obligation is to block the consumer report from any subsequent use and promptly provide a notice of the decision to block containing the name, address, and telephone number of each consumer reporting agency from which the information was obtained.",
+   "nli": 0.01953125,
+   "gpt_prob": 0.98,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16790330",
+   "sentence_idx": 3,
+   "sentence": "The sole obligation of the consumer reporting agency under this section, with regard to any request of a consumer under this section, shall be to block the consumer report maintained by the consumer reporting agency from any subsequent use if the consumer, in accordance with the provisions of subsection (a), identifies, to a consumer reporting agency, information in the file of the consumer that resulted from identity theft and the consumer reporting agency is a reseller of the identified information, and in carrying out its obligation under paragraph (2), the reseller shall promptly provide a notice to the consumer of the decision to block the file, and such notice shall contain the name, address, and telephone number of each consumer reporting agency from which the consumer information was obtained for resale.",
+   "nli": 0.21875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16793436",
+   "sentence_idx": 0,
+   "sentence": "The complaint describes conduct in connection with debt collection that may have the natural consequence of harassing, oppressing, or abusing a person, which is prohibited by 12 CFR 1006.14(a).",
+   "nli": 0.04180908203125,
+   "gpt_prob": 0.15,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16793436",
+   "sentence_idx": 0,
+   "sentence": "A debt collector must not engage in any conduct the natural consequence of which is to harass, oppress, or abuse any person in connection with the collection of a debt.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16793436",
+   "sentence_idx": 2,
+   "sentence": "The complaint also describes conduct that may involve the use or threat of violence or other criminal means to harm a person or property, which is prohibited by 12 CFR 1006.14(c).",
+   "nli": 0.0052337646484375,
+   "gpt_prob": 0.05,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16793436",
+   "sentence_idx": 2,
+   "sentence": "In connection with the collection of a debt, a debt collector must not use or threaten to use violence or other criminal means to harm the physical person, reputation, or property of any person.",
+   "nli": 0.99755859375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16793436",
+   "sentence_idx": 3,
+   "sentence": "Under that provision, the company must not use or threaten to use violence or other criminal means to harm the physical person, reputation, or property of any person in connection with debt collection.",
+   "nli": 0.99267578125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16793436",
+   "sentence_idx": 3,
+   "sentence": "In connection with the collection of a debt, a debt collector must not use or threaten to use violence or other criminal means to harm the physical person, reputation, or property of any person.",
+   "nli": 0.99755859375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16797145",
+   "sentence_idx": 1,
+   "sentence": "The 30-day period may be extended for not more than 15 additional days if the company receives relevant information from the consumer during that period, unless the information is found to be inaccurate or incomplete or cannot be verified during the period.",
+   "nli": 0.071044921875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16797145",
+   "sentence_idx": 1,
+   "sentence": "Except as provided in subparagraph (C), the 30-day period described in subparagraph (A) may be extended for not more than 15 additional days if the consumer reporting agency receives information from the consumer during that 30-day period that is relevant to the reinvestigation, but subparagraph (B) shall not apply to any reinvestigation in which, during the 30-day period described in subparagraph (A), the information that is the subject of the reinvestigation is found to be inaccurate or incomplete or the consumer reporting agency determines that the information cannot be verified.",
+   "nli": 0.0740966796875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16797145",
+   "sentence_idx": 4,
+   "sentence": "If the reinvestigation does not resolve the dispute, the consumer may file a brief statement setting forth the nature of the dispute, which the company may limit to one hundred words if it provides assistance in writing a clear summary.",
+   "nli": 0.96240234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16797145",
+   "sentence_idx": 4,
+   "sentence": "If the reinvestigation does not resolve the dispute, the consumer may file a brief statement setting forth the nature of the dispute, and the consumer reporting agency may limit such statements to not more than one hundred words if it provides the consumer with assistance in writing a clear summary of the dispute.",
+   "nli": 0.9912109375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16809825",
+   "sentence_idx": 0,
+   "sentence": "If the consumer's written debt validation request is a dispute submitted within the validation period, the debt collector must cease collection of the debt until it sends verification of the debt or a judgment to the consumer.",
+   "nli": 0.98583984375,
+   "gpt_prob": 0.15,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16809825",
+   "sentence_idx": 0,
+   "sentence": "Upon receipt of a dispute submitted by the consumer in writing within the validation period, a debt collector must cease collection of the debt until it sends a copy either of verification of the debt or of a judgment to the consumer.",
+   "nli": 0.99658203125,
+   "gpt_prob": 0.08,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "16862946",
+   "sentence_idx": 3,
+   "sentence": "The agency must maintain reasonable procedures designed to prevent the reappearance of deleted information in the consumer's file or reports, except for information reinserted after a furnisher certifies it is complete and accurate.",
+   "nli": 0.4560546875,
+   "gpt_prob": 0.35,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "16862946",
+   "sentence_idx": 3,
+   "sentence": "A consumer reporting agency shall maintain reasonable procedures designed to prevent the reappearance in a consumer's file, and in consumer reports on the consumer, of information that is deleted pursuant to this paragraph, other than information that is reinserted in accordance with subparagraph (B)(i); information may not be reinserted unless the person who furnishes the information certifies that the information is complete and accurate.",
+   "nli": 0.94580078125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17132882",
+   "sentence_idx": 1,
+   "sentence": "The consumer reporting agency must promptly notify the furnisher that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested, and of the effective dates of the block.",
+   "nli": 0.99462890625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17132882",
+   "sentence_idx": 1,
+   "sentence": "A consumer reporting agency shall promptly notify the furnisher of information identified by the consumer under subsection (a) that the information may be a result of identity theft, that an identity theft report has been filed, that a block has been requested under this section, and of the effective dates of the block.",
+   "nli": 0.99609375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17203764",
+   "sentence_idx": 1,
+   "sentence": "The institution must inform the consumer within two business days after the provisional crediting of the amount and date of the provisional crediting and give the consumer full use of the funds during the investigation.",
+   "nli": 0.9873046875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17203764",
+   "sentence_idx": 1,
+   "sentence": "The institution informs the consumer, within two business days after the provisional crediting, of the amount and date of the provisional crediting and gives the consumer full use of the funds during the investigation.",
+   "nli": 0.994140625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17203764",
+   "sentence_idx": 3,
+   "sentence": "The applicable time is 90 days in place of 45 days for completing an investigation if the notice of error involves an electronic fund transfer that was not initiated within a state, resulted from a point-of-sale debit card transaction, or occurred within 30 days after the first deposit to the account was made.",
+   "nli": 0.99169921875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17203764",
+   "sentence_idx": 3,
+   "sentence": "The applicable time is 90 days in place of 45 days under paragraph (c)(2) of this section, for completing an investigation, if a notice of error involves an electronic fund transfer that was not initiated within a state, resulted from a point-of-sale debit card transaction, or occurred within 30 days after the first deposit to the account was made.",
+   "nli": 0.99462890625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17303744",
+   "sentence_idx": 0,
+   "sentence": "When a consumer notifies the company directly or indirectly through a reseller that information in the consumer's file is disputed, the company must conduct a reasonable reinvestigation free of charge before the end of the 30-day period beginning on the date it receives the notice.",
+   "nli": 0.96484375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17303744",
+   "sentence_idx": 0,
+   "sentence": "If the completeness or accuracy of any item of information contained in a consumer's file at a consumer reporting agency is disputed by the consumer and the consumer notifies the agency directly or indirectly through a reseller, the agency shall, free of charge, conduct a reasonable reinvestigation before the end of the 30-day period beginning on the date on which the agency receives the notice of the dispute.",
+   "nli": 0.9833984375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17318814",
+   "sentence_idx": 0,
+   "sentence": "The creditor's failure to credit properly a payment to the consumer's account is a billing error under the regulation.",
+   "nli": 0.958984375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17318814",
+   "sentence_idx": 0,
+   "sentence": "A reflection on a periodic statement of the creditor's failure to credit properly a payment or other credit issued to the consumer's account is a billing error.",
+   "nli": 0.9990234375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17445316",
+   "sentence_idx": 2,
+   "sentence": "The company must ensure that any consumer report it obtains or uses is for an authorized purpose and is supported by the required certification.",
+   "nli": 0.02880859375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17445316",
+   "sentence_idx": 2,
+   "sentence": "A person shall not use or obtain a consumer report for any purpose unless the consumer report is obtained for a purpose for which the consumer report is authorized to be furnished under this section and the purpose is certified in accordance with section 1681e of this title by a prospective user of the report through a general or specific certification.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17475383",
+   "sentence_idx": 0,
+   "sentence": "The company must not use any false, deceptive, or misleading representation or means in connection with the collection of any debt.",
+   "nli": 0.962890625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17475383",
+   "sentence_idx": 0,
+   "sentence": "A debt collector must not use any false, deceptive, or misleading representation or means in connection with the collection of any debt, including, but not limited to, the conduct described in paragraphs (b) through (d) of this section.",
+   "nli": 0.9970703125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17546708",
+   "sentence_idx": 0,
+   "sentence": "The consumer's allegation of unauthorized charges falls under the definition of an error as an unauthorized electronic fund transfer, and the complaint serves as a notice of error that the institution must address.",
+   "nli": 0.8623046875,
+   "gpt_prob": 0.15,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17546708",
+   "sentence_idx": 0,
+   "sentence": "An unauthorized electronic fund transfer is an error, and a financial institution shall comply with the requirements of this section with respect to any oral or written notice of error from the consumer that enables the institution to identify the consumer's name and account number and indicates why the consumer believes an error exists",
+   "nli": 0.96337890625,
+   "gpt_prob": 0.03,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "17546708",
+   "sentence_idx": 1,
+   "sentence": "If the institution needs more than 10 business days to investigate, it may take up to 45 days from receipt of the notice and must provisionally credit the consumer's account within 10 business days, subject to the regulation's conditions.",
+   "nli": 0.974609375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "17546708",
+   "sentence_idx": 1,
+   "sentence": "If the financial institution is unable to complete its investigation within 10 business days, it may take up to 45 days from receipt of a notice of error to investigate and determine whether an error occurred, provided it provisionally credits the consumer's account in the amount of the alleged error within 10 business days of receiving the error notice",
+   "nli": 0.994140625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "18709571",
+   "sentence_idx": 1,
+   "sentence": "The creditor's failure to mail or deliver a periodic statement to the consumer's last known address may constitute a billing error if the address was received in writing at least 20 days before the end of the billing cycle.",
+   "nli": 0.99462890625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "18709571",
+   "sentence_idx": 1,
+   "sentence": "The creditor's failure to mail or deliver a periodic statement to the consumer's last known address is a billing error if that address was received by the creditor, in writing, at least 20 days before the end of the billing cycle for which the statement was required.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "18709571",
+   "sentence_idx": 2,
+   "sentence": "A billing error notice must be received at the address disclosed by the creditor within 60 days after the first periodic statement reflecting the alleged error, identify the consumer's name and account number, and indicate the belief, reasons, type, date, and amount of the error.",
+   "nli": 0.994140625,
+   "gpt_prob": 0.05,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "18709571",
+   "sentence_idx": 2,
+   "sentence": "A billing error notice is a written notice from a consumer that is received by a creditor at the address disclosed under \u00a7 1026.7(a)(9) or (b)(9), as applicable, no later than 60 days after the creditor transmitted the first periodic statement that reflects the alleged billing error, enables the creditor to identify the consumer's name and account number, and, to the extent possible, indicates the consumer's belief and the reasons for the belief that a billing error exists, and the type, date, and amount of the error.",
+   "nli": 0.9951171875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "18709571",
+   "sentence_idx": 3,
+   "sentence": "After resolution, if the creditor determines the consumer owes part of the disputed amount, it may report the account as delinquent only after allowing the disclosed payment period or 10 days, whichever is longer.",
+   "nli": 0.931640625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "18709571",
+   "sentence_idx": 3,
+   "sentence": "If a creditor, after complying with all of the requirements of this section, determines that a consumer owes all or part of the disputed amount and related finance or other charges, the creditor may report an account or amount as delinquent because the amount due under paragraph (g)(1) of this section remains unpaid after the creditor has allowed any time period disclosed under \u00a7 1026.6(a)(1) or (b)(2)(v), as applicable, and \u00a7 1026.7(a)(8) or (b)(8), as applicable or 10 days (whichever is longer) during which the consumer can pay the amount.",
+   "nli": 0.9921875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "18931780",
+   "sentence_idx": 0,
+   "sentence": "The consumer's dispute regarding incorrect ATM fees and withdrawal amounts may constitute an error under Regulation E, such as an incorrect electronic fund transfer or a computational or bookkeeping error relating to an electronic fund transfer",
+   "nli": 0.08929443359375,
+   "gpt_prob": 0.96,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "18931780",
+   "sentence_idx": 0,
+   "sentence": "The term error means an incorrect electronic fund transfer to or from the consumer's account or a computational or bookkeeping error made by the financial institution relating to an electronic fund transfer",
+   "nli": 0.97998046875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "18931780",
+   "sentence_idx": 1,
+   "sentence": "The company must follow the error resolution procedures, including applicable investigation time limits and extensions for qualifying electronic fund transfers",
+   "nli": 0.09393310546875,
+   "gpt_prob": 0.96,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "18931780",
+   "sentence_idx": 1,
+   "sentence": "The time periods in paragraphs (c)(1) and (c)(2) are extended as follows: 20 business days in place of 10 business days for transfers within 30 days after the first deposit, and 90 days in place of 45 days for transfers not initiated within a state, point-of-sale debit card transactions, or transfers within 30 days after the first deposit",
+   "nli": 0.99658203125,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "18931780",
+   "sentence_idx": 4,
+   "sentence": "If the company debits a provisionally credited amount after determining no error occurred, it must notify the consumer of the date and amount of the debiting and honor specified items for five business days without overdraft charges",
+   "nli": 0.9775390625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "18931780",
+   "sentence_idx": 4,
+   "sentence": "If the financial institution determines that no error occurred or that an error occurred in a manner or amount different from that described by the consumer and debits a provisionally credited amount, it must notify the consumer of the date and amount of the debiting and notify the consumer that it will honor checks, drafts, or similar instruments payable to third parties and preauthorized transfers from the consumer's account without charge to the consumer as a result of an overdraft for five business days after the notification",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "19039403",
+   "sentence_idx": 4,
+   "sentence": "The investigation time periods may be extended to 20 business days or 90 days in certain circumstances involving new accounts or specific electronic fund transfers.",
+   "nli": 0.990234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "19039403",
+   "sentence_idx": 4,
+   "sentence": "The time periods in paragraphs (c)(1) and (c)(2) of this section are extended as follows: the applicable time is 20 business days in place of 10 business days under paragraphs (c)(1) and (2) of this section if the notice of error involves an electronic fund transfer to or from the account within 30 days after the first deposit to the account was made, and the applicable time is 90 days in place of 45 days under paragraph (c)(2) of this section for completing an investigation if a notice of error involves an electronic fund transfer that was not initiated within a state, resulted from a point-of-sale debit card transaction, or occurred within 30 days after the first deposit to the account was made.",
+   "nli": 0.99560546875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "19099608",
+   "sentence_idx": 0,
+   "sentence": "The consumer's in-person notice to the bank about possible unauthorized use of her credit cards constitutes notification to the card issuer under the regulation.",
+   "nli": 0.96435546875,
+   "gpt_prob": 0.98,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "19099608",
+   "sentence_idx": 0,
+   "sentence": "Notification to a card issuer is given when steps have been taken as may be reasonably required in the ordinary course of business to provide the card issuer with pertinent information about the loss, theft, or possible unauthorized use of a credit card, regardless of whether any particular officer, employee, or agent of the card issuer does, in fact, receive the information, and notification may be given, at the option of the person giving it, in person, by telephone, or in writing.",
+   "nli": 0.99365234375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "19411051",
+   "sentence_idx": 0,
+   "sentence": "The company must determine the consumer's liability for the unauthorized electronic fund transfers under the limitations in \u00a7 1005.6(b) based on the timing of the consumer's notice regarding the loss or theft of the access device.",
+   "nli": 0.98779296875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "19411051",
+   "sentence_idx": 0,
+   "sentence": "A consumer's liability for an unauthorized electronic fund transfer or a series of related unauthorized transfers shall be determined under the limitations in paragraph (b) based on whether the consumer notifies the financial institution within two business days after learning of the loss or theft of the access device",
+   "nli": 0.994140625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "19411051",
+   "sentence_idx": 3,
+   "sentence": "The consumer may be held liable only if the institution provided the disclosures required by \u00a7 1005.7(b)(1), (2), and (3), and if the access device was accepted and the institution provided a means to identify the consumer to whom it was issued.",
+   "nli": 0.91357421875,
+   "gpt_prob": 0.15,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "19411051",
+   "sentence_idx": 3,
+   "sentence": "A consumer may be held liable, within the limitations described in paragraph (b) of this section, for an unauthorized electronic fund transfer involving the consumer's account only if the financial institution has provided the disclosures required by \u00a7 1005.7(b)(1), (2), and (3). If the unauthorized transfer involved an access device, it must be an accepted access device and the financial institution must have provided a means to identify the consumer to whom it was issued",
+   "nli": 0.982421875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "19898148",
+   "sentence_idx": 2,
+   "sentence": "If the debt collector reasonably determines the dispute is duplicative, it must either notify the consumer in writing or electronically of the determination with brief reasons and a reference to the earlier response, or satisfy the verification requirement.",
+   "nli": 0.9951171875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "19898148",
+   "sentence_idx": 2,
+   "sentence": "If the debt collector reasonably determines the dispute is a duplicative dispute, it must either notify the consumer in writing or electronically in the manner required by \u00a7 1006.42(a)(1) that the dispute is duplicative, provide a brief statement of the reasons for the determination, and refer the consumer to the debt collector's response to the earlier dispute, or satisfy paragraph (d)(2)(i) of this section.",
+   "nli": 0.9970703125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "23218918",
+   "sentence_idx": 2,
+   "sentence": "After resolution, if the creditor determines the consumer owes all or part of the disputed amount and related finance or other charges, it shall promptly notify the consumer in writing of the time when payment is due and the portion still owed.",
+   "nli": 0.994140625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "23218918",
+   "sentence_idx": 2,
+   "sentence": "If a creditor, after complying with all of the requirements of this section, determines that a consumer owes all or part of the disputed amount and related finance or other charges, the creditor shall promptly notify the consumer in writing of the time when payment is due and the portion of the disputed amount and related finance or other charges that the consumer still owes.",
+   "nli": 0.99755859375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "before",
+   "complaint_id": "24180973",
+   "sentence_idx": 3,
+   "sentence": "When a person who honors a credit card fails to resolve satisfactorily a dispute as to property or services purchased with the credit card in a consumer credit transaction, the cardholder may assert against the card issuer all claims and defenses arising out of the transaction and may withhold payment up to the amount of credit outstanding for the property or services that gave rise to the dispute.",
+   "nli": 0.01535797119140625,
+   "gpt_prob": 0.03,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "after",
+   "complaint_id": "24180973",
+   "sentence_idx": 3,
+   "sentence": "When a person who honors a credit card fails to resolve satisfactorily a dispute as to property or services purchased with the credit card in a consumer credit transaction, the cardholder may assert against the card issuer all claims (other than tort claims) and defenses arising out of the transaction and relating to the failure to resolve the dispute, and may withhold payment up to the amount of credit outstanding for the property or services that gave rise to the dispute and any finance or other charges imposed on that amount.",
+   "nli": 0.99560546875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "23826751",
+   "sentence_idx": 2,
+   "sentence": "If the creditor determines the consumer owes part of the disputed amount and receives further written notice that any portion remains in dispute, the creditor may not report the amount or account as delinquent unless it promptly reports that the amount or account is in dispute, mails or delivers written notice of the name and address of each person to whom it makes a report, and promptly reports any subsequent resolution.",
+   "nli": 0.99853515625,
+   "gpt_prob": 0.12,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "16215878",
+   "sentence_idx": 0,
+   "sentence": "If the company determines that no error occurred, its report of the investigation results must include a written explanation of its findings and note the consumer's right to request the documents relied on in making the determination.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17203764",
+   "sentence_idx": 2,
+   "sentence": "The institution must report the results to the consumer within three business days after completing its investigation, including, if applicable, notice that a provisional credit has been made final.",
+   "nli": 0.98193359375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "19411051",
+   "sentence_idx": 1,
+   "sentence": "If the consumer notified the institution within two business days after learning of the loss or theft of the access device, liability shall not exceed the lesser of $50 or the amount of unauthorized transfers that occur before notice to the financial institution.",
+   "nli": 0.98095703125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "19411051",
+   "sentence_idx": 5,
+   "sentence": "If the unauthorized transfer appears on a periodic statement, the consumer must report it within 60 days of the institution's transmittal of the statement to avoid liability for subsequent transfers.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "16862946",
+   "sentence_idx": 4,
+   "sentence": "Unless there are reasonable grounds to believe the dispute is frivolous or irrelevant, the agency must clearly note the dispute in any subsequent consumer report containing the information and provide the consumer's statement or a clear and accurate codification or summary.",
+   "nli": 0.9990234375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17243859",
+   "sentence_idx": 2,
+   "sentence": "During the validation period, a debt collector must not engage in any collection activities or communications that overshadow or are inconsistent with the disclosure of the consumer's rights to dispute the debt and to request the name and address of the original creditor.",
+   "nli": 0.9970703125,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17992904",
+   "sentence_idx": 0,
+   "sentence": "Upon receipt of a written dispute within the validation period, the company must cease collection of the debt or any disputed portion until it sends the consumer verification of the debt or a judgment.",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.25,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "15335226",
+   "sentence_idx": 2,
+   "sentence": "If the company declines to block or rescinds a block, it must notify the consumer promptly in the same manner as consumers are notified of the reinsertion of information under section 1681i(a)(5)(B).",
+   "nli": 0.998046875,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17021537",
+   "sentence_idx": 3,
+   "sentence": "If the institution cannot complete its investigation within 10 business days, it may take up to 45 days from receipt of the error notice, provided it provisionally credits the consumer's account within 10 business days.",
+   "nli": 0.99853515625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "16473047",
+   "sentence_idx": 3,
+   "sentence": "The company must also notify the consumer that it will honor checks, drafts, or similar instruments payable to third parties and preauthorized transfers for five business days after the notification without charge to the consumer as a result of an overdraft.",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "18318850",
+   "sentence_idx": 0,
+   "sentence": "An allegation of an unauthorized electronic fund transfer constitutes an error under the regulation's definition.",
+   "nli": 0.9990234375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "19039403",
+   "sentence_idx": 0,
+   "sentence": "If the financial institution is unable to complete its investigation within 10 business days, it may take up to 45 days from receipt of the error notice, provided it provisionally credits the consumer's account in the amount of the alleged error within 10 business days of receiving the notice.",
+   "nli": 0.998046875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17427389",
+   "sentence_idx": 0,
+   "sentence": "A written dispute submitted within the validation period obligates the debt collector to cease collection of the debt or any disputed portion until it sends the consumer verification of the debt or a judgment in writing or electronically as required by \u00a7 1006.42.",
+   "nli": 0.99951171875,
+   "gpt_prob": 0.08,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "16862946",
+   "sentence_idx": 2,
+   "sentence": "If the company is a reseller, it must within 5 business days determine whether the disputed information is incomplete or inaccurate due to its own act or omission and either correct or delete it within 20 days or convey the dispute to the relevant consumer reporting agencies.",
+   "nli": 0.998046875,
+   "gpt_prob": 0.98,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "23948582",
+   "sentence_idx": 0,
+   "sentence": "Upon receipt of a dispute submitted by the consumer in writing within the validation period, a debt collector must cease collection of the debt, or any disputed portion of the debt, until it sends verification of the debt or a judgment to the consumer in writing or electronically as required.",
+   "nli": 0.998046875,
+   "gpt_prob": 0.05,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17477503",
+   "sentence_idx": 1,
+   "sentence": "The institution must inform the consumer within two business days after the provisional crediting of the amount and date of the provisional crediting and give the consumer full use of the funds during the investigation.",
+   "nli": 0.9873046875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "15615432",
+   "sentence_idx": 0,
+   "sentence": "An extension of credit reflected on a periodic statement that was not made to the consumer or to an authorized user is a billing error.",
+   "nli": 0.99951171875,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "18709571",
+   "sentence_idx": 4,
+   "sentence": "If the consumer provides further written notice within the payment period that part of the billing error remains in dispute, the creditor may not report the amount as delinquent unless it promptly reports the dispute, sends written notice of the report recipients, and promptly reports any subsequent resolution.",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "18931780",
+   "sentence_idx": 2,
+   "sentence": "If the company determines that no error occurred or that a different error occurred, it must provide a written explanation of its findings and note the consumer's right to request the documents relied on",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "19411051",
+   "sentence_idx": 2,
+   "sentence": "If the consumer failed to notify within two business days, liability shall not exceed the lesser of $500 or the sum of $50 or the amount of unauthorized transfers within the two business days, plus transfers after the close of two business days and before notice that the institution establishes would not have occurred had the consumer notified within that period.",
+   "nli": 0.99462890625,
+   "gpt_prob": 0.15,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "18140264",
+   "sentence_idx": 1,
+   "sentence": "Upon the consumer's request, the company must promptly provide copies of the documents it relied on in making its determination.",
+   "nli": 0.9990234375,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "24180973",
+   "sentence_idx": 2,
+   "sentence": "A cardholder shall be liable for unauthorized use only if the credit card is an accepted credit card, the card issuer has provided adequate notice of the cardholder's maximum potential liability and of means by which the card issuer may be notified of loss or theft, and the card issuer has provided a means to identify the cardholder on the account.",
+   "nli": 0.9970703125,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "22147352",
+   "sentence_idx": 2,
+   "sentence": "The company must state the date it will consider the end of the validation period and explain that written dispute on or before that date requires the company to cease collection until it sends verification of the debt or a copy of a judgment.",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "18140264",
+   "sentence_idx": 4,
+   "sentence": "The time periods for completing an investigation may be extended to 20 business days or 90 days depending on the type of electronic fund transfer involved.",
+   "nli": 0.9970703125,
+   "gpt_prob": 0.97,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "15865429",
+   "sentence_idx": 2,
+   "sentence": "The agency may decline to block or rescind a block if it reasonably determines the block was in error, based on a material misrepresentation, or that the consumer obtained goods, services, or money from the blocked transaction.",
+   "nli": 0.99853515625,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "21757513",
+   "sentence_idx": 0,
+   "sentence": "If a consumer notifies a debt collector in writing that the consumer wants the debt collector to cease further communication, the debt collector must not communicate or attempt to communicate further with respect to the debt.",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.1,
+   "gpt_label": "unsupported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "15615432",
+   "sentence_idx": 3,
+   "sentence": "If the consumer provides further written notice that any portion of the billing error remains in dispute, the company may not report the amount or account as delinquent unless it promptly reports the dispute, sends a written notice of the recipients of the report, and promptly reports any subsequent resolution.",
+   "nli": 0.9990234375,
+   "gpt_prob": 0.99,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "17132882",
+   "sentence_idx": 2,
+   "sentence": "Nothing in this section requires a consumer reporting agency to prevent a Federal, State, or local law enforcement agency from accessing blocked information it could otherwise obtain under this subchapter.",
+   "nli": 0.99853515625,
+   "gpt_prob": 1.0,
+   "gpt_label": "supported"
+  },
+  {
+   "kind": "control",
+   "complaint_id": "16809825",
+   "sentence_idx": 2,
+   "sentence": "If the debt collector reasonably determines the dispute is duplicative, it must either notify the consumer in writing with reasons and refer to the earlier response or send verification of the debt.",
+   "nli": 0.998046875,
+   "gpt_prob": 0.98,
+   "gpt_label": "supported"
+  }
+ ]
+}

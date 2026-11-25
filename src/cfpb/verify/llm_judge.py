@@ -61,7 +61,12 @@ class LLMJudgeVerifier:
         self.model_name, self.threshold = model, threshold
         self.cache_dir, self.min_interval = Path(cache_dir), min_interval
         # Reuses the HTTP + retry code. 600 s because the NVIDIA queue alone took up to 185 s on 2026-11-04.
-        self._client = NemotronGenerator(model=model, max_tokens=max_tokens, timeout=600)
+        if model.startswith("codex:"):  # evaluation only: GPT through the Codex CLI (see codex_client.py)
+            from cfpb.verify.codex_client import CodexClient
+            self._client = CodexClient(model.split(":", 1)[1])
+            self.min_interval = 0.0
+        else:
+            self._client = NemotronGenerator(model=model, max_tokens=max_tokens, timeout=600)
         self._last_call = 0.0
 
     def _reply(self, premise: str, sentence: str) -> str:

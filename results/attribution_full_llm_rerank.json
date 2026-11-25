@@ -1,0 +1,205 @@
+{
+  "retrieved_run": "full-llm_rerank",
+  "oracle_run": "full-oracle-local",
+  "n_complaints": 127,
+  "k": 5,
+  "tau": "run threshold",
+  "failed_generations": {
+    "full-llm_rerank": [],
+    "full-oracle-local": []
+  },
+  "retrieved": {
+    "n_sentences": 505,
+    "pct_supported_micro": 0.9108910891089109,
+    "pct_supported_macro": 0.8964566929133858,
+    "pct_supported_and_gold_section_micro": 0.2514851485148515,
+    "pct_supported_and_gold_section_macro": 0.27296587926509186,
+    "mean_entail": 0.9060980060313008
+  },
+  "oracle": {
+    "n_sentences": 518,
+    "pct_supported_micro": 0.8571428571428571,
+    "pct_supported_macro": 0.826509186351706,
+    "pct_supported_and_gold_section_micro": 0.8571428571428571,
+    "pct_supported_and_gold_section_macro": 0.826509186351706,
+    "mean_entail": 0.8553344121770969
+  },
+  "gold_section_in_retrieved_topk": 0.889763779527559,
+  "gap_supported_oracle_minus_retrieved": {
+    "mean": -0.06994750656167978,
+    "ci95": [
+      -0.1300524934383202,
+      -0.009055118110236217
+    ]
+  },
+  "gap_supported_and_gold_oracle_minus_retrieved": {
+    "mean": 0.553543307086614,
+    "ci95": [
+      0.48976377952755906,
+      0.6149606299212597
+    ]
+  },
+  "gap_by_retrieval_hit": {
+    "True": {
+      "n": 113,
+      "mean_gap": -0.055604719764011795
+    },
+    "False": {
+      "n": 14,
+      "mean_gap": -0.18571428571428575
+    }
+  },
+  "by_regulation": {
+    "E": {
+      "n": 29,
+      "supported": {
+        "retrieved": 0.8425287356321839,
+        "oracle": 0.9436781609195403
+      },
+      "supported_and_gold": {
+        "retrieved": 0.4373563218390804,
+        "oracle": 0.9436781609195403
+      }
+    },
+    "F": {
+      "n": 30,
+      "supported": {
+        "retrieved": 0.9655555555555556,
+        "oracle": 0.8638888888888888
+      },
+      "supported_and_gold": {
+        "retrieved": 0.18,
+        "oracle": 0.8638888888888888
+      }
+    },
+    "FCRA": {
+      "n": 36,
+      "supported": {
+        "retrieved": 0.8856481481481482,
+        "oracle": 0.8449074074074074
+      },
+      "supported_and_gold": {
+        "retrieved": 0.23240740740740742,
+        "oracle": 0.8449074074074074
+      }
+    },
+    "V": {
+      "n": 5,
+      "supported": {
+        "retrieved": 0.9199999999999999,
+        "oracle": 0.85
+      },
+      "supported_and_gold": {
+        "retrieved": 0.13333333333333333,
+        "oracle": 0.85
+      }
+    },
+    "Z": {
+      "n": 27,
+      "supported": {
+        "retrieved": 0.8876543209876544,
+        "oracle": 0.6302469135802469
+      },
+      "supported_and_gold": {
+        "retrieved": 0.2796296296296296,
+        "oracle": 0.6302469135802469
+      }
+    }
+  },
+  "run_info": {
+    "full-llm_rerank": {
+      "date_utc": "2026-11-19T23:25:08+00:00",
+      "git_commit": "ae2547b-dirty",
+      "args": {
+        "retriever": "precomputed",
+        "corpus": "['chunking/data/processed/chunks.jsonl']",
+        "ranked": "outputs\\retrieval\\llm\\ranked.parquet",
+        "min_top_score": "None",
+        "k": "5",
+        "limit": "None",
+        "run_name": "full-llm_rerank",
+        "require_models": "False",
+        "generator": "nemotron",
+        "verifier": "nli",
+        "threshold": "0.5",
+        "judge_model": "None",
+        "ids": "annotation\\attribution_ids.txt"
+      },
+      "condition": "retrieved",
+      "classifier": "distilbert:product+issue",
+      "retriever": "nv-embed-8b+bm25+prior+llm-rerank",
+      "corpus": "regulation+statute",
+      "stubbed_stages": [],
+      "generator": {
+        "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "prompt_version": "v1-9d0f038c",
+        "temperature": 0.0
+      },
+      "verifier": {
+        "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+        "threshold": 0.5
+      },
+      "n_gold": 198,
+      "n_gold_without_text": 0,
+      "n_run": 127,
+      "n_abstained": 0,
+      "seconds": 13091.7,
+      "rows": {
+        "classification": 127,
+        "ranked": 635,
+        "responses": 127,
+        "sentences": 505
+      },
+      "versions": {
+        "python": "3.12.2"
+      }
+    },
+    "full-oracle-local": {
+      "date_utc": "2026-11-19T23:20:29+00:00",
+      "git_commit": "ae2547b-dirty",
+      "args": {
+        "retriever": "oracle",
+        "corpus": "['chunking/data/processed/chunks.jsonl']",
+        "ranked": "None",
+        "min_top_score": "None",
+        "k": "5",
+        "limit": "None",
+        "run_name": "full-oracle-local",
+        "require_models": "False",
+        "generator": "nemotron",
+        "verifier": "nli",
+        "threshold": "0.5",
+        "judge_model": "None",
+        "ids": "annotation\\attribution_ids.txt"
+      },
+      "condition": "oracle",
+      "classifier": "distilbert:product+issue",
+      "retriever": "oracle",
+      "corpus": "chunks.jsonl:regulation+statute",
+      "stubbed_stages": [],
+      "generator": {
+        "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+        "prompt_version": "v1-9d0f038c",
+        "temperature": 0.0
+      },
+      "verifier": {
+        "model": "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+        "threshold": 0.5
+      },
+      "n_gold": 198,
+      "n_gold_without_text": 0,
+      "n_run": 127,
+      "n_abstained": 0,
+      "seconds": 12812.7,
+      "rows": {
+        "classification": 127,
+        "ranked": 624,
+        "responses": 127,
+        "sentences": 518
+      },
+      "versions": {
+        "python": "3.12.2"
+      }
+    }
+  }
+}

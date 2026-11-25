@@ -1,0 +1,157 @@
+{
+  "half": 0,
+  "n": 62,
+  "K": 10,
+  "prompt": "RERANK_PROMPT (unchanged)",
+  "models": {
+    "lightning": {
+      "hit@1": 0.6290322580645161,
+      "hit@3": 0.8387096774193549,
+      "hit@5": 0.9032258064516129,
+      "mrr": 0.7441128827210617,
+      "empty_answers": 1,
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "settings": {
+        "max_tokens": 32768
+      }
+    },
+    "mistral": {
+      "hit@1": 0.6451612903225806,
+      "hit@3": 0.8709677419354839,
+      "hit@5": 0.9032258064516129,
+      "mrr": 0.762930087022137,
+      "empty_answers": 5,
+      "model": "mistralai/mistral-large-4-1t-a52b",
+      "settings": {
+        "max_tokens": 4096,
+        "reasoning_effort": "low"
+      }
+    },
+    "super": {
+      "hit@1": 0.7096774193548387,
+      "hit@3": 0.8548387096774194,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.8008333128285886,
+      "empty_answers": 0,
+      "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "settings": {
+        "max_tokens": 32768
+      }
+    },
+    "super|K20-w90": {
+      "hit@1": 0.6612903225806451,
+      "hit@3": 0.8709677419354839,
+      "hit@5": 0.9032258064516129,
+      "mrr": 0.777525960870982,
+      "empty_answers": 0,
+      "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "settings": {
+        "max_tokens": 32768
+      },
+      "K": 20,
+      "words_per_passage": 90,
+      "rubric": false
+    },
+    "ultra": {
+      "hit@1": 0.6774193548387096,
+      "hit@3": 0.8709677419354839,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.7787903020759005,
+      "empty_answers": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "settings": {
+        "max_tokens": 32768
+      }
+    },
+    "minimax": {
+      "hit@1": 0.6290322580645161,
+      "hit@3": 0.8548387096774194,
+      "hit@5": 0.9032258064516129,
+      "mrr": 0.7500268612156853,
+      "empty_answers": 1,
+      "model": "minimaxai/minimax-m3.1-flash",
+      "settings": {
+        "max_tokens": 32768
+      }
+    },
+    "super|K10-w200": {
+      "hit@1": 0.6612903225806451,
+      "hit@3": 0.8548387096774194,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.7739515923984811,
+      "empty_answers": 0,
+      "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "settings": {
+        "max_tokens": 32768
+      },
+      "K": 10,
+      "words_per_passage": 200,
+      "rubric": false
+    },
+    "super|K10-w90-rubric": {
+      "hit@1": 0.7741935483870968,
+      "hit@3": 0.9193548387096774,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.8481451407855779,
+      "empty_answers": 0,
+      "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "settings": {
+        "max_tokens": 32768
+      },
+      "K": 10,
+      "words_per_passage": 90,
+      "rubric": true
+    },
+    "kimi": {
+      "hit@1": 0.7258064516129032,
+      "hit@3": 0.8870967741935484,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.8008333128285885,
+      "empty_answers": 3,
+      "model": "moonshotai/kimi-k3.1-pro",
+      "settings": {
+        "max_tokens": 32768
+      }
+    },
+    "gpt": {
+      "hit@1": 0.7741935483870968,
+      "hit@3": 0.8709677419354839,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.8352419149791263,
+      "empty_answers": 0,
+      "model": "codex:gpt-5.6-sol",
+      "settings": {},
+      "K": 10,
+      "words_per_passage": 90,
+      "rubric": false
+    },
+    "gpt|K10-w90-rubric": {
+      "hit@1": 0.8387096774193549,
+      "hit@3": 0.9193548387096774,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.8830913773447177,
+      "empty_answers": 0,
+      "model": "codex:gpt-5.6-sol",
+      "settings": {},
+      "K": 10,
+      "words_per_passage": 90,
+      "rubric": true
+    },
+    "kimi|K10-w90-rubric": {
+      "hit@1": 0.8064516129032258,
+      "hit@3": 0.9193548387096774,
+      "hit@5": 0.9193548387096774,
+      "mrr": 0.8615860010006317,
+      "empty_answers": 3,
+      "model": "moonshotai/kimi-k3.1-pro",
+      "settings": {
+        "max_tokens": 32768
+      },
+      "K": 10,
+      "words_per_passage": 90,
+      "rubric": true
+    }
+  },
+  "first_stage_hit@1": 0.46774193548387094,
+  "first_stage_hit@10": 0.9193548387096774
+}

@@ -158,7 +158,7 @@ def health():
     m = eng.MODELS
     return {"models": m.status, "error": m.error, "ready": m.ready.is_set() and not m.error,
             "database": "postgres" if config.DATABASE_URL.startswith("postgres") else "sqlite",
-            "nli_cutoff": config.NLI_CUTOFF, "live_drafting": config.HAS_NVIDIA_KEY,
+            "nli_cutoff": config.CHECK_CUTOFF, "checker": config.CHECKER, "live_drafting": config.HAS_NVIDIA_KEY,
             "generator_model": config.GENERATOR_MODEL}
 
 
@@ -222,7 +222,7 @@ def save_draft(case_id: int, body: DraftIn, x_officer: str | None = Header(None)
         n_flag = sum(ch["label"] == "unsupported" for ch in checks or [])
         log_event(s, c, actor, "edited",
                   f"Draft v{version}: {len(texts)} sentences, "
-                  + (f"{n_flag} flagged." if checks is not None else "not re-checked (NLI model not loaded)."))
+                  + (f"{n_flag} flagged." if checks is not None else "not re-checked (checker not loaded)."))
         s.commit()
         return detail(load_case(s, case_id))
 
@@ -322,7 +322,21 @@ def about():
         s2 = final["H4_checker"]["set2"]
         out["retrieval"] = {"name": best, "n": w[best]["n"], "hit@1": w[best]["hit@1"], "hit@5": w[best]["hit@5"],
                             "bm25_hit@5": w["bm25"]["hit@5"]}
+        post = final.get("post_h1_retrieval")
+        if post and config.RETRIEVER == "llm":
+            v2 = post["retrievers"]["llm_rerank"]
+            out["retrieval"] |= {"name": "llm_rerank", "n": v2["n"], "hit@1": v2["hit@1"], "hit@5": v2["hit@5"],
+                                 "h1_hit@1": w[best]["hit@1"], "h1_hit@5": w[best]["hit@5"]}
+        rr = read("reranker_top1_section.json")
+        if rr and config.RETRIEVER == "llm":
+            key = "gpt" if config.RERANK_MODEL.startswith("codex:") else "super"
+            out["reranker"] = {"model": config.RERANK_MODEL, **rr["rerankers"][key]["heldout"],
+                               "super_top1": rr["rerankers"]["super"]["heldout"]["top1_correct"]}
         out["checker"] = {"n": s2["n"], "labels": s2["labels"], "at_T": s2["nli@T"], "at_0_5": s2["nli@0.5"]}
+        ens = (read("checker_ultra_compare.json") or {}).get("nli_or_ultra_avg")
+        if ens and config.CHECKER == "ensemble":  # EXPERIMENT_LOG E12b
+            out["checker"]["ensemble"] = {"cut": ens["cut_set1"], "balanced_accuracy": ens["BA_set2_at_cut"],
+                                          "unsupported_recall": ens["unsupported_recall_set2_at_cut"]}
         out["classifier"] = final["classifier"]
     return out
 

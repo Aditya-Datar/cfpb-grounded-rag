@@ -26,13 +26,15 @@ export interface Scope {
 
 export interface Sentence {
   text: string; cited_chunk_ids: string[]; premise_chunk_ids: string[];
-  entail_prob: number | null; contradict_prob: number | null; label: "supported" | "unsupported" | "unchecked";
+  entail_prob: number | null; contradict_prob: number | null; nli_prob?: number; ultra_prob?: number;
+  label: "supported" | "unsupported" | "unchecked";
+  original_text?: string; gating_round?: number;  // set when the checker loop rewrote the sentence
 }
 
 export interface Analysis {
   id: number; origin: string; stage: string; force_draft: boolean; error: string | null;
   classification: { product: Label; issue: Label | null; candidate_regulation: string | null; source: string } | null;
-  retrieval: { retriever: string; corpus: string; chunks: Chunk[] } | null;
+  retrieval: { retriever: string; corpus: string; chunks: Chunk[]; note?: string | null; sections?: string[] } | null;
   scope: Scope | null;
   draft: { model: string; is_referral: boolean } | null;
   generator_model: string | null; verifier: string | null; nli_cutoff: number | null;
@@ -54,7 +56,7 @@ export interface CaseDetail extends CaseSummary {
 
 export interface Health {
   ready: boolean; error: string | null; models: Record<string, string>; database: string;
-  nli_cutoff: number; live_drafting: boolean; generator_model: string;
+  nli_cutoff: number; checker?: string; live_drafting: boolean; generator_model: string;
 }
 
 export interface Stats {
@@ -68,8 +70,10 @@ export interface About {
   health: Health;
   scope_model: { name: string; threshold: number; source: string;
     report_half: { n: number; n_none: number; auroc: number; true_flags: number; false_flags: number } } | null;
-  retrieval: { name: string; n: number; "hit@1": Est; "hit@5": Est; "bm25_hit@5": Est } | null;
-  checker: { n: number; labels: string; at_T: Record<string, Est>; at_0_5: Record<string, Est> } | null;
+  reranker?: { model: string; n: number; top1_correct: number; ci95: [number, number]; super_top1: number };
+  retrieval: { name: string; n: number; "hit@1": Est; "hit@5": Est; "bm25_hit@5": Est; "h1_hit@1"?: Est; "h1_hit@5"?: Est } | null;
+  checker: { n: number; labels: string; at_T: Record<string, Est>; at_0_5: Record<string, Est>;
+             ensemble?: { cut: number; balanced_accuracy: number; unsupported_recall: number } } | null;
   classifier: { test_n: number; product: { macro_f1: number; accuracy: number };
     issue: { accuracy: number; macro_f1_all_issues: number } } | null;
 }

@@ -1,0 +1,332 @@
+% ============================================================
+%  CSCI 544 Group 36 -- Midterm Report, ACL style (acl.sty), compact layout
+%  Overleaf (pdfLaTeX): upload acl.sty and acl_natbib.bst from
+%  https://github.com/acl-org/acl-style-files next to this main.tex.
+%  Also upload references.bib (bibliography) next to this file.
+%  NOTE: margins, title box and spacing are overridden here for space;
+%  acl.sty itself is not modified.
+% ============================================================
+\documentclass[10pt]{article}
+
+
+% ---------- ACL style ----------
+\usepackage[final]{acl}   % final: no line numbers, no "Anonymous" author
+
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{adjustbox}
+\usepackage{xurl}
+
+% ---------- Compact layout (overrides acl.sty defaults: 2.5cm margins, 0.6cm gutter, tall title box) ----------
+\geometry{letterpaper,margin=0.55in,heightrounded=true}
+\setlength\columnsep{0.22in}
+\setlength\titlebox{6\baselineskip}   % one-line title + two author lines; smaller overflows into the text
+
+\captionsetup{font=small,labelfont=bf,skip=3pt}
+\setlength{\abovecaptionskip}{3pt}
+\setlength{\belowcaptionskip}{0pt}
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\parskip}{0pt}
+\setlist{nosep,leftmargin=*}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titleformat{\paragraph}[runin]{\normalsize\bfseries}{}{0pt}{}[.]
+\titlespacing*{\section}{0pt}{6pt plus 2pt minus 2pt}{2pt plus 1pt}
+\titlespacing*{\subsection}{0pt}{4pt plus 1pt minus 1pt}{1pt plus 1pt}
+\titlespacing*{\paragraph}{0pt}{2pt plus 1pt}{0.5em}
+
+% Compact bibliography
+\setlength{\bibsep}{0pt plus 0.5pt}
+\renewcommand{\bibfont}{\small}
+
+% Placeholder marker for unwritten text (delete when filled in)
+\newcommand{\todo}[1]{\textcolor{gray}{[#1]}}
+
+% Plain-text PDF title (the \adjustbox in \title is not valid PDF metadata)
+\AtBeginDocument{\hypersetup{pdftitle={Regulation-Grounded Triage and Response Drafting for CFPB Consumer Complaints}}}
+
+% ---------- Title (kept to one line) and authors ----------
+\title{\adjustbox{max width=\textwidth}{Regulation-Grounded Triage and Response Drafting for CFPB Consumer Complaints}}
+\author{\normalsize\mdseries Aditya Datar \quad Anirudh Joshi \quad Atharva Thorat \quad
+  Gagan Shivanna \quad Ishani Bhadlikar \quad Ujjwal Puri \\
+  \small\mdseries CSCI 544 Applied NLP \,\textbar\, Group 36 \,\textbar\, Midterm Report}
+
+% ============================================================
+\begin{document}
+\maketitle
+
+% ------------------------------------------------------------
+\section{Introduction}
+
+\subsection{What We Are Trying to Do}
+Every company that receives a complaint through the Consumer Financial
+Protection Bureau (CFPB) has 15 days to reply and up to 60 days to close the
+case~\cite{cfpb2026process}. Before anyone can write that reply, someone has to
+answer a hard question: which federal rule covers this complaint?
+
+Sometimes it's easy. If you write, ``I never approved this \$240 transfer, and my
+bank won't refund it,'' a trained compliance officer knows right away that
+Regulation~E applies. That's the rule for electronic money transfers, and it
+spells out how the bank has to investigate. Most complaints aren't that clean.
+They're long. They're often angry. Parts are blacked out to protect privacy. And
+they're written in everyday words, while the rules are written in legal
+language.
+
+We're building an assistant for that officer. It reads a complaint and sorts it
+by product and type of problem. Then it finds the passage of federal rules that
+most likely applies and drafts a short reply that cites it. Last, it checks each
+sentence of the draft against that passage and flags anything the passage
+doesn't back up. If nothing in our collection of rules fits, it should say so and
+hand the complaint to a person. The officer always makes the final call. The
+tool doesn't give legal advice.
+
+We also want to know why drafts go wrong. Did the system find the wrong rule? Or
+did it find the right one and write about it badly? So we draft every reply
+twice, once from the passage our system found and once from the correct passage,
+which we labeled ahead of time. Our early answer is clear. Most errors come from
+finding the wrong rule, not from the writing.
+
+\subsection{Who Cares and What Difference It Makes}\label{sec:whocares}
+Compliance teams feel this first. The CFPB received about 6.6 million complaints
+in 2025, up from about 3.2 million in 2024 and 1.6 million in
+2023~\cite{cfpb2026annual}. The agency says part of that growth comes from credit
+repair companies and from automated, often duplicate, submissions. So not every
+complaint is a new case. Still, each one that reaches a company starts the
+15-day clock. Someone has to read it.
+
+Much of that reading is still done by hand. And current AI tools aren't safe to
+use on their own yet. \citet{magesh2025hallucination} tested
+commercial legal research tools that cite their sources, and those tools still
+gave false or poorly supported answers to roughly one in six to one in three
+questions. General chatbots did much worse.
+\citet{dahl2024legalfictions} found they gave false answers about real
+federal court cases 58\% to 88\% of the time. A citation doesn't prove an answer
+is right. It doesn't tell you which sentence to doubt, either.
+
+That's where we think our work helps. If you're the officer, a
+sentence-by-sentence check lets you spend your time on the few lines that need
+it. You don't have to reread everything. And if you're building a system like
+ours, knowing where errors come from tells you where to put your effort: better
+search, or safer writing. Our early test on 40 complaints points to search.
+Given the correct passage, our automatic checker, at its default setting, found
+that on average 84\% of a draft's sentences were supported and came from the
+right rule. Given the passages our first search method found, only 19\% were. A
+smaller sample checked by people tells the same story, about two in three
+sentences against one in six. We also found no published work that links
+consumer complaints to the specific regulation section that governs them. So
+our labeled set of complaints may be useful to others too.
+
+% ------------------------------------------------------------
+\section{Related Work}
+
+\subsection{Hallucination in Legal AI}
+AI tools get the law wrong a lot, even when they cite sources.
+\citet{magesh2025hallucination} tested three commercial legal research
+tools on 202 legal questions: Lexis+ AI from LexisNexis, plus Westlaw
+AI-Assisted Research and Ask Practical Law AI from Thomson Reuters. All three
+look things up before they answer. All three still made the mistakes we
+described in Section~\ref{sec:whocares}. \citet{dahl2024legalfictions}
+saw the same problem in general chatbots answering questions about federal court
+cases with no sources at all.
+
+What matters most for us is how Magesh et al.\ define a mistake. An answer is
+wrong if it's incorrect, or if it cites a source that doesn't support it or
+doesn't apply. So an answer that faithfully repeats the wrong law still counts as
+an error. But these studies test each tool as a whole. Magesh et al.\ couldn't
+see inside the products, so they couldn't say for sure whether a mistake came
+from finding the wrong source or from writing a poor answer. Our experiment is
+built to answer exactly that.
+
+\subsection{Retrieving Law from Everyday Language}
+Finding the right law is hard when the question comes from an ordinary person.
+BSARD~\cite{louis2022bsard} shows this. It matches 1,108 French legal questions,
+based on requests from Belgian citizens, to the statutes that answer them.
+Keyword search (BM25) finds 51.3\% of the relevant articles in its top 100
+results. That beats neural search models used off the shelf. But it falls well
+behind models trained for the task, which reach 74.8\%.
+\citet{zheng2025reasoning} show why in U.S.\ law. Their questions
+share very few words with the legal text that answers them, far fewer than in
+common benchmarks like Natural Questions. On their housing-law questions, BM25
+gets every relevant passage into its top 10 for only 18.3\% of questions, and at
+least one for 40.8\%.
+
+It looks different when the questions already sound legal. On
+ObliQA~\cite{gokhan2024rirag}, where GPT-4 wrote the questions from Abu Dhabi
+financial rules, BM25 comes within about 3 points of the best neural model.
+LegalBench-RAG~\cite{pipitone2024legalbench}, a recent legal search benchmark,
+uses contracts and privacy policies instead of laws, and it only tests the
+search step. None of these benchmarks uses consumer complaints. Our guess is that
+complaints sit near the everyday end, which would help explain the low BM25
+scores in Section~\ref{sec:results}. We haven't measured that yet.
+
+\subsection{Evaluating RAG and Locating Its Errors}
+Our system is a form of retrieval-augmented generation (RAG). A model finds
+passages first, then writes an answer from them. A common way to score these
+systems is to ask whether the answer matches the passages it was given.
+RAGAS~\cite{es2024ragas} is a popular example. It calls an answer faithful when
+its statements follow from those passages, and that's what we mean when we call
+a sentence \emph{supported}. But for legal work that isn't enough. An answer can
+follow a passage perfectly and still be wrong, because the passage doesn't
+apply.
+
+Some recent work tries to split search errors from writing errors.
+RAGChecker~\cite{ru2024ragchecker} scores the two steps separately, but from a
+single run, by checking which retrieved passage backs each claim. Legal RAG
+Bench~\cite{butler2026legalragbench} sorts each wrong answer about Australian
+criminal law into a hallucination, a search error, or a reasoning error, based
+on whether the right passage was found. Its conclusion is that search sets the
+upper limit for many legal RAG systems. \citet{kim2025legalai} study
+1,039 Korean civil complaints. They compare 12 versions of a pipeline and link
+how well each one searched to how good its answers were. Handing a model the
+correct passage is a common test too. Lost in the Middle~\cite{liu2024lost} and
+ALCE~\cite{gao2023alce} both do it to see how well a model can do in the best
+case. We run the same kind of test, holding the model fixed and changing only
+the passage. Section~\ref{sec:differs} covers how ours differs. For error
+analysis, we borrow the seven failure points of \citet{barnett2024seven}.
+The first one, missing content, is our ``no governing section'' case.
+
+\subsection{Checking Generated Text Against Sources}
+Natural language inference (NLI) asks whether one piece of text follows from
+another. It can check a draft against its source, but you have to be careful
+with it. SummaC~\cite{laban2022summac} showed that NLI works better sentence by
+sentence, against small chunks of the source, than against a whole document at
+once. It reached 72.1 to 74.4 balanced accuracy on its benchmark, with a
+separate cutoff tuned for each dataset. Our checker adapts SummaC's zero-shot
+approach. It scores each sentence against blocks of the passages it cites, using
+a newer model, DeBERTa-v3.
+
+Later studies raise two warnings. These checkers do worse on text from modern
+systems. On news summaries written by recent models, SummaC's zero-shot version
+reaches only 63.3 balanced accuracy~\cite{tang2023aggrefact}. And a fixed cutoff
+can hurt. MiniCheck~\cite{tang2024minicheck} found that SummaC's trained version
+loses 9.2 points without a tuned cutoff, while MiniCheck's best small checker
+comes within a point of GPT-4 for a tiny fraction of the cost. Legal text brings
+its own trouble. In ContractNLI~\cite{koreeda2021contractnli}, a strong model
+fails on cases where an exception written far away in the document changes the
+rule. Regulations are full of phrases like ``except as provided in.'' The closest
+checker built for regulations is RePASs, from RIRAG~\cite{gokhan2024rirag}. It
+scores answers about Abu Dhabi rules by testing each sentence for support and
+contradiction, and by counting how many required obligations the answer covers.
+We took these warnings seriously. That's why we test our checker against human
+labels and tune its cutoff instead of trusting the default.
+
+\subsection{NLP on CFPB Complaints}
+Most past work on CFPB complaints predicts something other than which law
+applies. \citet{bastani2019lda} grouped complaint narratives into
+topics and suggested the topics could help evaluate consumer protection rules.
+Their topics are broad themes, though, not specific rule sections.
+\citet{gao2023anomalies} predicted whether credit and prepaid card
+complaints against one bank would end with relief for the consumer. It was a
+step toward finding systematic patterns among complaints closed without relief,
+and they used word-frequency features with classic classifiers.
+\citet{wang2026relief} predicted monetary relief for 176,942 checking and
+savings complaints with XGBoost and reached an AUC of 0.78. Sorting complaints by
+product is common too. \citet{airani2025ensembling} report a
+macro-F1 of 0.860 for DistilBERT. But that's on five product groups with a
+balanced test set, so you can't compare it directly with our 11-product result.
+None of these studies connects a complaint to the rule that governs it.
+
+\subsection{How Our Work Differs}\label{sec:differs}
+We found no published work that links a consumer complaint to the specific
+federal regulation section that governs it. Comparing a model's answers from
+retrieved and correct passages isn't new, though. ALCE~\cite{gao2023alce} does it
+with the same model. What's different is how we do it.
+
+Our correct passage is the governing section, chosen by annotators. ALCE picks
+its best-case passages from the retriever's own top 100 results. We also score
+every sentence twice. Is it supported by the passages it was given? And is it
+supported by the section that actually applies? In the run that uses our search
+results, the gap between those two scores closely matches what Magesh et al.\
+call misgrounded. And we do all of this sentence by sentence on federal
+regulations, with a checker we've tested against human labels.
+
+% ------------------------------------------------------------
+\section{Data and Annotation}
+
+\subsection{Consumer Complaints}
+\todo{FOIA narratives archive, cleaning funnel, splits.}
+
+\subsection{Regulation Corpus}
+\todo{Regulations E, F, V, Z and the FCRA statute; structure-aware chunking.}
+
+\subsection{Gold Annotation}
+\todo{198 complaints, LLM annotators with human adjudication, agreement.}
+
+% ------------------------------------------------------------
+\section{Method}
+
+\subsection{System Overview}
+\todo{Figure 1: the four-stage pipeline and human handoff.}
+
+\paragraph{Classification}
+\todo{DistilBERT, product and issue.}
+
+\paragraph{Retrieval}
+\todo{BM25 baseline; dense and hybrid planned.}
+
+\paragraph{Response drafting}
+\todo{Nemotron with per-sentence passage tags.}
+
+\paragraph{Sentence checking}
+\todo{DeBERTa-v3 NLI following SummaC.}
+
+\subsection{Attribution Experiment}
+\todo{Retrieved vs.\ correct passage; ``supported'' vs.\ ``supported and correct''.}
+
+\subsection{What Is New}
+\todo{Three contributions.}
+
+% ------------------------------------------------------------
+\section{Experimental Plan}
+
+\subsection{Hypotheses}
+\todo{H1--H5 (R6).}
+
+\subsection{Evaluation}
+\todo{Metrics per stage and end to end (R7).}
+
+% ------------------------------------------------------------
+\section{Preliminary Results}\label{sec:results}
+
+\subsection{Classification}
+\todo{Product and issue macro-F1.}
+
+\subsection{Retrieval}
+\todo{BM25 hit@k and MRR; abstention.}
+
+\subsection{Checker Validation}
+\todo{AUROC, cutoff sensitivity, agreement with human labels.}
+
+\subsection{Attribution Pilot}
+\todo{Retrieved vs.\ correct passage gap, human-label estimate.}
+
+\subsection{Limitations So Far}
+\todo{Pilot size, silver labels, metric definition.}
+
+% ------------------------------------------------------------
+\section{Milestones}
+
+\subsection{Progress Against the Proposal}
+\todo{M1 and M2 status, and changes from the proposal (R9).}
+
+\subsection{Updated Milestones}
+\todo{Plan for the rest of the semester (R10).}
+
+% ------------------------------------------------------------
+\bibliography{references}
+
+\end{document}

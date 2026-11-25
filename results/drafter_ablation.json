@@ -1,0 +1,130 @@
+{
+ "cut": 0.9737792968749999,
+ "arms": {
+  "A0": {
+   "n_drafts": 62,
+   "n_sentences": 252,
+   "sentences_per_draft": 4.064516129032258,
+   "empty_drafts": 0,
+   "supported_ensemble": 0.5158730158730159,
+   "supported_nli_T": 0.5357142857142857,
+   "supported_nli_0.5": 0.8492063492063492,
+   "supported_ultra_0.5": 0.6904761904761905,
+   "overlap_mean": 0.8743429305177198,
+   "addresses_complaint": 0.4032258064516129,
+   "addresses_score_mean": 45.88709677419355,
+   "prompt_version": "v1-9d0f038c",
+   "k": 5
+  },
+  "A1": {
+   "n_drafts": 62,
+   "n_sentences": 170,
+   "sentences_per_draft": 2.7419354838709675,
+   "empty_drafts": 0,
+   "supported_ensemble": 0.4176470588235294,
+   "supported_nli_T": 0.4764705882352941,
+   "supported_nli_0.5": 0.8058823529411765,
+   "supported_ultra_0.5": 0.5941176470588235,
+   "overlap_mean": 0.8426328588856349,
+   "addresses_complaint": 0.08064516129032258,
+   "addresses_score_mean": 12.903225806451612,
+   "prompt_version": "v1-61485102",
+   "k": 5,
+   "minus_A0_supported_ensemble": {
+    "diff": -0.0982259570494865,
+    "ci95": [
+     -0.20332081452745687,
+     0.004780573345795592
+    ]
+   }
+  },
+  "A2": {
+   "n_drafts": 62,
+   "n_sentences": 264,
+   "sentences_per_draft": 4.258064516129032,
+   "empty_drafts": 0,
+   "supported_ensemble": 0.5492424242424242,
+   "supported_nli_T": 0.4734848484848485,
+   "supported_nli_0.5": 0.9583333333333334,
+   "supported_ultra_0.5": 0.6856060606060606,
+   "overlap_mean": 0.9750484843029463,
+   "addresses_complaint": 0.14516129032258066,
+   "addresses_score_mean": 24.516129032258064,
+   "prompt_version": "v1-78d3dec5",
+   "k": 5,
+   "minus_A0_supported_ensemble": {
+    "diff": 0.03336940836940827,
+    "ci95": [
+     -0.04856848587923429,
+     0.11825568223559768
+    ]
+   }
+  },
+  "A3": {
+   "n_drafts": 62,
+   "n_sentences": 253,
+   "sentences_per_draft": 4.080645161290323,
+   "empty_drafts": 0,
+   "supported_ensemble": 0.766798418972332,
+   "supported_nli_T": 0.33992094861660077,
+   "supported_nli_0.5": 0.9644268774703557,
+   "supported_ultra_0.5": 0.8814229249011858,
+   "overlap_mean": 0.9846222981790957,
+   "addresses_complaint": 0.14516129032258066,
+   "addresses_score_mean": 21.93548387096774,
+   "prompt_version": "v1-37a68498",
+   "k": 5,
+   "minus_A0_supported_ensemble": {
+    "diff": 0.2509254030993161,
+    "ci95": [
+     0.1784215488822922,
+     0.32576232998076715
+    ]
+   }
+  },
+  "A4": {
+   "n_drafts": 62,
+   "n_sentences": 211,
+   "sentences_per_draft": 3.403225806451613,
+   "empty_drafts": 0,
+   "supported_ensemble": 0.3981042654028436,
+   "supported_nli_T": 0.41706161137440756,
+   "supported_nli_0.5": 0.7867298578199052,
+   "supported_ultra_0.5": 0.6824644549763034,
+   "overlap_mean": 0.7872000211135142,
+   "addresses_complaint": 0.3548387096774194,
+   "addresses_score_mean": 43.62903225806452,
+   "prompt_version": "v1-9d0f038c",
+   "k": 1,
+   "minus_A0_supported_ensemble": {
+    "diff": -0.11776875047017232,
+    "ci95": [
+     -0.19644790186775643,
+     -0.035605973899357
+    ]
+   }
+  },
+  "A5": {
+   "n_drafts": 62,
+   "n_sentences": 245,
+   "sentences_per_draft": 3.9516129032258065,
+   "empty_drafts": 0,
+   "supported_ensemble": 0.4775510204081633,
+   "supported_nli_T": 0.42448979591836733,
+   "supported_nli_0.5": 0.7836734693877551,
+   "supported_ultra_0.5": 0.8285714285714286,
+   "overlap_mean": 0.762272401695693,
+   "addresses_complaint": 0.41935483870967744,
+   "addresses_score_mean": 47.903225806451616,
+   "prompt_version": "v1-9d0f038c",
+   "k": 5,
+   "minus_A0_supported_ensemble": {
+    "diff": -0.038321995464852654,
+    "ci95": [
+     -0.12132085964875625,
+     0.044496853476439946
+    ]
+   }
+  }
+ }
+}

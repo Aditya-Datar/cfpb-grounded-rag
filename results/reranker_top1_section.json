@@ -1,0 +1,46 @@
+{
+ "what": "share of in-scope complaints whose top-ranked section is the gold section (EXPERIMENT_LOG E9, E16)",
+ "source": "outputs/retrieval/<name>/ranked.parquet",
+ "rerankers": {
+  "super": {
+   "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+   "run": "super_rubric_top1",
+   "dev": {
+    "n": 62,
+    "top1_correct": 0.7741935483870968,
+    "ci95": [
+     0.6612903225806451,
+     0.8709677419354839
+    ]
+   },
+   "heldout": {
+    "n": 65,
+    "top1_correct": 0.6307692307692307,
+    "ci95": [
+     0.5076923076923077,
+     0.7538461538461538
+    ]
+   }
+  },
+  "gpt": {
+   "model": "codex:gpt-5.6-sol",
+   "run": "gpt_rubric_top1",
+   "dev": {
+    "n": 62,
+    "top1_correct": 0.8387096774193549,
+    "ci95": [
+     0.7419354838709677,
+     0.9193548387096774
+    ]
+   },
+   "heldout": {
+    "n": 65,
+    "top1_correct": 0.7692307692307693,
+    "ci95": [
+     0.6615384615384615,
+     0.8615384615384616
+    ]
+   }
+  }
+ }
+}

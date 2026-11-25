@@ -5,7 +5,7 @@ import { Due, Modal, StatusBadge, Toast } from "../components";
 
 const STAGES = [
   { id: "classify", label: "Classify" }, { id: "retrieve", label: "Find regulation" }, { id: "scope", label: "Scope check" },
-  { id: "generate", label: "Draft" }, { id: "verify", label: "Check sentences" },
+  { id: "generate", label: "Draft" }, { id: "verify", label: "Check sentences" }, { id: "revise", label: "Rewrite flagged" },
 ];
 // V and the FCRA cover the same ground (credit reporting), so they never count as a mismatch.
 const family = (r: string | null | undefined) => (r === "FCRA" ? "V" : r);
@@ -146,7 +146,7 @@ export default function CasePage({ health }: { health: Health | null }) {
           <ComplaintCard c={c} />
           {a?.classification && <TriageCard a={a} />}
           {a?.scope && c.status !== "scope_review" && <ScopeCard scope={a.scope} />}
-          {chunks.length > 0 && <Passages chunks={chunks} hit={hitIds} candidate={a?.classification?.candidate_regulation ?? null} />}
+          {chunks.length > 0 && <Passages chunks={chunks} hit={hitIds} candidate={a?.classification?.candidate_regulation ?? null} retriever={a?.retrieval?.retriever} note={a?.retrieval?.note} sections={a?.retrieval?.sections} />}
         </div>
       </div>
 
@@ -170,7 +170,7 @@ function Progress({ stage }: { stage: string }) {
   return (
     <div className="card card-pad stack">
       <div className="row"><span className="spin" style={{ color: "var(--blue)" }} /><h2>Analyzing</h2>
-        <span className="faint">{stage === "queued" ? "Waiting for the worker…" : stage === "generate" ? "Drafting on the NVIDIA API can take several minutes." : ""}</span></div>
+        <span className="faint">{stage === "queued" ? "Waiting for the worker…" : stage === "generate" ? "Drafting on the NVIDIA API can take several minutes." : stage === "revise" ? "Flagged sentences go back to the drafter and are checked again." : ""}</span></div>
       <div className="steps">
         {STAGES.map((s, j) => (
           <div key={s.id} className={`step ${j < i ? "done" : j === i ? "now" : ""}`}><div className="bar" />{s.label}</div>
@@ -221,9 +221,9 @@ function DraftCard(p: DraftCardProps) {
       {!p.editing && (
         <div style={{ padding: "12px 18px 0" }}>
           {flagged > 0 ? (
-            <div className="notice bad"><div><b>{flagged} of {draft.sentences.length} sentences are not supported</b> by the passage they cite (entailment below {a?.nli_cutoff?.toPrecision(4) ?? "the cutoff"}). Fix or remove them, or approve with a written justification.</div></div>
+            <div className="notice bad"><div><b>{flagged} of {draft.sentences.length} sentences are not supported</b> by the passage they cite (checker score below {a?.nli_cutoff?.toPrecision(4) ?? "the cutoff"}). Fix or remove them, or approve with a written justification.</div></div>
           ) : unchecked === draft.sentences.length ? (
-            <div className="notice warn">These sentences were not checked (the NLI model is not loaded).</div>
+            <div className="notice warn">These sentences were not checked (the checker is not loaded).</div>
           ) : (
             <div className="notice ok"><div><b>Every sentence is supported</b> by the passage it cites. That does not mean the passage is the right one; confirm the governing section on the right.</div></div>
           )}
@@ -281,7 +281,10 @@ function SentenceRow({ s, i, sel, pIndex, chunks, onClick }: { s: Sentence; i: n
         {s.label === "supported" && <span className="badge tone-ok">Supported</span>}
         {s.label === "unsupported" && <span className="badge tone-bad">Flagged</span>}
         {s.label === "unchecked" && <span className="badge">Not checked</span>}
-        {s.entail_prob != null && <span className="score" title="Probability the cited text entails this sentence (DeBERTa NLI)">entail {s.entail_prob.toFixed(3)}</span>}
+        {s.original_text && <span className="badge" title={`Rewritten by the checker loop (round ${s.gating_round}). Original: ${s.original_text}`}>Rewritten</span>}
+        {s.entail_prob != null && (s.ultra_prob != null
+          ? <span className="score" title={`Checker score: mean of DeBERTa NLI entailment (${s.nli_prob!.toFixed(3)}) and the Nemotron Ultra judge (${s.ultra_prob.toFixed(3)})`}>support {s.entail_prob.toFixed(3)}</span>
+          : <span className="score" title="Probability the cited text entails this sentence (DeBERTa NLI)">entail {s.entail_prob.toFixed(3)}</span>)}
       </div>
     </div>
   );
@@ -398,18 +401,22 @@ function ScopeCard({ scope }: { scope: NonNullable<NonNullable<CaseDetail["analy
   );
 }
 
-function Passages({ chunks, hit, candidate }: { chunks: Chunk[]; hit: Set<string>; candidate: string | null }) {
+function Passages({ chunks, hit, candidate, retriever, note, sections }: { chunks: Chunk[]; hit: Set<string>; candidate: string | null; retriever?: string; note?: string | null; sections?: string[] }) {
   const top = chunks[0];
   const mismatch = candidate && top && family(top.regulation) !== family(candidate);
   return (
     <div className="card">
-      <div className="card-head"><h2>Regulation passages</h2><span className="faint">top {chunks.length} retrieved</span></div>
+      <div className="card-head"><h2>Regulation passages</h2><span className="faint">{retriever?.endsWith("top-section") ? `${chunks.length} passages of the top-ranked section` : retriever === "llm-rerank" ? `top ${chunks.length} sections, picked by the LLM` : `top ${chunks.length} retrieved`}</span></div>
+      {sections && sections.length > 1 && (
+        <div className="faint" style={{ margin: "8px 16px 0" }}>Section ranking: {sections.join(" › ")}. The draft uses only the first.</div>
+      )}
+      {note && <div className="notice warn" style={{ margin: "12px 16px 0" }}>Section ranking: {note}.</div>}
       {mismatch && (
         <div className="notice warn" style={{ margin: "12px 16px 0" }}>
           The top passage is from {REG_NAMES[top.regulation] ?? top.regulation}, but this product is usually governed by {REG_NAMES[candidate!] ?? candidate}. Check that the right regulation was found.
         </div>
       )}
-      <div style={{ marginTop: mismatch ? 8 : 0 }}>
+      <div style={{ marginTop: mismatch || note ? 8 : 0 }}>
         {chunks.map((ch, i) => (
           <details key={ch.chunk_id} className={`passage ${hit.has(ch.chunk_id) ? "hit" : ""}`} open={hit.has(ch.chunk_id) || (hit.size === 0 && i === 0)}>
             <summary>

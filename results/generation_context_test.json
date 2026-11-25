@@ -1,0 +1,92 @@
+{
+  "note": "    .venv/Scripts/python.exe scripts/run_generation_context_test.py [--workers 6]",
+  "variants": {
+    "current": {
+      "all": {
+        "n": 127,
+        "gold_in_context": 0.889763779527559,
+        "sentences": 505,
+        "cite_gold_micro": 0.2811881188118812,
+        "cite_gold_macro": 0.32099737532808403,
+        "drafts_citing_gold_at_least_once": 0.8110236220472441,
+        "empty_drafts": 0
+      },
+      "dev": {
+        "n": 62,
+        "gold_in_context": 0.9032258064516129,
+        "sentences": 255,
+        "cite_gold_micro": 0.2784313725490196,
+        "cite_gold_macro": 0.3112903225806451,
+        "drafts_citing_gold_at_least_once": 0.8548387096774194,
+        "empty_drafts": 0
+      },
+      "report": {
+        "n": 65,
+        "gold_in_context": 0.8769230769230769,
+        "sentences": 250,
+        "cite_gold_micro": 0.284,
+        "cite_gold_macro": 0.3302564102564103,
+        "drafts_citing_gold_at_least_once": 0.7692307692307693,
+        "empty_drafts": 0
+      }
+    },
+    "top1x5": {
+      "all": {
+        "n": 127,
+        "gold_in_context": 0.5826771653543307,
+        "sentences": 528,
+        "cite_gold_micro": 0.5946969696969697,
+        "cite_gold_macro": 0.5826771653543307,
+        "drafts_citing_gold_at_least_once": 0.5826771653543307,
+        "empty_drafts": 0
+      },
+      "dev": {
+        "n": 62,
+        "gold_in_context": 0.6290322580645161,
+        "sentences": 263,
+        "cite_gold_micro": 0.6311787072243346,
+        "cite_gold_macro": 0.6290322580645161,
+        "drafts_citing_gold_at_least_once": 0.6290322580645161,
+        "empty_drafts": 0
+      },
+      "report": {
+        "n": 65,
+        "gold_in_context": 0.5384615384615384,
+        "sentences": 265,
+        "cite_gold_micro": 0.5584905660377358,
+        "cite_gold_macro": 0.5384615384615384,
+        "drafts_citing_gold_at_least_once": 0.5384615384615384,
+        "empty_drafts": 0
+      }
+    },
+    "top2_3_2": {
+      "all": {
+        "n": 127,
+        "gold_in_context": 0.7007874015748031,
+        "sentences": 525,
+        "cite_gold_micro": 0.4666666666666667,
+        "cite_gold_macro": 0.45892388451443566,
+        "drafts_citing_gold_at_least_once": 0.6850393700787402,
+        "empty_drafts": 0
+      },
+      "dev": {
+        "n": 62,
+        "gold_in_context": 0.7741935483870968,
+        "sentences": 261,
+        "cite_gold_micro": 0.5172413793103449,
+        "cite_gold_macro": 0.5088709677419354,
+        "drafts_citing_gold_at_least_once": 0.7580645161290323,
+        "empty_drafts": 0
+      },
+      "report": {
+        "n": 65,
+        "gold_in_context": 0.6307692307692307,
+        "sentences": 264,
+        "cite_gold_micro": 0.4166666666666667,
+        "cite_gold_macro": 0.4112820512820513,
+        "drafts_citing_gold_at_least_once": 0.6153846153846154,
+        "empty_drafts": 0
+      }
+    }
+  }
+}
