@@ -1077,3 +1077,17 @@ Dev gating (bh8crhi20) was paused overnight by sleep, now resumed. Queue (task b
   - Slide 3: explains the dashes on the GPT rerank row (it returns top-1 only).
 - Pushed the deck source plus final_presentation/SLIDES.md (slide text and notes) to origin/documents as 6ccf9e5.
 - The edits to docs/final_presentation on final-experiments are not committed yet.
+
+## 2026-11-24: documentation pushed; deck redesigned with charts
+- origin/final-experiments 552432b: deck rubric-pass edits and progress log.
+- origin/documents 8a35e5d: PROJECT_DOCUMENTATION.md rewritten as Part I (final results, F1–F8: pipeline, setup, stage results, matched attribution, ablations, limitations, app, midterm plan vs done, decisions D15–D22) and Part II (the midterm record, unchanged).
+- Deck redesigned at Aditya's request (simpler, chart-led; artifact version 1795587851-e868), still 5 slides:
+  1. recap: pipeline, prior work, attribution diagram.
+  2. progress (new): midterm plan → done, plus a dot chart of 4 headline numbers, midterm → final.
+  3. components: a setup strip, a retrieval top-1 bar chart and a checker balanced-accuracy bar chart.
+  4. endtoend: stacked "error budget" bars (correct / lost to retrieval / lost to generation) for midterm, final before rewriting and final with rewriting; a mini chart of cited-section tiers; ablations.
+  5. takeaways: 3 big numbers and limitations.
+- The old setup slide was merged into slide 3.
+- Palette validated with the dataviz validator: blue / orange / purple, with a neutral labelled gray for midterm values.
+- Previewed at 1920×1080 in the browser pane; fixed the slide-4 legend wrap, the clipped 77% label, and the slide-2 row spacing.
+- Not yet committed: the redesigned deck files in docs/final_presentation, and the copy on documents.

@@ -1,29 +1,56 @@
-<section id="endtoend" class="alt">
-<p class="kicker">Results 2 · attribution experiment, end to end (65 held-out complaints)</p>
-<h2>Retrieval's share of the error fell from 70 points to 11; generation is now the bigger part</h2>
+<section id="endtoend">
+<p class="kicker">Main result · attribution experiment (65 held-out complaints)</p>
+<h2>Errors moved from retrieval to generation</h2>
 <div class="row">
-<div class="col" style="flex:1.45">
-<table>
-<tr><th>Final accuracy (supported + correct section)</th><th class="num">Retrieved</th><th class="num">Oracle</th><th class="num">Gap, 95% CI</th></tr>
-<tr class="base"><td>Midterm: BM25, lenient checker</td><td class="num">0.18</td><td class="num">0.87</td><td class="num">+0.70 [0.64, 0.77]</td></tr>
-<tr><td>Final pipeline, no rewriting</td><td class="num">0.44</td><td class="num">0.52</td><td class="num">+0.07 [−0.03, 0.18]</td></tr>
-<tr class="win"><td>Final pipeline + rewrite flagged sentences</td><td class="num">0.69</td><td class="num">0.81</td><td class="num">+0.11 [0.00, 0.23]</td></tr>
-<tr><td>Acceptable drafts, with rewriting</td><td class="num">0.75</td><td class="num">0.89</td><td class="num"></td></tr>
-</table>
-<table>
-<tr><th>Ablation</th><th class="num">Effect on final accuracy</th></tr>
-<tr><td>Rewrite flagged sentences, judged by DeBERTa + Ultra</td><td class="num">+0.25 (0.44 → 0.69)</td></tr>
-<tr><td>Same rewriting judged by DeBERTa alone</td><td class="num">0.56 instead of 0.69</td></tr>
-<tr><td>Drafter prompt: quote the provision (dev)</td><td class="num">+0.17 alone, −0.01 with rewriting</td></tr>
-</table>
+<div class="col" style="flex:1.7">
+<div class="legend"><span><span class="sw" style="background:#2c63a6"></span>Correct</span><span><span class="sw" style="background:#c8611a"></span>Lost to retrieval</span><span><span class="sw" style="background:#8e5fb0"></span>Lost to generation (wrong even with the correct passage)</span></div>
+<svg aria-label="Midterm: 18% correct, 69% lost to retrieval, 13% lost to generation. Final before rewriting: 44% correct, 7% retrieval, 48% generation. Final with rewriting: 69% correct, 11% retrieval, 19% generation." width="1000" height="410" viewBox="0 0 1000 410" xmlns="http://www.w3.org/2000/svg">
+<text x="0" y="30" font-family="Inter" font-size="26" fill="#16203a"><tspan font-weight="700">Midterm: BM25, lenient checker</tspan><tspan fill="#4f586b">  ·  gap +0.70 [0.64, 0.77]</tspan></text>
+<rect x="0.0" y="46" width="182.0" height="60" rx="4" fill="#2c63a6"/>
+<text x="91.0" y="86" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">18%</text>
+<rect x="184.0" y="46" width="685.0" height="60" rx="4" fill="#c8611a"/>
+<text x="526.5" y="86" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">69%</text>
+<rect x="871.0" y="46" width="127.0" height="60" rx="4" fill="#8e5fb0"/>
+<text x="934.5" y="86" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">13%</text>
+<text x="0" y="155" font-family="Inter" font-size="26" fill="#16203a"><tspan font-weight="700">Final pipeline, before rewriting</tspan><tspan fill="#4f586b">  ·  gap +0.07 [−0.03, 0.18], not significant</tspan></text>
+<rect x="0.0" y="171" width="442.0" height="60" rx="4" fill="#2c63a6"/>
+<text x="221.0" y="211" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">44%</text>
+<rect x="444.0" y="171" width="73.0" height="60" rx="4" fill="#c8611a"/>
+<text x="480.5" y="211" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">7%</text>
+<rect x="519.0" y="171" width="479.0" height="60" rx="4" fill="#8e5fb0"/>
+<text x="758.5" y="211" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">48%</text>
+<text x="0" y="280" font-family="Inter" font-size="26" fill="#16203a"><tspan font-weight="700">Final pipeline, rewriting flagged sentences</tspan><tspan fill="#4f586b">  ·  gap +0.11 [0.00, 0.23]</tspan></text>
+<rect x="0.0" y="296" width="692.0" height="60" rx="4" fill="#2c63a6"/>
+<text x="346.0" y="336" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">69%</text>
+<rect x="694.0" y="296" width="112.0" height="60" rx="4" fill="#c8611a"/>
+<text x="750.0" y="336" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">11%</text>
+<rect x="808.0" y="296" width="190.0" height="60" rx="4" fill="#8e5fb0"/>
+<text x="903.0" y="336" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#fffdf8">19%</text>
+<text x="0" y="396" font-family="Inter" font-size="24" fill="#4f586b">Share of draft sentences (100% = all sentences in the 65 held-out drafts)</text>
+</svg>
 </div>
-<div class="col" style="flex:0.75">
-<h3>Error analysis: which section each sentence cites</h3>
-<div class="card"><span class="big">77%</span><span class="bigcap">gold section</span></div>
-<div class="card"><span class="big" style="font-size:64px">4%</span><span class="bigcap">accepted equivalent section</span></div>
-<div class="card"><span class="big orange" style="font-size:64px">7% · 12%</span><span class="bigcap">wrong section of the right law · wrong law</span></div>
+<div class="col" style="flex:1">
+<div class="card"><span class="tag">Error analysis: section each sentence cites</span>
+<svg aria-label="Sentences cite the gold section 77%, an accepted equivalent 4%, a wrong section of the right law 7%, a wrong law 12%" width="500" height="190" viewBox="0 0 500 190" xmlns="http://www.w3.org/2000/svg">
+<text x="0" y="32" font-family="Inter" font-size="24" fill="#16203a">Gold section</text>
+<rect x="280" y="10" width="138.6" height="28" rx="4" fill="#2c63a6"/>
+<text x="428.6" y="32" font-family="Inter" font-size="24" font-weight="700" fill="#16203a">77%</text>
+<text x="0" y="78" font-family="Inter" font-size="24" fill="#16203a">Accepted equivalent</text>
+<rect x="280" y="56" width="7.2" height="28" rx="4" fill="#2c63a6"/>
+<text x="297.2" y="78" font-family="Inter" font-size="24" font-weight="700" fill="#16203a">4%</text>
+<text x="0" y="124" font-family="Inter" font-size="24" fill="#16203a">Right law, wrong section</text>
+<rect x="280" y="102" width="12.6" height="28" rx="4" fill="#2c63a6"/>
+<text x="302.6" y="124" font-family="Inter" font-size="24" font-weight="700" fill="#16203a">7%</text>
+<text x="0" y="170" font-family="Inter" font-size="24" fill="#16203a">Wrong law</text>
+<rect x="280" y="148" width="21.6" height="28" rx="4" fill="#2c63a6"/>
+<text x="311.6" y="170" font-family="Inter" font-size="24" font-weight="700" fill="#16203a">12%</text>
+</svg></div>
+<div class="card"><span class="tag">Ablations</span>
+<p class="chk"><b>+25 pts</b> from rewriting flagged sentences</p>
+<p class="chk"><b>0.56</b> instead of 0.69 if NLI alone picks what to rewrite</p>
+<p class="chk"><b>+17 pts</b> from a "quote the provision" prompt, ≈0 on top of rewriting (dev)</p></div>
 </div>
 </div>
-<p class="source">Midterm row: BM25, DeBERTa at 0.5, all 127 complaints. Paired bootstrap over complaints. Same drafter (Nemotron Super), checker and rewriting on both sides. EXPERIMENT_LOG H2, E17.</p>
-<aside>~75 seconds, the main slide. Each complaint is drafted twice: once with what our retriever found, once with the correct passage. The gap is what retrieval costs; what is still missing with the correct passage is generation's fault. At the midterm, with BM25, the gap was 70 points: retrieval was the problem. With the final retriever it is 7 points before rewriting (not significant) and 11 with rewriting. So with the correct passage, about 19% of sentences still fail; generation is now the larger error source, and that is why the rewrite step matters: checking each sentence and rewriting flagged ones added 25 points. Rewriting judged by NLI alone only reached 0.56, so the validated checker is what makes it work. Prompt tweaks help only without rewriting. Error analysis on the right: 77% of sentences cite the gold section, 4% an accepted equivalent, 7% a wrong section of the right law and 12% another law. If asked why oracle is not 100%: even with the correct passage, the checker still finds sentences the passage does not support after two rewrite rounds.</aside>
+<p class="source">Same drafter (Nemotron Super), checker and rewriting on both sides; gap = oracle − retrieved, paired bootstrap (per complaint); bars are per sentence. Midterm row: all 127 complaints. EXPERIMENT_LOG H2, E13, E16, E17.</p>
+<aside>~75 seconds, the main slide. Each bar is all the sentences our drafts produced. Blue is correct: supported and citing the right section. Orange is what retrieval costs: the gap between drafting from the retrieved passage and from the correct one. Purple is what is still wrong even with the correct passage, so it is generation's fault. At the midterm, with BM25, the orange part was 70 points: retrieval was the problem. With the final retriever it shrinks to 7 points before rewriting, not significant, and generation is now the big purple block. So we check every sentence and rewrite the flagged ones from the passage: correct sentences go from 44 to 69 percent, a 25-point gain, and the retrieval gap is 11 points, CI 0.00 to 0.23. Ablations: if the NLI checker alone decides what to rewrite, we only reach 0.56, so the validated checker is what makes rewriting work. A prompt telling the drafter to quote the provision helps by 17 points alone but adds nothing on top of rewriting. Error analysis: 77 percent of sentences cite the gold section, 4 an accepted equivalent, 7 the wrong section of the right law and 12 a different law. If asked why the correct passage still is not 100 percent: the drafter applies the rule to the complaint's facts or drops a condition, which the passage alone cannot support.</aside>
 </section>

@@ -1,0 +1,53 @@
+<section id="progress" class="alt">
+<p class="kicker">Progress since the midterm</p>
+<h2>Plan delivered, and the bottleneck moved</h2>
+<div class="row">
+<div class="col" style="flex:0.95">
+<h3>Midterm plan → done</h3>
+<p class="chk"><b>✓</b> Dense + hybrid retrieval vs BM25, then LLM rerank</p>
+<p class="chk"><b>✓</b> Attribution on all 127 complaints, held-out half</p>
+<p class="chk"><b>✓</b> Chunking ablation: section chunks win (+0.15 hit@5)</p>
+<p class="chk"><b>✓</b> Out-of-scope detector: AUROC 0.43 → 0.74</p>
+<p class="chk"><b>✓</b> Streamlit demo → full officer web app</p>
+<h3 style="margin-top:16px">Changed, and why</h3>
+<p class="why"><b>→</b> NLI checker failed validation (0.70), so we added an LLM judge</p>
+<p class="why"><b>→</b> Once retrieval was fixed, generation became the bottleneck, so flagged sentences are rewritten</p>
+<p class="why"><b>→</b> Credit-bureau duties are in the FCRA statute, so we added it</p>
+</div>
+<div class="col" style="flex:1.05">
+<div class="legend"><span><span class="sw" style="background:#8a857b"></span>Midterm</span><span><span class="sw" style="background:#2c63a6"></span>Final (held-out)</span></div>
+<svg aria-label="Midterm to final: retrieval top-1 6% to 77%; checker balanced accuracy 61% to 83%; final accuracy 18% to 69%; retrieval gap 70 to 11 points" width="840" height="520" viewBox="0 0 840 520" xmlns="http://www.w3.org/2000/svg">
+<text x="20" y="40" font-family="Inter" font-size="26" font-weight="600" fill="#16203a">Right section ranked first (retrieval top-1)</text>
+<line x1="20" y1="76" x2="820" y2="76" stroke="#cfc9bc" stroke-width="2"/>
+<line x1="68" y1="76" x2="636" y2="76" stroke="#2c63a6" stroke-opacity="0.35" stroke-width="10" stroke-linecap="round"/>
+<circle cx="68" cy="76" r="12" fill="#8a857b" stroke="#f6f4ef" stroke-width="2"/>
+<circle cx="636" cy="76" r="14" fill="#2c63a6" stroke="#f6f4ef" stroke-width="2"/>
+<text x="68" y="116" text-anchor="middle" font-family="Inter" font-size="24" fill="#4f586b">6%</text>
+<text x="636" y="116" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#2c63a6">77%</text>
+<text x="20" y="168" font-family="Inter" font-size="26" font-weight="600" fill="#16203a">Checker agreement with labels (balanced accuracy)</text>
+<line x1="20" y1="204" x2="820" y2="204" stroke="#cfc9bc" stroke-width="2"/>
+<line x1="508" y1="204" x2="684" y2="204" stroke="#2c63a6" stroke-opacity="0.35" stroke-width="10" stroke-linecap="round"/>
+<circle cx="508" cy="204" r="12" fill="#8a857b" stroke="#f6f4ef" stroke-width="2"/>
+<circle cx="684" cy="204" r="14" fill="#2c63a6" stroke="#f6f4ef" stroke-width="2"/>
+<text x="508" y="244" text-anchor="middle" font-family="Inter" font-size="24" fill="#4f586b">61%</text>
+<text x="684" y="244" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#2c63a6">83%</text>
+<text x="20" y="296" font-family="Inter" font-size="26" font-weight="600" fill="#16203a">Draft sentences fully correct (final accuracy)</text>
+<line x1="20" y1="332" x2="820" y2="332" stroke="#cfc9bc" stroke-width="2"/>
+<line x1="164" y1="332" x2="572" y2="332" stroke="#2c63a6" stroke-opacity="0.35" stroke-width="10" stroke-linecap="round"/>
+<circle cx="164" cy="332" r="12" fill="#8a857b" stroke="#f6f4ef" stroke-width="2"/>
+<circle cx="572" cy="332" r="14" fill="#2c63a6" stroke="#f6f4ef" stroke-width="2"/>
+<text x="164" y="372" text-anchor="middle" font-family="Inter" font-size="24" fill="#4f586b">18%</text>
+<text x="572" y="372" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#2c63a6">69%</text>
+<text x="20" y="424" font-family="Inter" font-size="26" font-weight="600" fill="#16203a">Gap caused by retrieval (lower is better)</text>
+<line x1="20" y1="460" x2="820" y2="460" stroke="#cfc9bc" stroke-width="2"/>
+<line x1="580" y1="460" x2="108" y2="460" stroke="#2c63a6" stroke-opacity="0.35" stroke-width="10" stroke-linecap="round"/>
+<circle cx="580" cy="460" r="12" fill="#8a857b" stroke="#f6f4ef" stroke-width="2"/>
+<circle cx="108" cy="460" r="14" fill="#2c63a6" stroke="#f6f4ef" stroke-width="2"/>
+<text x="580" y="500" text-anchor="middle" font-family="Inter" font-size="24" fill="#4f586b">70 pts</text>
+<text x="108" y="500" text-anchor="middle" font-family="Inter" font-size="26" font-weight="700" fill="#2c63a6">11 pts</text>
+</svg>
+</div>
+</div>
+<p class="source">Held-out: 65 complaints; checker: 100 labelled pairs. The midterm accuracy used the lenient 0.5 checker, which flatters it. EXPERIMENT_LOG H1–H5, E12, E17.</p>
+<aside>~55 seconds. Left: the plan we showed at the midterm, and every item is done. We added dense and hybrid retrieval and then an LLM reranker; ran the attribution experiment on all 127 complaints and once on an untouched held-out half; the chunking ablation shows chunks cut at section boundaries beat fixed 200-word windows by about 15 points hit@5; the detector for complaints no regulation in our corpus covers went from AUROC 0.43 to 0.74; and the demo became a full officer web app. Three changes of direction, each for a reason: the NLI checker only reached 0.70 against our labels, so we paired it with an LLM judge; once retrieval improved, generation became the bottleneck, so we rewrite flagged sentences; and credit-bureau duties are in the FCRA statute, not Reg V, so we added it. Right: the four headline numbers, midterm to final. Retrieval top-1 from 6 to 77 percent; checker agreement from 61 to 83; fully correct sentences from 18 to 69; and the gap caused by retrieval from 70 points down to 11.</aside>
+</section>
